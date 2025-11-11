@@ -450,7 +450,7 @@ output:
   #   - Moc.fits / Moc.json     (MOC)
   #   - properties / metadata.xml
   #   - process.log             (full textual log)
-  out_dir: "/scratch/users/luigi.silva/sky-viewer/docs/hipsgen_python_parallelized/LSST_DP1"
+  out_dir: "/scratch/users/luigi.silva/hipscatalog_gen/LSST_DP1"
 
   # Catalog / HiPS name:
   #   - Used in metadata (properties, metadata.xml).

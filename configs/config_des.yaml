@@ -432,7 +432,7 @@ output:
   #   - Moc.fits / Moc.json     (MOC)
   #   - properties / metadata.xml
   #   - process.log             (full textual log)
-  out_dir: "/scratch/users/luigi.silva/sky-viewer/docs/hipsgen_python_parallelized/DES_DR2_spatial_cut"
+  out_dir: "/scratch/users/luigi.silva/hipscatalog_gen/DES_DR2_spatial_cut"
 
   # Catalog / HiPS name:
   #   - Used in metadata (properties, metadata.xml).
