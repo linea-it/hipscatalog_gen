@@ -77,7 +77,7 @@ class AlgoOpts:
     #   "linear"   → increases linearly with depth
     #   "exp"      → increases exponentially with depth
     #   "log"      → increases ~log(depth)
-    density_mode: str = "constant"
+    density_mode: str = "exp"
 
     # Expected rows per coverage cell (__icov__) at depth 1
     # (base of the density profile in per-coverage mode).
@@ -103,13 +103,13 @@ class AlgoOpts:
     # How to handle the fractional part of k:
     #   "random" → random +1 decisions
     #   "score"  → score-based decisions
-    fractional_mode: str = "random"
+    fractional_mode: str = "score"
 
     # Scope of the fractional logic:
     #   "auto"   → random → local, score → global (backward-compatible)
     #   "local"  → per coverage cell (__icov__)
     #   "global" → union of all coverage cells at this depth
-    fractional_mode_logic: str = "auto"
+    fractional_mode_logic: str = "local"
 
     # When True (and input.format == "hats"), use HATS/LSDB partitions
     # themselves as coverage cells (__icov__), instead of HEALPix cells.
@@ -200,11 +200,17 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
 
     # If only one of level_coverage / coverage_order is provided, use it for the other.
     if raw_level_coverage is None and raw_coverage_order is None:
-        # Default: use level_limit for both if neither is explicitly given.
-        raw_level_coverage = level_limit
-        raw_coverage_order = level_limit
+        # New default rule:
+        # - If level_limit >= 8: default coverage = 8
+        # - If level_limit < 8: default coverage = level_limit
+        default_cov = 8 if level_limit >= 8 else level_limit
+
+        raw_level_coverage = default_cov
+        raw_coverage_order = default_cov
+
     elif raw_level_coverage is None:
         raw_level_coverage = raw_coverage_order
+
     elif raw_coverage_order is None:
         raw_coverage_order = raw_level_coverage
 
@@ -212,7 +218,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     coverage_order = int(raw_coverage_order)
 
     # Density / selection parameters
-    density_mode = algo.get("density_mode", "constant")
+    density_mode = algo.get("density_mode", "exp")
 
     # Mutually exclusive initial parameters:
     #   * k_per_cov_initial     → base expected rows per coverage cell (depth 1)
@@ -310,8 +316,8 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             density_exp_base=float(algo.get("density_exp_base", 2.0)),
             density_bias_mode=algo.get("density_bias_mode", "none"),
             density_bias_exponent=float(algo.get("density_bias_exponent", 1.0)),
-            fractional_mode=algo.get("fractional_mode", "random"),
-            fractional_mode_logic=algo.get("fractional_mode_logic", "auto"),
+            fractional_mode=algo.get("fractional_mode", "score"),
+            fractional_mode_logic=algo.get("fractional_mode_logic", "local"),
             use_hats_as_coverage=bool(algo.get("use_hats_as_coverage", False)),
             mag_column=algo.get("mag_column"),
             mag_min=algo.get("mag_min"),
