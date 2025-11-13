@@ -14,7 +14,9 @@ try:
     # Optional for SLURM-based clusters
     from dask_jobqueue import SLURMCluster  # type: ignore[import]
 except Exception:  # pragma: no cover - optional dependency
-    SLURMCluster = None  # type: ignore[assignment]
+    # When dask_jobqueue is not available, we keep SLURMCluster as a placeholder.
+    # mypy complains about assigning to a type here, so we silence that single check.
+    SLURMCluster = None  # type: ignore[misc,assignment]
 
 
 __all__ = [
@@ -74,6 +76,9 @@ def setup_cluster(
     # ------------------------------------------------------------------
     # Cluster creation (local or SLURM)
     # ------------------------------------------------------------------
+    cluster: Any
+    client: Client
+
     if cfg.mode == "slurm":
         assert SLURMCluster is not None, "dask-jobqueue is required for mode='slurm'"
         sl = cfg.slurm or {}
