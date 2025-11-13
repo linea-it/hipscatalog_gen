@@ -14,6 +14,7 @@ __all__ = [
     "Config",
     "load_config",
     "load_config_from_dict",
+    "display_available_configs",
 ]
 
 
@@ -189,6 +190,215 @@ class Config:
     output: OutputCfg
 
 
+_CONFIG_HELP_TEXT = """
+HiPS catalog pipeline configuration reference
+=============================================
+
+Top-level sections
+------------------
+input      [required]
+columns    [required]
+algorithm  [required]
+cluster    [required]
+output     [required]
+
+input
+-----
+paths         [required] list[str]
+    Glob patterns for input files (Parquet/CSV/TSV/HATS).
+format        [optional, default="parquet"]
+    One of: "parquet", "csv", "tsv", "hats".
+header        [optional, default=True]
+    Whether CSV/TSV files include a header row.
+ascii_format  [optional, default=None]
+    Optional hint for ASCII input ("CSV" or "TSV").
+
+columns
+-------
+ra    [required] str
+    RA column name.
+dec   [required] str
+    DEC column name.
+score [required] str
+    Score column or expression used for ranking.
+keep  [optional, default=None] list[str]
+    Explicit list of columns to keep in the HiPS output.
+
+algorithm
+---------
+selection_mode         [optional, default="coverage"]
+    High-level selection strategy:
+      - "coverage"   → coverage-based selection per coverage cell (__icov__).
+      - "mag_global" → global magnitude-complete selection.
+level_limit            [required] int
+    Maximum HiPS order (NorderL). Must be in [4, 11].
+level_coverage         [optional, default=8 if level_limit >= 8 else level_limit]
+    HiPS order used for the MOC and coverage densmap.
+coverage_order         [optional, default=8 if level_limit >= 8 else level_limit]
+    HEALPix order used to define coverage cells (__icov__).
+order_desc             [optional, default=False]
+    If False, lower score is better; if True, higher score is better.
+k_per_cov_per_level    [optional, default=None] dict[int, float]
+    Per-depth overrides of the expected rows per coverage cell.
+targets_total_per_level [optional, default=None] dict[int, int]
+    Per-depth total caps (rows per depth).
+
+tie_buffer             [optional, default=10]
+    Score tie buffer near the selection cut.
+
+density_mode           [optional, default="constant"]
+    Depth profile mode for k or total targets:
+      - "constant"
+      - "linear"
+      - "exp"
+      - "log"
+k_per_cov_initial      [optional, default=1.0]
+    Base expected rows per coverage cell at depth 1 for coverage mode.
+targets_total_initial  [optional, default=None]
+    Base expected total rows at depth 1. Mutually exclusive with
+    k_per_cov_initial. When set, k_per_cov_initial is ignored by the
+    density profile.
+density_exp_base       [optional, default=2.0]
+    Base used when density_mode == "exp".
+
+density_bias_mode      [optional, default="none"]
+    Optional density bias based on coverage density at coverage_order:
+      - "none"
+      - "proportional"
+      - "inverse"
+density_bias_exponent  [optional, default=1.0]
+    Strength of the density bias.
+
+fractional_mode        [optional, default="random"]
+    How to handle the fractional part of k:
+      - "random"
+      - "score"
+fractional_mode_logic  [optional, default="auto"]
+    Scope of the fractional logic:
+      - "auto"
+      - "local"
+      - "global"
+
+use_hats_as_coverage   [optional, default=False]
+    When True and input.format == "hats", use HATS/LSDB partitions
+    as coverage cells (__icov__) instead of HEALPix cells.
+
+mag_column             [optional in coverage mode,
+                        required in mag_global mode] str
+    Magnitude column used when selection_mode == "mag_global".
+mag_min                [optional, default=None] float
+    Lower bound of the magnitude range in mag_global mode. If omitted,
+    the global minimum magnitude is used (clipped to >= -2).
+mag_max                [optional, default=None] float
+    Upper bound of the magnitude range in mag_global mode. If omitted,
+    it is estimated from the peak of the magnitude histogram (mag <= 40).
+mag_hist_nbins         [optional, default=256] int
+    Number of bins in the global magnitude histogram.
+n_1, n_2, n_3          [optional, default=None] int
+    Approximate global target counts for depths 1–3 in mag_global mode.
+    Must be provided in order: n_1, then n_2, then n_3.
+
+cluster
+-------
+mode                     [optional, default="local"]
+    Cluster mode: "local" or "slurm".
+n_workers                [optional, default=4] int
+    Number of Dask workers.
+threads_per_worker       [optional, default=1] int
+    Threads per worker.
+memory_per_worker        [optional, default="4GB"] str
+    Memory per worker (e.g. "8GB").
+slurm                    [optional, default=None] dict
+    Additional SLURM options when mode == "slurm".
+persist_ddfs             [optional, default=False] bool
+    If True, persist intermediate Dask DataFrames in memory.
+avoid_computes_wherever_possible [optional, default=True] bool
+    If True, prefer distributed reductions over materializing intermediates.
+diagnostics_mode         [optional, default="per_step"]
+    Dask diagnostics mode: "per_step", "global" or "off".
+
+output
+------
+out_dir      [required] str
+    Output directory where the HiPS hierarchy will be written.
+cat_name     [required] str
+    Catalog name used in metadata and directory naming.
+target       [optional, default="0 0"] str
+    Target coordinates (RA DEC) for metadata.
+creator_did  [optional, default=None] str
+    Dataset identifier for the creator, used in metadata.
+obs_title    [optional, default=None] str
+    Human-readable title for the observation/catalog, used in metadata.
+
+
+Examples
+========
+
+Example: minimal configuration (dict)
+-------------------------------------
+This is the smallest valid configuration you can pass to
+``load_config_from_dict()``::
+
+    cfg = {
+        "input": {
+            "paths": ["/path/to/catalog/*.parquet"],
+        },
+        "columns": {
+            "ra": "ra",
+            "dec": "dec",
+            "score": "score",
+        },
+        "algorithm": {
+            "level_limit": 10
+        },
+        "cluster": {},
+        "output": {
+            "out_dir": "/path/to/output",
+            "cat_name": "MyCatalog"
+        }
+    }
+
+
+Example: minimal configuration (YAML)
+-------------------------------------
+This is the smallest valid YAML file you can pass to ``load_config()``::
+
+    input:
+      paths:
+        - "/path/to/catalog/*.parquet"
+
+    columns:
+      ra: "ra"
+      dec: "dec"
+      score: "score"
+
+    algorithm:
+      level_limit: 10
+
+    cluster: {}
+
+    output:
+      out_dir: "/path/to/output"
+      cat_name: "MyCatalog"
+""".strip()
+
+
+def display_available_configs() -> None:
+    """Display a concise reference of all configuration options.
+
+    This prints a structured summary of all available configuration keys,
+    grouped by top-level section (input, columns, algorithm, cluster, output),
+    indicating which parameters are required, which are optional, and the
+    default values for optional parameters.
+
+    This function is intended for interactive use, e.g.:
+
+        >>> from hipscatalog_gen.config import display_available_configs
+        >>> display_available_configs()
+    """
+    print(_CONFIG_HELP_TEXT)
+
+
 def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     """Internal helper to build a Config from a raw mapping."""
     algo = y["algorithm"]
@@ -356,6 +566,13 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
 def load_config(path: str) -> Config:
     """Load configuration from a YAML file.
 
+    The YAML structure must follow the sections described in
+    ``display_available_configs()``. For an overview of all available
+    configuration keys (required vs optional, and defaults), call:
+
+        >>> from hipscatalog_gen.config import display_available_configs
+        >>> display_available_configs()
+
     Args:
         path: Path to the YAML configuration file.
 
@@ -375,7 +592,13 @@ def load_config_from_dict(cfg_dict: Mapping[str, Any]) -> Config:
     """Build configuration from an in-memory mapping.
 
     This is useful in interactive environments (e.g., notebooks) where the
-    configuration is defined directly as a Python dict instead of a YAML file.
+    configuration is defined directly as a Python dict instead of a YAML
+    file. The mapping must follow the same structure described in
+    ``display_available_configs()``. For a summary of all configuration
+    keys, call:
+
+        >>> from hipscatalog_gen.config import display_available_configs
+        >>> display_available_configs()
 
     Args:
         cfg_dict: Mapping with the same structure expected in the YAML file.
