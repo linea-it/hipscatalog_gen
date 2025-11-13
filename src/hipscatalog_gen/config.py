@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 __all__ = [
     "AlgoOpts",
