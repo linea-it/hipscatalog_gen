@@ -165,7 +165,7 @@ class ClusterCfg:
     slurm: Optional[Dict] = None
     persist_ddfs: bool = False
     avoid_computes_wherever_possible: bool = True
-    diagnostics_mode: str = "per_step"  # "per_step" | "global" | "off"
+    diagnostics_mode: str = "global"  # "per_step" | "global" | "off"
 
 
 @dataclass
@@ -221,8 +221,18 @@ dec   [required] str
     DEC column name.
 score [required] str
     Score column or expression used for ranking.
-keep  [optional, default=None] list[str]
-    Explicit list of columns to keep in the HiPS output.
+keep  [optional, default=None] list[str] or null
+    Controls which columns are kept in the HiPS tiles:
+      - Not set / null (default):
+          Keep all input columns. RA, DEC, score dependencies and
+          mag_column (when used) are moved to the beginning of the
+          output column order.
+      - Empty list []:
+          Keep only the minimal set required by the pipeline:
+          RA, DEC, score dependencies and mag_column (when used).
+      - Non-empty list:
+          Keep the minimal set (RA, DEC, score deps, mag_column if any)
+          plus the explicitly listed columns.
 
 algorithm
 ---------
@@ -233,9 +243,11 @@ selection_mode         [optional, default="coverage"]
 level_limit            [required] int
     Maximum HiPS order (NorderL). Must be in [4, 11].
 level_coverage         [optional, default=8 if level_limit >= 8 else level_limit]
-    HiPS order used for the MOC and coverage densmap.
+    HiPS order used for the MOC and coverage densmap. If only one of
+    level_coverage or coverage_order is set, its value is used for both.
 coverage_order         [optional, default=8 if level_limit >= 8 else level_limit]
-    HEALPix order used to define coverage cells (__icov__).
+    HEALPix order used to define coverage cells (__icov__). If only one of
+    level_coverage or coverage_order is set, its value is used for both.
 order_desc             [optional, default=False]
     If False, lower score is better; if True, higher score is better.
 k_per_cov_per_level    [optional, default=None] dict[int, float]
@@ -246,7 +258,7 @@ targets_total_per_level [optional, default=None] dict[int, int]
 tie_buffer             [optional, default=10]
     Score tie buffer near the selection cut.
 
-density_mode           [optional, default="constant"]
+density_mode           [optional, default="exp"]
     Depth profile mode for k or total targets:
       - "constant"
       - "linear"
@@ -269,11 +281,11 @@ density_bias_mode      [optional, default="none"]
 density_bias_exponent  [optional, default=1.0]
     Strength of the density bias.
 
-fractional_mode        [optional, default="random"]
+fractional_mode        [optional, default="score"]
     How to handle the fractional part of k:
       - "random"
       - "score"
-fractional_mode_logic  [optional, default="auto"]
+fractional_mode_logic  [optional, default="local"]
     Scope of the fractional logic:
       - "auto"
       - "local"
@@ -288,10 +300,11 @@ mag_column             [optional in coverage mode,
     Magnitude column used when selection_mode == "mag_global".
 mag_min                [optional, default=None] float
     Lower bound of the magnitude range in mag_global mode. If omitted,
-    the global minimum magnitude is used (clipped to >= -2).
+    the global minimum magnitude is used, clipped to >= -2.
 mag_max                [optional, default=None] float
     Upper bound of the magnitude range in mag_global mode. If omitted,
-    it is estimated from the peak of the magnitude histogram (mag <= 40).
+    it is estimated from the peak of the magnitude histogram, using
+    only magnitudes <= 40.
 mag_hist_nbins         [optional, default=256] int
     Number of bins in the global magnitude histogram.
 n_1, n_2, n_3          [optional, default=None] int
@@ -302,11 +315,11 @@ cluster
 -------
 mode                     [optional, default="local"]
     Cluster mode: "local" or "slurm".
-n_workers                [optional, default=4] int
+n_workers                [optional, default=3] int
     Number of Dask workers.
 threads_per_worker       [optional, default=1] int
     Threads per worker.
-memory_per_worker        [optional, default="4GB"] str
+memory_per_worker        [optional, default="2GB"] str
     Memory per worker (e.g. "8GB").
 slurm                    [optional, default=None] dict
     Additional SLURM options when mode == "slurm".
@@ -314,7 +327,7 @@ persist_ddfs             [optional, default=False] bool
     If True, persist intermediate Dask DataFrames in memory.
 avoid_computes_wherever_possible [optional, default=True] bool
     If True, prefer distributed reductions over materializing intermediates.
-diagnostics_mode         [optional, default="per_step"]
+diagnostics_mode         [optional, default="global"]
     Dask diagnostics mode: "per_step", "global" or "off".
 
 output
@@ -539,13 +552,13 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         ),
         cluster=ClusterCfg(
             mode=y["cluster"].get("mode", "local"),
-            n_workers=int(y["cluster"].get("n_workers", 4)),
+            n_workers=int(y["cluster"].get("n_workers", 3)),
             threads_per_worker=int(y["cluster"].get("threads_per_worker", 1)),
-            memory_per_worker=str(y["cluster"].get("memory_per_worker", "4GB")),
+            memory_per_worker=str(y["cluster"].get("memory_per_worker", "2GB")),
             slurm=y["cluster"].get("slurm"),
             persist_ddfs=bool(y["cluster"].get("persist_ddfs", False)),
             avoid_computes_wherever_possible=bool(y["cluster"].get("avoid_computes_wherever_possible", True)),
-            diagnostics_mode=y["cluster"].get("diagnostics_mode", "per_step"),
+            diagnostics_mode=y["cluster"].get("diagnostics_mode", "global"),
         ),
         output=OutputCfg(
             out_dir=y["output"]["out_dir"],
