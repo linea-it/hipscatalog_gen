@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 import yaml  # type: ignore[import-untyped]
 
@@ -13,6 +13,7 @@ __all__ = [
     "OutputCfg",
     "Config",
     "load_config",
+    "load_config_from_dict",
 ]
 
 
@@ -188,21 +189,8 @@ class Config:
     output: OutputCfg
 
 
-def load_config(path: str) -> Config:
-    """Load configuration from a YAML file.
-
-    Args:
-        path: Path to the YAML configuration file.
-
-    Returns:
-        Parsed Config instance.
-
-    Raises:
-        ValueError: If algorithm options are inconsistent.
-    """
-    with open(path, "r", encoding="utf-8") as f:
-        y = yaml.safe_load(f)
-
+def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
+    """Internal helper to build a Config from a raw mapping."""
     algo = y["algorithm"]
 
     # Coverage / MOC orders
@@ -235,7 +223,7 @@ def load_config(path: str) -> Config:
     if raw_k_per_cov_initial is not None and raw_targets_total_initial is not None:
         raise ValueError(
             "algorithm.k_per_cov_initial and algorithm.targets_total_initial "
-            "are mutually exclusive. Please define only one of them in the YAML."
+            "are mutually exclusive. Please define only one of them in the YAML or dict."
         )
 
     if raw_k_per_cov_initial is not None:
@@ -357,3 +345,39 @@ def load_config(path: str) -> Config:
         cfg.algorithm.level_coverage = cfg.algorithm.level_limit
 
     return cfg
+
+
+def load_config(path: str) -> Config:
+    """Load configuration from a YAML file.
+
+    Args:
+        path: Path to the YAML configuration file.
+
+    Returns:
+        Parsed Config instance.
+
+    Raises:
+        ValueError: If algorithm options are inconsistent.
+    """
+    with open(path, "r", encoding="utf-8") as f:
+        y = yaml.safe_load(f)
+
+    return _build_config_from_mapping(y)
+
+
+def load_config_from_dict(cfg_dict: Mapping[str, Any]) -> Config:
+    """Build configuration from an in-memory mapping.
+
+    This is useful in interactive environments (e.g., notebooks) where the
+    configuration is defined directly as a Python dict instead of a YAML file.
+
+    Args:
+        cfg_dict: Mapping with the same structure expected in the YAML file.
+
+    Returns:
+        Parsed Config instance.
+
+    Raises:
+        ValueError: If algorithm options are inconsistent.
+    """
+    return _build_config_from_mapping(cfg_dict)
