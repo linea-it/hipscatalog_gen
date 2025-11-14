@@ -41,35 +41,25 @@ jobs:
     - name: Run unit tests with pytest
       run: |
         python -m pytest
-    - name: Send status to author's email
-      if: ${{ failure() }} && github.event_name != 'workflow_dispatch' }} # Only email if the workflow failed and was not manually started. Customize this as necessary.
-      uses: dawidd6/action-send-mail@v6
-      with:
-        # Required mail server address if not connection_url:
-        server_address: smtp.gmail.com
-        # Server port: (uses TLS by default if server_port is 465)
-        server_port: 465
-
-        # Mail server username:
-        username: ${{secrets.MAIL_USERNAME}}
-        # Mail server password:
-        password: ${{secrets.MAIL_PASSWORD}}
-        # Required recipients' addresses:
-        to: luigi.silva@linea.org.br
-
-        # Required mail subject:
-        subject: Smoke test ${{ job.status }} in ${{github.repository}}
-        # Required sender full name:
-        from: GitHub Actions Report
-        # Optional body:
-        html_body: |
-          <!DOCTYPE html>
-          <html>
-          <body>
-          <h3>Smoke test ${{ job.status }}</h3>
-          <p>The smoke test in <b>${{ github.repository }}</b> has completed with result: <b>${{ job.status }}</b></p>
-          <p><a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">
-          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          </a></p>
-          </body>
-          </html>
+    # - name: Send status to author's email
+    #   if: ${{ failure() && github.event_name != 'workflow_dispatch' }}
+    #   uses: dawidd6/action-send-mail@v6
+    #   with:
+    #     server_address: smtp.gmail.com
+    #     server_port: 465
+    #     username: ${{secrets.MAIL_USERNAME}}
+    #     password: ${{secrets.MAIL_PASSWORD}}
+    #     to: luigi.silva@linea.org.br
+    #     subject: Smoke test ${{ job.status }} in ${{github.repository}}
+    #     from: GitHub Actions Report
+    #     html_body: |
+    #       <!DOCTYPE html>
+    #       <html>
+    #       <body>
+    #       <h3>Smoke test ${{ job.status }}</h3>
+    #       <p>The smoke test in <b>${{ github.repository }}</b> has completed with result: <b>${{ job.status }}</b></p>
+    #       <p><a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">
+    #       ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    #       </a></p>
+    #       </body>
+    #       </html>
