@@ -48,6 +48,9 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     if getattr(cfg.algorithm, "selection_mode", "coverage").lower() == "mag_global":
         mag_col_cfg = cfg.algorithm.mag_column
 
+    # If columns.keep is None, preserve all input columns.
+    keep_all_columns = cfg.columns.keep is None
+
     # ------------------------------------------------------------------
     # HATS / LSDB input: keep LSDB structure
     # ------------------------------------------------------------------
@@ -60,7 +63,8 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
         hats_path = paths[0]
 
         # Columns explicitly requested by the user in the YAML.
-        requested_keep = cfg.columns.keep or []
+        requested_keep_cfg = cfg.columns.keep
+        requested_keep = requested_keep_cfg or []
 
         # Extract potential score dependencies from the score expression.
         score_expr = cfg.columns.score or ""
@@ -78,7 +82,8 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
                 needed_cols.append(c)
                 seen_needed.add(c)
 
-        if needed_cols:
+        # If columns.keep is None → open all columns.
+        if needed_cols and not keep_all_columns:
             cat0 = cast(LsdbCatalog, lsdb.open_catalog(hats_path, columns=needed_cols))
         else:
             cat0 = cast(LsdbCatalog, lsdb.open_catalog(hats_path))
@@ -107,7 +112,12 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
         if mag_col_cfg and mag_col_cfg in available_cols:
             must_keep_resolved.append(mag_col_cfg)
 
-        candidate = requested_keep  # only include if explicitly provided
+        # When keep_all_columns is True, we still put RA/DEC (and deps) first,
+        # but preserve all remaining columns from the catalog.
+        if keep_all_columns:
+            candidate = [c for c in available_cols if c not in must_keep_resolved]
+        else:
+            candidate = requested_keep  # only include if explicitly provided
 
         seen = set()
         keep_cols_out: List[str] = []
@@ -160,15 +170,20 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     # 2) Column selection (preserve order; ensure score deps).
     available_cols = list(ddf0.columns)
     score_dependencies = _score_deps(cfg.columns.score, available_cols)
-    requested_keep = cfg.columns.keep or []
+
+    requested_keep_cfg = cfg.columns.keep
+    requested_keep = requested_keep_cfg or []
 
     must_keep = [RA_NAME, DEC_NAME, *score_dependencies]
     if mag_col_cfg and mag_col_cfg in available_cols:
         must_keep.append(mag_col_cfg)
 
-    # If the user did not request extra columns, keep only the minimal set:
-    # RA/DEC, score dependencies and (in mag_global mode) mag_column.
-    candidate = requested_keep
+    # If columns.keep is None, preserve all columns:
+    # RA/DEC and score deps first, then all remaining columns.
+    if keep_all_columns:
+        candidate = [c for c in available_cols if c not in must_keep]
+    else:
+        candidate = requested_keep
 
     seen = set()
     keep_cols_out_2: List[str] = []
