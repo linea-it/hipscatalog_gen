@@ -406,8 +406,8 @@ def display_available_configs() -> None:
 
     This function is intended for interactive use, e.g.:
 
-        >>> from hipscatalog_gen.config import display_available_configs
-        >>> display_available_configs()
+        from hipscatalog_gen.config import display_available_configs
+        display_available_configs()
     """
     print(_CONFIG_HELP_TEXT)
 
