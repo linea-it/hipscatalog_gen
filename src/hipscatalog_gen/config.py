@@ -583,8 +583,8 @@ def load_config(path: str) -> Config:
     ``display_available_configs()``. For an overview of all available
     configuration keys (required vs optional, and defaults), call:
 
-        >>> from hipscatalog_gen.config import display_available_configs
-        >>> display_available_configs()
+        from hipscatalog_gen.config import display_available_configs
+        display_available_configs()
 
     Args:
         path: Path to the YAML configuration file.
@@ -610,8 +610,8 @@ def load_config_from_dict(cfg_dict: Mapping[str, Any]) -> Config:
     ``display_available_configs()``. For a summary of all configuration
     keys, call:
 
-        >>> from hipscatalog_gen.config import display_available_configs
-        >>> display_available_configs()
+        from hipscatalog_gen.config import display_available_configs
+        display_available_configs()
 
     Args:
         cfg_dict: Mapping with the same structure expected in the YAML file.
