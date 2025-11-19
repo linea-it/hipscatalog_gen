@@ -135,6 +135,15 @@ Contributions, bug reports, and pull requests are welcome via GitHub Issues: htt
 
 -------------------------------------------------------------------------------
 
+## Acknowledgments
+
+This project acknowledges the foundational work of the **CDS HiPS Catalog Tool** (Hipsgen-cat.jar) developed by the Strasbourg Astronomical Data Center (Unistra/CNRS, 2016), which inspired aspects of the software design.
+More information: https://aladin.cds.unistra.fr/hips/HipsCat.gml.
+
+The mag-global mode builds on an idea originally suggested by **Julia Gschwend**.
+
+-------------------------------------------------------------------------------
+
 ## Citation
 
 If you use this package in your research, please cite:
@@ -142,8 +151,6 @@ If you use this package in your research, please cite:
 Silva, L. L. C., et al. (2025). *hipscatalog-gen: A Python HiPS Catalog Pipeline*.
 LIneA – Laboratório Interinstitucional de e-Astronomia.
 Available at: https://github.com/linea-it/hipscatalog_gen
-
-The software design is based on and acknowledges the CDS HiPS Catalog Tools (Fernique et al., 2015, Strasbourg Astronomical Data Center).
 
 -------------------------------------------------------------------------------
 
