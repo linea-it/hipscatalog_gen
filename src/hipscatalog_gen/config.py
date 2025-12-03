@@ -123,12 +123,16 @@ class AlgoOpts:
     mag_min: Optional[float] = None
     mag_max: Optional[float] = None
 
+    # Include all input rows in mag_global selection
+    # When True, overrides automatic mag_min/mag_max logic and uses
+    # the full magnitude range of the input catalog.
+    mag_completeness: bool = False
+
     # Number of bins used for the global magnitude histogram in mag_global mode.
-    mag_hist_nbins: int = 256
+    mag_hist_nbins: int = 512
 
     # Optional approximate total targets for the first HiPS orders (depths 1–3)
-    # in mag_global mode. These are global target counts per depth before
-    # magnitude slicing. They must be provided in order: n_1, then n_2, then n_3.
+    # in mag_global mode.
     n_1: Optional[int] = None
     n_2: Optional[int] = None
     n_3: Optional[int] = None
@@ -305,7 +309,17 @@ mag_max                [optional, default=None] float
     Upper bound of the magnitude range in mag_global mode. If omitted,
     it is estimated from the peak of the magnitude histogram, using
     only magnitudes <= 40.
-mag_hist_nbins         [optional, default=256] int
+mag_completeness       [optional, default=False] bool
+    When True:
+      - mag_min and mag_max are ignored
+      - The full magnitude range of the input catalog is used
+        (including extreme/invalid values such as 99, 100, -999, etc.)
+      - All input objects are guaranteed to participate in the selection
+        and are then distributed across HiPS levels based on the
+        densmap tile activation weights.
+    When False (default):
+      - Automatic mag_min/mag_max logic is used.
+mag_hist_nbins         [optional, default=512] int
     Number of bins in the global magnitude histogram.
 n_1, n_2, n_3          [optional, default=None] int
     Approximate global target counts for depths 1–3 in mag_global mode.
@@ -545,7 +559,8 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             mag_column=algo.get("mag_column"),
             mag_min=algo.get("mag_min"),
             mag_max=algo.get("mag_max"),
-            mag_hist_nbins=int(algo.get("mag_hist_nbins", 256)),
+            mag_completeness=bool(algo.get("mag_completeness", False)),
+            mag_hist_nbins=int(algo.get("mag_hist_nbins", 512)),
             n_1=n_1,
             n_2=n_2,
             n_3=n_3,

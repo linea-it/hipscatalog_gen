@@ -343,6 +343,9 @@ algorithm:
   # mag_min: 17.0
   # mag_max: 24.5
 
+  # When true, the full magnitude range of the input catalog is used.
+  # mag_completeness: true
+
   # Number of bins for the global magnitude histogram (mag_global only).
   #
   #   - Controls the resolution of the CDF used to assign approximate targets
