@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from lsdb.catalog import Catalog as LsdbCatalog
 
-from .utils import _get_meta_df
+from ..utils import _get_meta_df
 
 __all__ = [
     "build_cov_thresholds",

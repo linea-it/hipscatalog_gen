@@ -17,22 +17,24 @@ from __future__ import annotations
 
 # Standard library
 import time
+
+# Internal modules
+from contextlib import suppress
 from pathlib import Path
 from typing import List
 
-# Internal modules
-from .cluster import setup_cluster, shutdown_cluster
-from .config import Config
-from .pipeline_common import (
+from ..cluster.runtime import setup_cluster, shutdown_cluster
+from ..config import Config
+from ..coverage.pipeline import add_coverage_column, run_coverage_selection
+from ..mag_global.pipeline import prepare_mag_global, run_mag_global_selection
+from ..utils import _mkdirs, _ts
+from .common import (
     build_and_prepare_input,
     compute_and_write_densmaps,
     log_epilogue,
     log_prologue,
     write_common_static_products,
 )
-from .pipeline_coverage import add_coverage_column, run_coverage_selection
-from .pipeline_mag_global import prepare_mag_global, run_mag_global_selection
-from .utils import _mkdirs, _ts
 
 __all__ = ["run_pipeline"]
 
@@ -160,9 +162,7 @@ def run_pipeline(cfg: Config) -> None:
         else:
             _run_core_pipeline()
     finally:
-        try:
+        with suppress(Exception):
             shutdown_cluster(runtime)
-        except Exception:
-            pass
 
         log_epilogue(out_dir, log_lines, t0, _log)

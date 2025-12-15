@@ -9,7 +9,10 @@ import healpy as hp
 import numpy as np
 import pandas as pd
 
-from .coverage_selection import (
+from ..io.output import build_header_line_from_keep
+from ..pipeline.common import write_tiles_with_allsky
+from ..utils import _HEALPIX_INDEX_RE, _fmt_dur, _get_meta_df, _log_depth_stats
+from .utils import (
     _candidates_by_coverage_partition,
     _reduce_coverage_exact,
     _reduce_coverage_exact_dask,
@@ -17,9 +20,6 @@ from .coverage_selection import (
     build_cov_thresholds,
     filter_remainder_by_coverage_partition,
 )
-from .io_output import build_header_line_from_keep
-from .pipeline_common import write_tiles_with_allsky
-from .utils import _HEALPIX_INDEX_RE, _fmt_dur, _get_meta_df, _log_depth_stats
 
 __all__ = ["add_coverage_column", "run_coverage_selection"]
 

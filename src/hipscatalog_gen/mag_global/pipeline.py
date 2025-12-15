@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 from dask import compute as dask_compute
 
-from .io_output import build_header_line_from_keep
-from .mag_global import _quantile_from_histogram, compute_mag_histogram_ddf
-from .pipeline_common import write_tiles_with_allsky
-from .utils import _fmt_dur, _get_meta_df, _log_depth_stats
+from ..io.output import build_header_line_from_keep
+from ..pipeline.common import write_tiles_with_allsky
+from ..utils import _fmt_dur, _get_meta_df, _log_depth_stats
+from .utils import _quantile_from_histogram, compute_mag_histogram_ddf
 
 __all__ = ["prepare_mag_global", "run_mag_global_selection"]
 

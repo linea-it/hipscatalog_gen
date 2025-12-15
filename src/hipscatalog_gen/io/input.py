@@ -9,8 +9,8 @@ import pandas as pd
 from dask import compute as dask_compute
 from lsdb.catalog import Catalog as LsdbCatalog
 
-from .config import Config
-from .utils import _ID_RE, _resolve_col_name, _score_deps
+from ..config import Config
+from ..utils import _ID_RE, _resolve_col_name, _score_deps
 
 __all__ = [
     "_build_input_ddf",
@@ -180,10 +180,7 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
 
     # If columns.keep is None, preserve all columns:
     # RA/DEC and score deps first, then all remaining columns.
-    if keep_all_columns:
-        candidate = [c for c in available_cols if c not in must_keep]
-    else:
-        candidate = requested_keep
+    candidate = [c for c in available_cols if c not in must_keep] if keep_all_columns else requested_keep
 
     seen = set()
     keep_cols_out_2: List[str] = []
@@ -222,10 +219,7 @@ def compute_column_report_sample(ddf_like: Any, sample_rows: int = 200_000) -> D
         except Exception:
             ncols = 0
 
-        if ncols > 0:
-            frac = min(1.0, sample_rows / max(1, ncols * 10_000))
-        else:
-            frac = 1.0
+        frac = min(1.0, sample_rows / max(1, ncols * 10_000)) if ncols > 0 else 1.0
 
         # First try Dask/pandas-style signature (frac, replace).
         try:

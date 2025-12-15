@@ -8,7 +8,7 @@ import pandas as pd
 from dask import delayed as _delayed
 from numpy.typing import NDArray
 
-from .utils import _HEALPIX_INDEX_RE, _get_meta_df
+from ..utils import _HEALPIX_INDEX_RE, _get_meta_df
 
 __all__ = [
     "ipix_for_depth",

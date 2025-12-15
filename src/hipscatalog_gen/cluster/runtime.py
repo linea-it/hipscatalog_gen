@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import nullcontext
+from contextlib import nullcontext, suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, ContextManager, Tuple
@@ -8,7 +8,7 @@ from typing import Any, Callable, ContextManager, Tuple
 import dask
 from dask.distributed import Client, LocalCluster, performance_report
 
-from .config import ClusterCfg
+from ..config import ClusterCfg
 
 try:
     # Optional for SLURM-based clusters
@@ -162,11 +162,7 @@ def shutdown_cluster(runtime: ClusterRuntime) -> None:
     Args:
         runtime: ClusterRuntime with cluster and client handles.
     """
-    try:
+    with suppress(Exception):
         runtime.client.close()
-    except Exception:
-        pass
-    try:
+    with suppress(Exception):
         runtime.cluster.close()
-    except Exception:
-        pass

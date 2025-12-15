@@ -5,7 +5,7 @@ import sys
 from typing import List, Optional
 
 from .config import load_config
-from .pipeline import run_pipeline
+from .pipeline.main import run_pipeline
 
 __all__ = ["main"]
 

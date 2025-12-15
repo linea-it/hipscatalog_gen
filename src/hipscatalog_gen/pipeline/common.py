@@ -10,9 +10,9 @@ import pandas as pd
 from dask import compute as dask_compute
 from lsdb.catalog import Catalog as LsdbCatalog
 
-from .healpix import densmap_for_depth_delayed
-from .io_input import _build_input_ddf
-from .io_output import (
+from ..healpix.densmap import densmap_for_depth_delayed
+from ..io.input import _build_input_ddf
+from ..io.output import (
     finalize_write_tiles,
     write_arguments,
     write_densmap_fits,
@@ -20,7 +20,7 @@ from .io_output import (
     write_moc,
     write_properties,
 )
-from .utils import _detect_hats_catalog_root, _fmt_dur, _validate_and_normalize_radec
+from ..utils import _detect_hats_catalog_root, _fmt_dur, _validate_and_normalize_radec
 
 __all__ = [
     "build_and_prepare_input",

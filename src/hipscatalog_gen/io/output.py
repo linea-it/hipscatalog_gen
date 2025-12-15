@@ -13,8 +13,8 @@ from astropy.io.votable import writeto as vot_writeto
 from astropy.table import Table
 from mocpy import MOC
 
-from .config import OutputCfg
-from .utils import _mkdirs, _now_str, _write_text
+from ..config import OutputCfg
+from ..utils import _mkdirs, _now_str, _write_text
 
 __all__ = [
     "TSVTileWriter",
