@@ -203,6 +203,8 @@ def write_common_static_products(
         order_desc: {cfg.algorithm.order_desc}
         selection_mode: {cfg.algorithm.selection_mode}
         mag_column: {cfg.algorithm.mag_column}
+        flux_column: {cfg.algorithm.flux_column}
+        mag_offset: {cfg.algorithm.mag_offset}
         mag_min: {cfg.algorithm.mag_min}
         mag_max: {cfg.algorithm.mag_max}
         mag_completeness: {cfg.algorithm.mag_completeness}

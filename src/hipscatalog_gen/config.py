@@ -120,6 +120,8 @@ class AlgoOpts:
     # mag_global selection controls
     # -------------------------
     mag_column: Optional[str] = None
+    flux_column: Optional[str] = None
+    mag_offset: Optional[float] = None
     mag_min: Optional[float] = None
     mag_max: Optional[float] = None
 
@@ -302,6 +304,13 @@ use_hats_as_coverage   [optional, default=False]
 mag_column             [optional in coverage mode,
                         required in mag_global mode] str
     Magnitude column used when selection_mode == "mag_global".
+flux_column            [optional in coverage mode,
+                        required if mag_column is absent in mag_global mode] str
+    Flux column used to derive magnitudes in mag_global mode when
+    mag_column is not provided.
+mag_offset             [required when using flux_column] float
+    Offset applied to the flux→magnitude conversion:
+        mag = -2.5 * log10(flux) + mag_offset
 mag_min                [optional, default=None] float
     Lower bound of the magnitude range in mag_global mode. If omitted,
     the global minimum magnitude is used, clipped to >= -2.
@@ -557,6 +566,8 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             fractional_mode_logic=algo.get("fractional_mode_logic", "local"),
             use_hats_as_coverage=bool(algo.get("use_hats_as_coverage", False)),
             mag_column=algo.get("mag_column"),
+            flux_column=algo.get("flux_column"),
+            mag_offset=algo.get("mag_offset"),
             mag_min=algo.get("mag_min"),
             mag_max=algo.get("mag_max"),
             mag_completeness=bool(algo.get("mag_completeness", False)),
@@ -587,6 +598,29 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     # Align level_coverage if user set it above level_limit.
     if cfg.algorithm.level_coverage > cfg.algorithm.level_limit:
         cfg.algorithm.level_coverage = cfg.algorithm.level_limit
+
+    # ------------------------------------------------------------------
+    # mag_global-specific validation (mag_column vs flux_column)
+    # ------------------------------------------------------------------
+    algo = cfg.algorithm
+    mag_col = getattr(algo, "mag_column", None)
+    flux_col = getattr(algo, "flux_column", None)
+    if mag_col and flux_col:
+        raise ValueError(
+            "algorithm.mag_column and algorithm.flux_column are mutually exclusive. "
+            "Please set only one of them."
+        )
+    if str(algo.selection_mode).lower() == "mag_global":
+        if not mag_col and not flux_col:
+            raise ValueError(
+                "selection_mode='mag_global' requires either algorithm.mag_column "
+                "or algorithm.flux_column to be set."
+            )
+        if flux_col and algo.mag_offset is None:
+            raise ValueError(
+                "selection_mode='mag_global' with flux_column requires "
+                "algorithm.mag_offset to be defined for the flux→magnitude conversion."
+            )
 
     return cfg
 

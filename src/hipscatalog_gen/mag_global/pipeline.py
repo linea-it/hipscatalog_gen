@@ -15,19 +15,31 @@ from .utils import _quantile_from_histogram, compute_mag_histogram_ddf
 
 __all__ = ["prepare_mag_global", "run_mag_global_selection"]
 
+MAG_CONV = np.log(10.0) * 0.4
+
 
 def prepare_mag_global(ddf: Any, cfg: Any, diag_ctx, log_fn):
     """Add __mag__ column and restrict to the configured magnitude window."""
     algo = cfg.algorithm
     mag_col_cfg = getattr(algo, "mag_column", None)
-    if not mag_col_cfg:
-        raise ValueError(
-            "algorithm.selection_mode='mag_global' requires "
-            "algorithm.mag_column to be set to the name of a magnitude column."
-        )
+    flux_col_cfg = getattr(algo, "flux_column", None)
 
-    if mag_col_cfg not in ddf.columns:
-        raise KeyError(f"Configured mag_column '{mag_col_cfg}' not found in input columns.")
+    if mag_col_cfg and flux_col_cfg:
+        raise ValueError("mag_column and flux_column are mutually exclusive for mag_global mode.")
+
+    if flux_col_cfg:
+        if flux_col_cfg not in ddf.columns:
+            raise KeyError(f"Configured flux_column '{flux_col_cfg}' not found in input columns.")
+        mag_offset = getattr(algo, "mag_offset", None)
+        if mag_offset is None:
+            raise ValueError("mag_global selection with flux_column requires algorithm.mag_offset to be set.")
+    elif mag_col_cfg:
+        if mag_col_cfg not in ddf.columns:
+            raise KeyError(f"Configured mag_column '{mag_col_cfg}' not found in input columns.")
+    else:
+        raise ValueError(
+            "mag_global selection requires either algorithm.mag_column or algorithm.flux_column."
+        )
 
     base_meta_mag = _get_meta_df(ddf)
     meta_with_mag = base_meta_mag.copy()
@@ -41,11 +53,32 @@ def prepare_mag_global(ddf: Any, cfg: Any, diag_ctx, log_fn):
         pdf["__mag__"] = pd.to_numeric(pdf[mag_col_name], errors="coerce")
         return pdf
 
-    ddf = ddf.map_partitions(
-        _add_mag_column,
-        mag_col_cfg,
-        meta=meta_with_mag,
-    )
+    def _add_mag_from_flux(pdf: pd.DataFrame, flux_col_name: str, mag_offset_val: float) -> pd.DataFrame:
+        if pdf.empty:
+            pdf["__mag__"] = pd.Series([], dtype="float64")
+            return pdf
+        pdf = pdf.copy()
+        flux = pd.to_numeric(pdf[flux_col_name], errors="coerce")
+        mag_arr = np.full(len(flux), 99.0, dtype="float64")
+        valid = flux > 0
+        if valid.any():
+            mag_arr[valid.to_numpy()] = -2.5 * np.log10(flux[valid]) + float(mag_offset_val)
+        pdf["__mag__"] = mag_arr
+        return pdf
+
+    if flux_col_cfg:
+        ddf = ddf.map_partitions(
+            _add_mag_from_flux,
+            flux_col_cfg,
+            float(algo.mag_offset),
+            meta=meta_with_mag,
+        )
+    else:
+        ddf = ddf.map_partitions(
+            _add_mag_column,
+            mag_col_cfg,
+            meta=meta_with_mag,
+        )
 
     mag_col_internal = "__mag__"
     mag_min_cfg = getattr(algo, "mag_min", None)

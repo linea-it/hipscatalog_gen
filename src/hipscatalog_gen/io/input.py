@@ -45,8 +45,10 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     fmt = cfg.input.format.lower()
     # Single declaration for the whole function (avoid no-redef)
     mag_col_cfg: Optional[str] = None
+    flux_col_cfg: Optional[str] = None
     if getattr(cfg.algorithm, "selection_mode", "coverage").lower() == "mag_global":
         mag_col_cfg = cfg.algorithm.mag_column
+        flux_col_cfg = getattr(cfg.algorithm, "flux_column", None)
 
     # If columns.keep is None, preserve all input columns.
     keep_all_columns = cfg.columns.keep is None
@@ -70,10 +72,12 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
         score_expr = cfg.columns.score or ""
         score_tokens = set(_ID_RE.findall(str(score_expr)))
 
-        # Always request RA, DEC and score dependencies; mag_col if applicable.
+        # Always request RA, DEC and score dependencies; mag/flux if applicable.
         must_keep = [cfg.columns.ra, cfg.columns.dec, *score_tokens]
         if mag_col_cfg:
             must_keep.append(mag_col_cfg)
+        if flux_col_cfg:
+            must_keep.append(flux_col_cfg)
 
         needed_cols: List[str] = []
         seen_needed: set[str] = set()
@@ -111,6 +115,8 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
         must_keep_resolved = [RA_NAME, DEC_NAME, *score_dependencies]
         if mag_col_cfg and mag_col_cfg in available_cols:
             must_keep_resolved.append(mag_col_cfg)
+        if flux_col_cfg and flux_col_cfg in available_cols:
+            must_keep_resolved.append(flux_col_cfg)
 
         # When keep_all_columns is True, we still put RA/DEC (and deps) first,
         # but preserve all remaining columns from the catalog.
@@ -174,9 +180,13 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     requested_keep_cfg = cfg.columns.keep
     requested_keep = requested_keep_cfg or []
 
+    flux_col_cfg = getattr(cfg.algorithm, "flux_column", None)
+
     must_keep = [RA_NAME, DEC_NAME, *score_dependencies]
     if mag_col_cfg and mag_col_cfg in available_cols:
         must_keep.append(mag_col_cfg)
+    if flux_col_cfg and flux_col_cfg in available_cols:
+        must_keep.append(flux_col_cfg)
 
     # If columns.keep is None, preserve all columns:
     # RA/DEC and score deps first, then all remaining columns.
