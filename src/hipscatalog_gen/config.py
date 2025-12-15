@@ -241,8 +241,8 @@ keep  [optional, default=None] list[str] or null
 
 algorithm
 ---------
-selection_mode         [optional, default="coverage"]
-    High-level selection strategy:
+selection_mode         [required]
+    High-level selection strategy. Must be one of:
       - "coverage"   → coverage-based selection per coverage cell (__icov__).
       - "mag_global" → global magnitude-complete selection.
 level_limit            [required] int
@@ -386,8 +386,9 @@ This is the smallest valid configuration you can pass to
             "dec": "dec",
         },
         "algorithm": {
+            "selection_mode": "mag_global",
             "level_limit": 10,
-            "coverage_score_column": "score",
+            "mag_column": "mag_r",
         },
         "cluster": {},
         "output": {
@@ -410,8 +411,9 @@ This is the smallest valid YAML file you can pass to ``load_config()``::
       dec: "dec"
 
     algorithm:
+      selection_mode: "mag_global"
       level_limit: 10
-      coverage_score_column: "score"
+      mag_column: "mag_r"
 
     cluster: {}
 
@@ -441,7 +443,13 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     """Internal helper to build a Config from a raw mapping."""
     algo = y["algorithm"]
 
-    selection_mode = str(algo.get("selection_mode", "coverage")).lower()
+    raw_selection_mode = algo.get("selection_mode")
+    if raw_selection_mode is None:
+        raise ValueError(
+            "Missing required parameter: algorithm.selection_mode. "
+            "Set it to 'coverage' or 'mag_global' in the configuration."
+        )
+    selection_mode = str(raw_selection_mode).lower()
 
     # Coverage / MOC orders
     level_limit = int(algo["level_limit"])
