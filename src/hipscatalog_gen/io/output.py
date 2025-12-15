@@ -144,10 +144,10 @@ def finalize_write_tiles(
             f.write(completeness_header)
             f.write(header_line)
 
-        # Sanitize string columns.
-        obj_cols = g_tile.select_dtypes(include=["object", "string"]).columns
-        if len(obj_cols) > 0:
-            g_tile[obj_cols] = g_tile[obj_cols].replace({r"[\t\r\n]": " "}, regex=True)
+        # Sanitize string columns (NestedFrame-safe: operate column by column).
+        obj_cols = list(g_tile.select_dtypes(include=["object", "string"]).columns)
+        for col in obj_cols:
+            g_tile[col] = g_tile[col].replace({r"[\t\r\n]": " "}, regex=True)
 
         # 2) Append rows.
         g_tile.to_csv(
