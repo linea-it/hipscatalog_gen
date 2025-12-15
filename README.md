@@ -17,12 +17,12 @@ hipscatalog-gen is a Python package for building HiPS-compliant catalog hierarch
 
 The pipeline supports three selection modes, configured in the YAML file under algorithm.selection_mode:
 
-- **coverage**     — coverage-based selection per HEALPix or HATS cell.
 - **mag_global**   — global magnitude-complete selection.
 - **score_global** — global selection driven by an arbitrary score/expression.
+- **coverage**     — coverage-based selection per HEALPix or HATS cell.
 
 Mode-specific parameters in the YAML use the prefixes:
-`cov_*` (coverage), `mg_*` (mag_global), and `sg_*` (score_global).
+`mg_*` (mag_global), `sg_*` (score_global), and `cov_*` (coverage).
 
 -------------------------------------------------------------------------------
 
@@ -114,14 +114,14 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 
 ## Mode Comparison (Summary)
 
-| Feature | Coverage Mode | Mag Global Mode | Score Global Mode |
-|----------|----------------|----------------|-------------------|
-| Partition basis | HEALPix/HATS cells (__icov__) | Global sample | Global sample |
-| Main metric | Score + density profile | Magnitude column | Arbitrary score/expression |
-| Completeness goal | Spatial balance / density control | Magnitude completeness | Score window completeness |
-| Depth behavior | Profile-driven (k_per_cov_*, targets_total_*) | Histogram-based (mag_hist_nbins, n_1/n_2/n_3) | Histogram-based (score_hist_nbins, score_n_1/n_2/n_3) |
-| Bias options | density_bias_mode / exponent | Not applicable | Not applicable |
-| Typical use | Uniform or density-aware selection | Magnitude-complete catalogs | Global ranking/quality score selections |
+| Feature | Mag Global Mode | Score Global Mode | Coverage Mode |
+|----------|----------------|-------------------|---------------|
+| Partition basis | Global sample | Global sample | HEALPix/HATS cells (__icov__) |
+| Main metric | Magnitude column | Arbitrary score/expression | Score + density profile |
+| Completeness goal | Magnitude completeness | Score window completeness | Spatial balance / density control |
+| Depth behavior | Histogram-based (mag_hist_nbins, n_1/n_2/n_3) | Histogram-based (score_hist_nbins, score_n_1/n_2/n_3) | Profile-driven (k_per_cov_*, targets_total_*) |
+| Bias options | Not applicable | Not applicable | density_bias_mode / exponent |
+| Typical use | Magnitude-complete catalogs | Global ranking/quality score selections | Uniform or density-aware selection |
 
 -------------------------------------------------------------------------------
 

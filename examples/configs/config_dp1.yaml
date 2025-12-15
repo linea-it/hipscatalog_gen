@@ -29,7 +29,7 @@ input:
   #   - Parquet/CSV/TSV → file paths or glob patterns.
   #   - HATS           → root catalog folder (where collection.properties lives).
   paths:
-    - "/scratch/users/luigi.silva/data_preparation_results/lsst_dp1/DP_run_LSST_DP1_mag_cModelFlux_sfd_2025-10-29_15-57/data/*.parquet"
+    - "<path-omitted>/data/*.parquet"
 
   # Input format:
   #   "parquet" → Dask DataFrame via dd.read_parquet
@@ -111,19 +111,19 @@ algorithm:
   # Common settings (all modes)
   # ==============================
   selection_mode: "mag_global"  # "coverage" | "mag_global" | "score_global"
-  level_limit: 10             # HiPS max depth (4..11)
-  level_coverage: 8          # Depth used for coverage densmap and MOC
+  level_limit: 11             # HiPS max depth (4..11)
+  level_coverage: 10          # Depth used for coverage densmap and MOC
 
   # ==============================
   # mag_global mode ONLY
   # (precedence: mg_mag_column OR mg_flux_column)
   # ==============================
-  mg_mag_column: r_mag            # Magnitude column (mutually exclusive with mg_flux_column)
+  mg_mag_column: "r_cModelMag_dered" # Magnitude column (mutually exclusive with mg_flux_column)
   mg_flux_column: null           # Flux column to derive magnitudes (requires mg_mag_offset)
   mg_mag_offset: null            # Required if mg_flux_column is set
   mg_mag_min: null               # Optional lower mag bound (auto if null)
   mg_mag_max: null               # Optional upper mag bound (auto if null)
-  mg_mag_completeness: false     # Use full mag range, ignore mg_mag_min/max
+  mg_mag_adaptive_range: "complete"  # "complete" | "hist_peak"
   mg_mag_hist_nbins: 512         # Histogram bins for mag_global
   mg_n_1: null                   # Optional targets for depths 1..3
   mg_n_2: null
@@ -132,14 +132,14 @@ algorithm:
   # ==============================
   # score_global mode ONLY
   # ==============================
-  sg_score_column: null           # Column or expression to evaluate globally
-  sg_score_min: null              # Optional lower bound (auto if null)
-  sg_score_max: null              # Optional upper bound (auto if null)
-  sg_score_adaptive_range: "complete"  # "complete" | "hist_peak"
-  sg_score_hist_nbins: 512        # Histogram bins for score_global
-  sg_n_1: null                    # Optional targets for depths 1..3
-  sg_n_2: null
-  sg_n_3: null
+  #sg_score_column: null           # Column or expression to evaluate globally
+  #sg_score_min: null              # Optional lower bound (auto if null)
+  #sg_score_max: null              # Optional upper bound (auto if null)
+  #sg_score_adaptive_range: "complete"  # "complete" | "hist_peak"
+  #sg_score_hist_nbins: 512        # Histogram bins for score_global
+  #sg_n_1: null                    # Optional targets for depths 1..3
+  #sg_n_2: null
+  #sg_n_3: null
 
   # ==============================
   # coverage mode ONLY
@@ -156,21 +156,21 @@ algorithm:
   #
   # In coverage mode, this directly controls which rows are kept and how
   # fractional selection works inside each coverage cell.
-  cov_coverage_score_column: "i_cModelMag_dered"
-  cov_use_hats_as_coverage: false     # HATS partitions as coverage cells (__icov__)
-  cov_order_desc: false               # Score ordering (coverage mode)
-  cov_coverage_order: 8              # HEALPix order for __icov__ when not using HATS
-  cov_density_mode: "exp"             # "constant" | "linear" | "exp" | "log"
-  cov_k_per_cov_initial: 1.0          # Base k per coverage cell at depth 1
-  cov_targets_total_initial: null     # Mutually exclusive with k_per_cov_initial
-  cov_density_exp_base: 2.0           # Base for density_mode == "exp"
-  cov_density_bias_mode: "none"       # "none" | "proportional" | "inverse"
-  cov_density_bias_exponent: 1.0      # Bias strength
-  cov_fractional_mode: "score"        # "random" | "score"
-  cov_fractional_mode_logic: "local"  # "auto" | "local" | "global"
-  cov_k_per_cov_per_level: {}         # Optional per-depth k overrides
-  cov_targets_total_per_level: {}     # Optional per-depth total caps
-  cov_tie_buffer: 10                  # Extra rows kept near cut
+  #cov_coverage_score_column: "i_cModelMag_dered"
+  #cov_use_hats_as_coverage: false     # HATS partitions as coverage cells (__icov__)
+  #cov_order_desc: false               # Score ordering (coverage mode)
+  #cov_coverage_order: 8              # HEALPix order for __icov__ when not using HATS
+  #cov_density_mode: "exp"             # "constant" | "linear" | "exp" | "log"
+  #cov_k_per_cov_initial: 1.0          # Base k per coverage cell at depth 1
+  #cov_targets_total_initial: null     # Mutually exclusive with k_per_cov_initial
+  #cov_density_exp_base: 2.0           # Base for density_mode == "exp"
+  #cov_density_bias_mode: "none"       # "none" | "proportional" | "inverse"
+  #cov_density_bias_exponent: 1.0      # Bias strength
+  #cov_fractional_mode: "score"        # "random" | "score"
+  #cov_fractional_mode_logic: "local"  # "auto" | "local" | "global"
+  #cov_k_per_cov_per_level: {}         # Optional per-depth k overrides
+  #cov_targets_total_per_level: {}     # Optional per-depth total caps
+  #cov_tie_buffer: 10                  # Extra rows kept near cut
 # -----------------------------------------------------------------------------
 # Cluster settings (Dask or SLURM)
 # -----------------------------------------------------------------------------
@@ -233,7 +233,7 @@ output:
   #   - Moc.fits / Moc.json     (MOC)
   #   - properties / metadata.xml
   #   - process.log             (full textual log)
-  out_dir: "/scratch/users/luigi.silva/hipscatalog_gen/LSST_DP1"
+  out_dir: "<path-omitted>/LSST_DP1"
 
   # Catalog / HiPS name:
   #   - Used in metadata (properties, metadata.xml).

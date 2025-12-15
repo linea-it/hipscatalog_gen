@@ -22,136 +22,46 @@ __all__ = [
 class AlgoOpts:
     """Algorithm options for HiPS selection and density profiles.
 
-    Attributes:
-        selection_mode: High-level selection strategy ("coverage", "mag_global" or "score_global").
+    Common settings (all modes):
+        selection_mode: High-level strategy ("coverage", "mag_global" or "score_global").
         level_limit: Maximum HiPS order (NorderL).
         level_coverage: Coverage / MOC order (lC).
-        order_desc: If True, sort score in descending order.
-        coverage_order: HEALPix order used for coverage cells (__icov__).
-        coverage_score_column: Score column/expression used for coverage mode.
-        k_per_cov_per_level: Optional per-depth overrides of k per coverage cell.
-        targets_total_per_level: Optional per-depth total caps (rows per level).
-        tie_buffer: Score tie buffer near the selection cut.
-        density_mode: Depth profile mode ("constant", "linear", "exp", "log").
-        k_per_cov_initial: Initial expected rows per coverage cell at depth 1.
-        targets_total_initial: Initial expected total rows at depth 1.
-        density_exp_base: Base used when density_mode == "exp".
-        density_bias_mode: Density bias mode ("none", "proportional", "inverse").
-        density_bias_exponent: Strength of the density bias.
-        fractional_mode: How to handle fractional k ("random" or "score").
-        fractional_mode_logic: Scope of fractional logic ("auto", "local", "global").
-        use_hats_as_coverage: If True, use HATS/LSDB partitions as coverage cells.
-        mag_column: Magnitude column used in mag_global mode.
-        mag_min: Lower bound of the magnitude range in mag_global mode.
-        mag_max: Upper bound of the magnitude range in mag_global mode.
-        mag_hist_nbins: Number of bins in the global magnitude histogram.
-        n_1: Approximate global target for depth 1 in mag_global mode.
-        n_2: Approximate global target for depth 2 in mag_global mode.
-        n_3: Approximate global target for depth 3 in mag_global mode.
-        score_column: Score column/expression used in score_global mode.
-        score_min: Lower bound of the score range in score_global mode.
-        score_max: Upper bound of the score range in score_global mode.
-        score_adaptive_range: How to auto-complete missing score bounds ("complete" or "hist_peak").
-        score_hist_nbins: Number of bins in the global score histogram.
-        score_n_1: Approximate global target for depth 1 in score_global mode.
-        score_n_2: Approximate global target for depth 2 in score_global mode.
-        score_n_3: Approximate global target for depth 3 in score_global mode.
+
+    mag_global mode:
+        mag_column / flux_column + mag_offset: Magnitude source (column or flux+offset).
+        mag_min / mag_max / mag_adaptive_range / mag_hist_nbins: Magnitude bounds logic.
+        n_1 / n_2 / n_3: Optional approximate targets for depths 1–3.
+
+    score_global mode:
+        score_column / score_min / score_max / score_adaptive_range / score_hist_nbins.
+        score_n_1 / score_n_2 / score_n_3: Optional approximate targets for depths 1–3.
+
+    coverage mode:
+        coverage_score_column / use_hats_as_coverage / order_desc / coverage_order.
+        density_mode / k_per_cov_initial / targets_total_initial / density_exp_base.
+        density_bias_mode / density_bias_exponent.
+        fractional_mode / fractional_mode_logic.
+        k_per_cov_per_level / targets_total_per_level / tie_buffer.
     """
 
-    # Selection mode:
-    #   "coverage"  → coverage-based selection
-    #   "mag_global" → global magnitude-complete selection
+    # Common settings
     selection_mode: str
-
-    # HiPS / coverage geometry
     level_limit: int  # maximum HiPS order (NorderL)
     level_coverage: int  # MOC / coverage order (lC)
-    order_desc: bool  # False → ascending score (lower is better)
-    coverage_order: int  # HEALPix order for __icov__ coverage cells
-    coverage_score_column: Optional[str] = None  # score expression/column for coverage mode
 
-    # Optional per-level overrides for k (hard overrides by depth).
-    # Example: {3: 0.6, 4: 1.2}
-    k_per_cov_per_level: Optional[Dict[int, float]] = None
-
-    # Optional global total caps per level (rows per level).
-    targets_total_per_level: Optional[Dict[int, int]] = None
-
-    # Score tie buffer near the cut (helps avoid artifacts).
-    tie_buffer: int = 10
-
-    # -------------------------
-    # Density profile controls
-    # -------------------------
-    # How k (or total targets) varies with depth:
-    #   "constant" → same base value at all depths
-    #   "linear"   → increases linearly with depth
-    #   "exp"      → increases exponentially with depth
-    #   "log"      → increases ~log(depth)
-    density_mode: str = "exp"
-
-    # Expected rows per coverage cell (__icov__) at depth 1
-    # (base of the density profile in per-coverage mode).
-    k_per_cov_initial: float = 1.0
-
-    # Expected total number of rows at depth 1 (base of the total-target profile).
-    # When not None, the per-depth density is derived as:
-    #   T_desired(depth) → k_desired(depth) = T_desired / N_cov
-    # and k_per_cov_initial is ignored by the density profile.
-    targets_total_initial: Optional[float] = None
-
-    # Base used only when density_mode == "exp".
-    density_exp_base: float = 2.0
-
-    # Optional density bias based on coverage density (densmap at coverage_order).
-    # density_bias_mode:
-    #   "none"         → no bias (default)
-    #   "proportional" → k_per_cov increases with density
-    #   "inverse"      → k_per_cov increases in sparse regions
-    density_bias_mode: str = "none"
-    density_bias_exponent: float = 1.0
-
-    # How to handle the fractional part of k:
-    #   "random" → random +1 decisions
-    #   "score"  → score-based decisions
-    fractional_mode: str = "score"
-
-    # Scope of the fractional logic:
-    #   "auto"   → random → local, score → global (backward-compatible)
-    #   "local"  → per coverage cell (__icov__)
-    #   "global" → union of all coverage cells at this depth
-    fractional_mode_logic: str = "local"
-
-    # When True (and input.format == "hats"), use HATS/LSDB partitions
-    # themselves as coverage cells (__icov__), instead of HEALPix cells.
-    use_hats_as_coverage: bool = False
-
-    # -------------------------
-    # mag_global selection controls
-    # -------------------------
+    # mag_global mode (precedence: mag_column or flux_column+offset)
     mag_column: Optional[str] = None
     flux_column: Optional[str] = None
     mag_offset: Optional[float] = None
     mag_min: Optional[float] = None
     mag_max: Optional[float] = None
-
-    # Include all input rows in mag_global selection
-    # When True, overrides automatic mag_min/mag_max logic and uses
-    # the full magnitude range of the input catalog.
-    mag_completeness: bool = False
-
-    # Number of bins used for the global magnitude histogram in mag_global mode.
+    mag_adaptive_range: str = "complete"
     mag_hist_nbins: int = 512
-
-    # Optional approximate total targets for the first HiPS orders (depths 1–3)
-    # in mag_global mode.
     n_1: Optional[int] = None
     n_2: Optional[int] = None
     n_3: Optional[int] = None
 
-    # -------------------------
-    # score_global selection controls
-    # -------------------------
+    # score_global mode
     score_column: Optional[str] = None
     score_min: Optional[float] = None
     score_max: Optional[float] = None
@@ -160,6 +70,23 @@ class AlgoOpts:
     score_n_1: Optional[int] = None
     score_n_2: Optional[int] = None
     score_n_3: Optional[int] = None
+
+    # coverage mode (including density profile controls)
+    coverage_score_column: Optional[str] = None  # score expression/column for coverage mode
+    use_hats_as_coverage: bool = False
+    order_desc: bool = False  # False → ascending score (lower is better)
+    coverage_order: int = 8  # HEALPix order for __icov__ coverage cells
+    density_mode: str = "exp"
+    k_per_cov_initial: float = 1.0
+    targets_total_initial: Optional[float] = None
+    density_exp_base: float = 2.0
+    density_bias_mode: str = "none"
+    density_bias_exponent: float = 1.0
+    fractional_mode: str = "score"
+    fractional_mode_logic: str = "local"
+    k_per_cov_per_level: Optional[Dict[int, float]] = None  # per-depth overrides for k
+    targets_total_per_level: Optional[Dict[int, int]] = None  # per-depth total caps
+    tie_buffer: int = 10  # score tie buffer near the selection cut
 
 
 @dataclass
@@ -287,8 +214,10 @@ mg_mag_min             [optional, default=None] float
     Lower bound of the magnitude range. If omitted, global minimum clipped to >= -2.
 mg_mag_max             [optional, default=None] float
     Upper bound of the magnitude range. If omitted, estimated from the histogram peak.
-mg_mag_completeness    [optional, default=False] bool
-    When True, ignores mg_mag_min/max and uses full range (including extreme values).
+mg_mag_adaptive_range  [optional, default="complete"] str
+    How to fill missing mag_min/mag_max:
+      - "complete"  → use global min/max when a bound is missing.
+      - "hist_peak" → use the histogram peak (bin center) for the missing bound.
 mg_mag_hist_nbins      [optional, default=512] int
     Number of bins in the global magnitude histogram.
 mg_n_1, mg_n_2, mg_n_3 [optional, default=None] int
@@ -315,18 +244,14 @@ sg_n_1, sg_n_2, sg_n_3 [optional, default=None] int
 
 Coverage mode (prefix cov_)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-cov_coverage_order     [optional, default=8 if level_limit >= 8 else level_limit]
-    HEALPix order used to define coverage cells (__icov__).
 cov_coverage_score_column [required in coverage mode] str
     Score column or expression used to rank sources inside each coverage cell.
+cov_use_hats_as_coverage [optional, default=False]
+    When True and input.format == "hats", use HATS/LSDB partitions as coverage cells.
 cov_order_desc         [optional, default=False]
     If False, lower score is better; if True, higher score is better.
-cov_k_per_cov_per_level [optional, default=None] dict[int, float]
-    Per-depth overrides of the expected rows per coverage cell.
-cov_targets_total_per_level [optional, default=None] dict[int, int]
-    Per-depth total caps (rows per depth).
-cov_tie_buffer         [optional, default=10]
-    Score tie buffer near the selection cut.
+cov_coverage_order     [optional, default=8 if level_limit >= 8 else level_limit]
+    HEALPix order used to define coverage cells (__icov__).
 cov_density_mode       [optional, default="exp"]
     Depth profile mode for k or total targets: "constant", "linear", "exp", "log".
 cov_k_per_cov_initial  [optional, default=1.0]
@@ -343,8 +268,12 @@ cov_fractional_mode    [optional, default="score"]
     How to handle the fractional part of k: "random" or "score".
 cov_fractional_mode_logic [optional, default="local"]
     Scope of the fractional logic: "auto", "local", or "global".
-cov_use_hats_as_coverage [optional, default=False]
-    When True and input.format == "hats", use HATS/LSDB partitions as coverage cells.
+cov_k_per_cov_per_level [optional, default=None] dict[int, float]
+    Per-depth overrides of the expected rows per coverage cell.
+cov_targets_total_per_level [optional, default=None] dict[int, int]
+    Per-depth total caps (rows per depth).
+cov_tie_buffer         [optional, default=10]
+    Score tie buffer near the selection cut.
 
 cluster
 -------
@@ -456,6 +385,9 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     def _get_mode_value(mapping: Mapping[str, Any], key: str, default=None):
         return mapping.get(key, default)
 
+    # ------------------------------------------------------------------
+    # Common settings (all modes)
+    # ------------------------------------------------------------------
     raw_selection_mode = algo.get("selection_mode")
     if raw_selection_mode is None:
         raise ValueError(
@@ -464,7 +396,6 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         )
     selection_mode = str(raw_selection_mode).lower()
 
-    # Coverage / MOC orders
     level_limit = int(algo["level_limit"])
     raw_level_coverage = algo.get("level_coverage")
     raw_coverage_order = _get_mode_value(algo, "cov_coverage_order")
@@ -488,7 +419,33 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     level_coverage = int(raw_level_coverage)
     coverage_order = int(raw_coverage_order)
 
-    # Density / selection parameters
+    # ------------------------------------------------------------------
+    # mag_global mode
+    # ------------------------------------------------------------------
+    n_1_raw = _get_mode_value(algo, "mg_n_1")
+    n_2_raw = _get_mode_value(algo, "mg_n_2")
+    n_3_raw = _get_mode_value(algo, "mg_n_3")
+
+    # ------------------------------------------------------------------
+    # score_global mode
+    # ------------------------------------------------------------------
+    score_n_1_raw = _get_mode_value(algo, "sg_n_1")
+    score_n_2_raw = _get_mode_value(algo, "sg_n_2")
+    score_n_3_raw = _get_mode_value(algo, "sg_n_3")
+
+    # ------------------------------------------------------------------
+    # coverage mode
+    # ------------------------------------------------------------------
+    coverage_score_column = _get_mode_value(algo, "cov_coverage_score_column")
+    legacy_score_column = y.get("columns", {}).get("score")
+    if coverage_score_column is None and legacy_score_column is not None:
+        coverage_score_column = legacy_score_column
+
+    if selection_mode == "coverage" and not coverage_score_column:
+        raise ValueError(
+            "selection_mode='coverage' requires algorithm.cov_coverage_score_column to be defined."
+        )
+
     density_mode = _get_mode_value(algo, "cov_density_mode", "exp")
 
     # Mutually exclusive initial parameters:
@@ -517,34 +474,26 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         k_per_cov_initial = 1.0
         targets_total_initial = None
 
-    # Approximate fixed totals for mag_global selection (depths 1–3).
-    n_1_raw = _get_mode_value(algo, "mg_n_1")
-    n_2_raw = _get_mode_value(algo, "mg_n_2")
-    n_3_raw = _get_mode_value(algo, "mg_n_3")
-    score_n_1_raw = _get_mode_value(algo, "sg_n_1")
-    score_n_2_raw = _get_mode_value(algo, "sg_n_2")
-    score_n_3_raw = _get_mode_value(algo, "sg_n_3")
-
     # Enforce prefix rule: n_2 requires n_1, n_3 requires n_1 and n_2.
     if n_2_raw is not None and n_1_raw is None:
         raise ValueError(
-            "algorithm.n_2 is set but algorithm.n_1 is missing. "
-            "These controls must be provided in order: n_1, then n_2, then n_3."
+            "algorithm.mg_n_2 is set but algorithm.mg_n_1 is missing. "
+            "These controls must be provided in order: mg_n_1, then mg_n_2, then mg_n_3."
         )
     if n_3_raw is not None and (n_1_raw is None or n_2_raw is None):
         raise ValueError(
-            "algorithm.n_3 is set but algorithm.n_1 and algorithm.n_2 are not "
-            "both defined. These controls must be provided in order: n_1, n_2, n_3."
+            "algorithm.mg_n_3 is set but algorithm.mg_n_1 and algorithm.mg_n_2 are not "
+            "both defined. These controls must be provided in order: mg_n_1, mg_n_2, mg_n_3."
         )
     if score_n_2_raw is not None and score_n_1_raw is None:
         raise ValueError(
-            "algorithm.score_n_2 is set but algorithm.score_n_1 is missing. "
-            "These controls must be provided in order: score_n_1, then score_n_2, then score_n_3."
+            "algorithm.sg_n_2 is set but algorithm.sg_n_1 is missing. "
+            "These controls must be provided in order: sg_n_1, then sg_n_2, then sg_n_3."
         )
     if score_n_3_raw is not None and (score_n_1_raw is None or score_n_2_raw is None):
         raise ValueError(
-            "algorithm.score_n_3 is set but algorithm.score_n_1 and algorithm.score_n_2 are not "
-            "both defined. These controls must be provided in order: score_n_1, score_n_2, score_n_3."
+            "algorithm.sg_n_3 is set but algorithm.sg_n_1 and algorithm.sg_n_2 are not "
+            "both defined. These controls must be provided in order: sg_n_1, sg_n_2, sg_n_3."
         )
 
     def _to_int_or_none(x, name: str) -> Optional[int]:
@@ -558,22 +507,12 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             raise ValueError(f"algorithm.{name} must be non-negative, got {v}.")
         return v
 
-    n_1 = _to_int_or_none(n_1_raw, "n_1")
-    n_2 = _to_int_or_none(n_2_raw, "n_2")
-    n_3 = _to_int_or_none(n_3_raw, "n_3")
-    score_n_1 = _to_int_or_none(score_n_1_raw, "score_n_1")
-    score_n_2 = _to_int_or_none(score_n_2_raw, "score_n_2")
-    score_n_3 = _to_int_or_none(score_n_3_raw, "score_n_3")
-
-    coverage_score_column = _get_mode_value(algo, "cov_coverage_score_column")
-    legacy_score_column = y.get("columns", {}).get("score")
-    if coverage_score_column is None and legacy_score_column is not None:
-        coverage_score_column = legacy_score_column
-
-    if selection_mode == "coverage" and not coverage_score_column:
-        raise ValueError(
-            "selection_mode='coverage' requires algorithm.cov_coverage_score_column to be defined."
-        )
+    n_1 = _to_int_or_none(n_1_raw, "mg_n_1")
+    n_2 = _to_int_or_none(n_2_raw, "mg_n_2")
+    n_3 = _to_int_or_none(n_3_raw, "mg_n_3")
+    score_n_1 = _to_int_or_none(score_n_1_raw, "sg_n_1")
+    score_n_2 = _to_int_or_none(score_n_2_raw, "sg_n_2")
+    score_n_3 = _to_int_or_none(score_n_3_raw, "sg_n_3")
 
     cfg = Config(
         input=InputCfg(
@@ -588,44 +527,22 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             keep=y["columns"].get("keep"),
         ),
         algorithm=AlgoOpts(
+            # Common settings
             selection_mode=selection_mode,
             level_limit=level_limit,
             level_coverage=level_coverage,
-            order_desc=bool(_get_mode_value(algo, "cov_order_desc", False)),
-            coverage_order=coverage_order,
-            coverage_score_column=coverage_score_column,
-            # Per-level overrides for k (float values).
-            k_per_cov_per_level=(
-                {int(k): float(v) for k, v in _get_mode_value(algo, "cov_k_per_cov_per_level", {}).items()}
-                if isinstance(_get_mode_value(algo, "cov_k_per_cov_per_level"), dict)
-                else None
-            ),
-            # Per-level total caps (int values).
-            targets_total_per_level=(
-                {int(k): int(v) for k, v in _get_mode_value(algo, "cov_targets_total_per_level", {}).items()}
-                if isinstance(_get_mode_value(algo, "cov_targets_total_per_level"), dict)
-                else None
-            ),
-            tie_buffer=int(_get_mode_value(algo, "cov_tie_buffer", 10)),
-            density_mode=density_mode,
-            k_per_cov_initial=k_per_cov_initial,
-            targets_total_initial=targets_total_initial,
-            density_exp_base=float(_get_mode_value(algo, "cov_density_exp_base", 2.0)),
-            density_bias_mode=_get_mode_value(algo, "cov_density_bias_mode", "none"),
-            density_bias_exponent=float(_get_mode_value(algo, "cov_density_bias_exponent", 1.0)),
-            fractional_mode=_get_mode_value(algo, "cov_fractional_mode", "score"),
-            fractional_mode_logic=_get_mode_value(algo, "cov_fractional_mode_logic", "local"),
-            use_hats_as_coverage=bool(_get_mode_value(algo, "cov_use_hats_as_coverage", False)),
+            # mag_global mode
             mag_column=_get_mode_value(algo, "mg_mag_column"),
             flux_column=_get_mode_value(algo, "mg_flux_column"),
             mag_offset=_get_mode_value(algo, "mg_mag_offset"),
             mag_min=_get_mode_value(algo, "mg_mag_min"),
             mag_max=_get_mode_value(algo, "mg_mag_max"),
-            mag_completeness=bool(_get_mode_value(algo, "mg_mag_completeness", False)),
+            mag_adaptive_range=_get_mode_value(algo, "mg_mag_adaptive_range", "complete"),
             mag_hist_nbins=int(_get_mode_value(algo, "mg_mag_hist_nbins", 512)),
             n_1=n_1,
             n_2=n_2,
             n_3=n_3,
+            # score_global mode
             score_column=_get_mode_value(algo, "sg_score_column"),
             score_min=_get_mode_value(algo, "sg_score_min"),
             score_max=_get_mode_value(algo, "sg_score_max"),
@@ -634,6 +551,30 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             score_n_1=score_n_1,
             score_n_2=score_n_2,
             score_n_3=score_n_3,
+            # coverage mode
+            coverage_score_column=coverage_score_column,
+            use_hats_as_coverage=bool(_get_mode_value(algo, "cov_use_hats_as_coverage", False)),
+            order_desc=bool(_get_mode_value(algo, "cov_order_desc", False)),
+            coverage_order=coverage_order,
+            density_mode=density_mode,
+            k_per_cov_initial=k_per_cov_initial,
+            targets_total_initial=targets_total_initial,
+            density_exp_base=float(_get_mode_value(algo, "cov_density_exp_base", 2.0)),
+            density_bias_mode=_get_mode_value(algo, "cov_density_bias_mode", "none"),
+            density_bias_exponent=float(_get_mode_value(algo, "cov_density_bias_exponent", 1.0)),
+            fractional_mode=_get_mode_value(algo, "cov_fractional_mode", "score"),
+            fractional_mode_logic=_get_mode_value(algo, "cov_fractional_mode_logic", "local"),
+            k_per_cov_per_level=(
+                {int(k): float(v) for k, v in _get_mode_value(algo, "cov_k_per_cov_per_level", {}).items()}
+                if isinstance(_get_mode_value(algo, "cov_k_per_cov_per_level"), dict)
+                else None
+            ),
+            targets_total_per_level=(
+                {int(k): int(v) for k, v in _get_mode_value(algo, "cov_targets_total_per_level", {}).items()}
+                if isinstance(_get_mode_value(algo, "cov_targets_total_per_level"), dict)
+                else None
+            ),
+            tie_buffer=int(_get_mode_value(algo, "cov_tie_buffer", 10)),
         ),
         cluster=ClusterCfg(
             mode=y["cluster"].get("mode", "local"),
@@ -679,6 +620,15 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
                 "selection_mode='mag_global' with mg_flux_column requires "
                 "mg_mag_offset to be defined for the flux→magnitude conversion."
             )
+
+        mag_range_mode = str(getattr(algo, "mag_adaptive_range", "complete")).lower()
+        if mag_range_mode not in {"complete", "hist_peak"}:
+            raise ValueError(
+                "selection_mode='mag_global' requires mg_mag_adaptive_range to be "
+                "either 'complete' or 'hist_peak'."
+            )
+        # Normalize to lowercase for downstream consumers.
+        algo.mag_adaptive_range = mag_range_mode
     if str(algo.selection_mode).lower() == "score_global":
         if not getattr(algo, "score_column", None):
             raise ValueError("selection_mode='score_global' requires algorithm.score_column to be set.")

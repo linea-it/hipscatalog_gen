@@ -190,49 +190,70 @@ def write_common_static_products(
 
     arg_text = textwrap.dedent(
         f"""
-        # Input/output
-        Input files: {paths}
-        Input type: {cfg.input.format}
-        Output dir: {out_dir}
-        # Input data parameters
-        Catalogue name: {cfg.output.cat_name}
-        RA column name: {ra_col}
-        DE column name: {dec_col}
-        # Selection parameters
-        level_limit(lM): {cfg.algorithm.level_limit}
-        level_coverage(lC): {cfg.algorithm.level_coverage}
-        coverage_order(Oc): {cfg.algorithm.coverage_order}
-        order_desc: {cfg.algorithm.order_desc}
-        selection_mode: {cfg.algorithm.selection_mode}
-        mag_column: {cfg.algorithm.mag_column}
-        flux_column: {cfg.algorithm.flux_column}
-        mag_offset: {cfg.algorithm.mag_offset}
-        mag_min: {cfg.algorithm.mag_min}
-        mag_max: {cfg.algorithm.mag_max}
-        mag_completeness: {cfg.algorithm.mag_completeness}
-        mag_hist_nbins: {cfg.algorithm.mag_hist_nbins}
-        n_1: {cfg.algorithm.n_1}
-        n_2: {cfg.algorithm.n_2}
-        n_3: {cfg.algorithm.n_3}
-        score_column: {cfg.algorithm.score_column}
-        score_min: {cfg.algorithm.score_min}
-        score_max: {cfg.algorithm.score_max}
-        score_adaptive_range: {cfg.algorithm.score_adaptive_range}
-        score_hist_nbins: {cfg.algorithm.score_hist_nbins}
-        score_n_1: {cfg.algorithm.score_n_1}
-        score_n_2: {cfg.algorithm.score_n_2}
-        score_n_3: {cfg.algorithm.score_n_3}
-        k_per_cov_per_level: {cfg.algorithm.k_per_cov_per_level}
-        targets_total_per_level: {cfg.algorithm.targets_total_per_level}
-        tie_buffer: {cfg.algorithm.tie_buffer}
-        density_mode: {cfg.algorithm.density_mode}
-        k_per_cov_initial: {cfg.algorithm.k_per_cov_initial}
-        targets_total_initial: {cfg.algorithm.targets_total_initial}
-        density_exp_base: {cfg.algorithm.density_exp_base}
-        density_bias_mode: {cfg.algorithm.density_bias_mode}
-        density_bias_exponent: {cfg.algorithm.density_bias_exponent}
-        fractional_mode: {cfg.algorithm.fractional_mode}
-        fractional_mode_logic: {cfg.algorithm.fractional_mode_logic}
+        # input
+        input.paths: {paths}
+        input.format: {cfg.input.format}
+        input.header: {getattr(cfg.input, "header", None)}
+        input.ascii_format: {getattr(cfg.input, "ascii_format", None)}
+        # columns
+        columns.ra: {ra_col}
+        columns.dec: {dec_col}
+        columns.keep: {cfg.columns.keep}
+        # algorithm.common
+        algorithm.selection_mode: {cfg.algorithm.selection_mode}
+        algorithm.level_limit: {cfg.algorithm.level_limit}
+        algorithm.level_coverage: {cfg.algorithm.level_coverage}
+        # algorithm.mag_global
+        mg_mag_column: {cfg.algorithm.mag_column}
+        mg_flux_column: {cfg.algorithm.flux_column}
+        mg_mag_offset: {cfg.algorithm.mag_offset}
+        mg_mag_min: {cfg.algorithm.mag_min}
+        mg_mag_max: {cfg.algorithm.mag_max}
+        mg_mag_adaptive_range: {cfg.algorithm.mag_adaptive_range}
+        mg_mag_hist_nbins: {cfg.algorithm.mag_hist_nbins}
+        mg_n_1: {cfg.algorithm.n_1}
+        mg_n_2: {cfg.algorithm.n_2}
+        mg_n_3: {cfg.algorithm.n_3}
+        # algorithm.score_global
+        sg_score_column: {cfg.algorithm.score_column}
+        sg_score_min: {cfg.algorithm.score_min}
+        sg_score_max: {cfg.algorithm.score_max}
+        sg_score_adaptive_range: {cfg.algorithm.score_adaptive_range}
+        sg_score_hist_nbins: {cfg.algorithm.score_hist_nbins}
+        sg_n_1: {cfg.algorithm.score_n_1}
+        sg_n_2: {cfg.algorithm.score_n_2}
+        sg_n_3: {cfg.algorithm.score_n_3}
+        # algorithm.coverage
+        cov_coverage_score_column: {cfg.algorithm.coverage_score_column}
+        cov_use_hats_as_coverage: {cfg.algorithm.use_hats_as_coverage}
+        cov_order_desc: {cfg.algorithm.order_desc}
+        cov_coverage_order: {cfg.algorithm.coverage_order}
+        cov_density_mode: {cfg.algorithm.density_mode}
+        cov_k_per_cov_initial: {cfg.algorithm.k_per_cov_initial}
+        cov_targets_total_initial: {cfg.algorithm.targets_total_initial}
+        cov_density_exp_base: {cfg.algorithm.density_exp_base}
+        cov_density_bias_mode: {cfg.algorithm.density_bias_mode}
+        cov_density_bias_exponent: {cfg.algorithm.density_bias_exponent}
+        cov_fractional_mode: {cfg.algorithm.fractional_mode}
+        cov_fractional_mode_logic: {cfg.algorithm.fractional_mode_logic}
+        cov_k_per_cov_per_level: {cfg.algorithm.k_per_cov_per_level}
+        cov_targets_total_per_level: {cfg.algorithm.targets_total_per_level}
+        cov_tie_buffer: {cfg.algorithm.tie_buffer}
+        # cluster
+        cluster.mode: {cfg.cluster.mode}
+        cluster.n_workers: {cfg.cluster.n_workers}
+        cluster.threads_per_worker: {cfg.cluster.threads_per_worker}
+        cluster.memory_per_worker: {cfg.cluster.memory_per_worker}
+        cluster.persist_ddfs: {cfg.cluster.persist_ddfs}
+        cluster.avoid_computes_wherever_possible: {cfg.cluster.avoid_computes_wherever_possible}
+        cluster.diagnostics_mode: {cfg.cluster.diagnostics_mode}
+        cluster.slurm: {cfg.cluster.slurm}
+        # output
+        output.out_dir: {out_dir}
+        output.cat_name: {cfg.output.cat_name}
+        output.target: {cfg.output.target}
+        output.creator_did: {cfg.output.creator_did}
+        output.obs_title: {cfg.output.obs_title}
         """
     ).strip("\n")
     write_arguments(out_dir, arg_text + "\n")
