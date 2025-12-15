@@ -135,10 +135,10 @@ class AlgoOpts:
     mag_min: Optional[float] = None
     mag_max: Optional[float] = None
 
-    # Include all input rows in mag_global selection
-    # When True, overrides automatic mag_min/mag_max logic and uses
-    # the full magnitude range of the input catalog.
-    mag_completeness: bool = False
+    # Controls how missing mag_min/mag_max are filled in mag_global mode.
+    #   - "complete"  → use global min/max when a bound is missing.
+    #   - "hist_peak" → fill the missing bound with the magnitude histogram peak.
+    mag_adaptive_range: str = "complete"
 
     # Number of bins used for the global magnitude histogram in mag_global mode.
     mag_hist_nbins: int = 512
@@ -287,8 +287,10 @@ mg_mag_min             [optional, default=None] float
     Lower bound of the magnitude range. If omitted, global minimum clipped to >= -2.
 mg_mag_max             [optional, default=None] float
     Upper bound of the magnitude range. If omitted, estimated from the histogram peak.
-mg_mag_completeness    [optional, default=False] bool
-    When True, ignores mg_mag_min/max and uses full range (including extreme values).
+mg_mag_adaptive_range  [optional, default="complete"] str
+    How to fill missing mag_min/mag_max:
+      - "complete"  → use global min/max when a bound is missing.
+      - "hist_peak" → use the histogram peak (bin center) for the missing bound.
 mg_mag_hist_nbins      [optional, default=512] int
     Number of bins in the global magnitude histogram.
 mg_n_1, mg_n_2, mg_n_3 [optional, default=None] int
@@ -621,7 +623,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             mag_offset=_get_mode_value(algo, "mg_mag_offset"),
             mag_min=_get_mode_value(algo, "mg_mag_min"),
             mag_max=_get_mode_value(algo, "mg_mag_max"),
-            mag_completeness=bool(_get_mode_value(algo, "mg_mag_completeness", False)),
+            mag_adaptive_range=_get_mode_value(algo, "mg_mag_adaptive_range", "complete"),
             mag_hist_nbins=int(_get_mode_value(algo, "mg_mag_hist_nbins", 512)),
             n_1=n_1,
             n_2=n_2,
@@ -679,6 +681,15 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
                 "selection_mode='mag_global' with mg_flux_column requires "
                 "mg_mag_offset to be defined for the flux→magnitude conversion."
             )
+
+        mag_range_mode = str(getattr(algo, "mag_adaptive_range", "complete")).lower()
+        if mag_range_mode not in {"complete", "hist_peak"}:
+            raise ValueError(
+                "selection_mode='mag_global' requires mg_mag_adaptive_range to be "
+                "either 'complete' or 'hist_peak'."
+            )
+        # Normalize to lowercase for downstream consumers.
+        algo.mag_adaptive_range = mag_range_mode
     if str(algo.selection_mode).lower() == "score_global":
         if not getattr(algo, "score_column", None):
             raise ValueError("selection_mode='score_global' requires algorithm.score_column to be set.")

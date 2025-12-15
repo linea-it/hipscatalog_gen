@@ -111,88 +111,142 @@ def prepare_mag_global(ddf: Any, cfg: Any, diag_ctx, log_fn):
             f"[{mag_min_global_raw}, {mag_max_global_raw}]."
         )
 
-    mag_completeness = bool(getattr(algo, "mag_completeness", False))
-    if mag_completeness:
-        mag_min = mag_min_global_raw
-        mag_max = mag_max_global_raw
-        mag_upper_for_hist = mag_max_global_raw
-
-        log_fn(
-            f"[mag_global] mag_completeness=True → using full magnitude range: "
-            f"[{mag_min}, {mag_max}] (raw catalog bounds).",
-            always=True,
+    range_mode = str(getattr(algo, "mag_adaptive_range", "complete")).lower()
+    if range_mode not in {"complete", "hist_peak"}:
+        raise ValueError(
+            f"mag_global selection: invalid mag_adaptive_range '{range_mode}'. "
+            "Allowed values are: 'complete', 'hist_peak'."
         )
 
-        algo.mag_min = mag_min
-        algo.mag_max = mag_max
-    else:
-        if mag_min_cfg is None:
-            raw = mag_min_global_raw
-            mag_min = max(raw, -2.0)
-            if mag_min != raw:
-                log_fn(
-                    "[mag_global] mag_min not provided; using global minimum "
-                    f"{raw:.4f} clipped to {mag_min:.4f} (>= -2).",
-                    always=True,
-                )
-            else:
-                log_fn(
-                    "[mag_global] mag_min not provided; using global minimum " f"magnitude {mag_min:.4f}.",
-                    always=True,
-                )
-        else:
-            mag_min = float(mag_min_cfg)
-
-        mag_upper_for_hist = min(mag_max_global_raw, 40.0)
-        if mag_upper_for_hist <= mag_min:
+    def _histogram_peak(
+        lower: float,
+        upper: float,
+        ctx_name: str,
+    ) -> tuple[float, float, float]:
+        """Return (peak_center, bin_left, bin_right) for the given range."""
+        if upper <= lower:
             raise ValueError(
-                "mag_global selection: after applying automatic bounds, "
-                f"mag_min={mag_min:.4f} is not smaller than the upper histogram "
-                f"limit={mag_upper_for_hist:.4f}. Check magnitude values or "
-                "configured mag_min."
+                f"mag_global selection: invalid histogram bounds [{lower}, {upper}]. "
+                "Upper bound must be larger than lower bound."
             )
 
-        if mag_max_cfg is None:
-            with diag_ctx("dask_mag_hist_auto_max"):
-                hist_auto, edges_auto, n_tot_auto = compute_mag_histogram_ddf(
-                    ddf_like=ddf,
-                    mag_col=mag_col_internal,
-                    mag_min=mag_min,
-                    mag_max=mag_upper_for_hist,
-                    nbins=algo.mag_hist_nbins,
-                )
+        with diag_ctx(ctx_name):
+            hist, edges, n_tot = compute_mag_histogram_ddf(
+                ddf_like=ddf,
+                mag_col=mag_col_internal,
+                mag_min=lower,
+                mag_max=upper,
+                nbins=algo.mag_hist_nbins,
+            )
 
-            if n_tot_auto == 0:
-                raise ValueError(
-                    "mag_global selection: no objects found when estimating "
-                    "automatic mag_max. Check the magnitude column and range."
-                )
+        if n_tot == 0:
+            raise ValueError(
+                "mag_global selection: no objects found when estimating "
+                "histogram peak. Check the magnitude column and configured bounds."
+            )
 
-            peak_idx = int(np.argmax(hist_auto))
-            bin_left = float(edges_auto[peak_idx])
-            bin_right = float(edges_auto[peak_idx + 1])
-            peak_center = 0.5 * (bin_left + bin_right)
+        peak_idx = int(np.argmax(hist))
+        bin_left = float(edges[peak_idx])
+        bin_right = float(edges[peak_idx + 1])
+        peak_center = 0.5 * (bin_left + bin_right)
+        return float(np.round(peak_center, 2)), bin_left, bin_right
 
-            peak_center = min(peak_center, mag_upper_for_hist)
-            mag_max = float(np.round(peak_center, 2))
-
+    if range_mode == "complete":
+        if mag_min_cfg is not None and mag_max_cfg is not None:
+            mag_min = float(mag_min_cfg)
+            mag_max = float(mag_max_cfg)
             log_fn(
-                "[mag_global] mag_max not provided; using histogram peak at "
-                f"{mag_max:.2f} (bin center from [{bin_left:.4f}, "
-                f"{bin_right:.4f}], with mag < 40).",
+                "[mag_global] mag_adaptive_range=complete with explicit mag_min/mag_max "
+                f"→ using [{mag_min}, {mag_max}].",
+                always=True,
+            )
+        elif mag_min_cfg is not None:
+            mag_min = float(mag_min_cfg)
+            mag_max = mag_max_global_raw
+            log_fn(
+                "[mag_global] mag_adaptive_range=complete and mag_min provided "
+                f"→ mag_min={mag_min}, mag_max={mag_max_global_raw} (global maximum).",
+                always=True,
+            )
+        elif mag_max_cfg is not None:
+            mag_min = mag_min_global_raw
+            mag_max = float(mag_max_cfg)
+            log_fn(
+                "[mag_global] mag_adaptive_range=complete and mag_max provided "
+                f"→ mag_min={mag_min_global_raw} (global minimum), mag_max={mag_max}.",
                 always=True,
             )
         else:
+            mag_min = mag_min_global_raw
+            mag_max = mag_max_global_raw
+            log_fn(
+                "[mag_global] mag_adaptive_range=complete with no bounds provided "
+                f"→ using full global range [{mag_min}, {mag_max}].",
+                always=True,
+            )
+    else:  # hist_peak
+        if mag_min_cfg is not None and mag_max_cfg is not None:
+            mag_min = float(mag_min_cfg)
             mag_max = float(mag_max_cfg)
-
-        if mag_min >= mag_max:
-            raise ValueError(
-                f"algorithm.mag_min ({mag_min}) must be strictly smaller than "
-                f"algorithm.mag_max ({mag_max}) for mag_global selection."
+            log_fn(
+                "[mag_global] mag_adaptive_range=hist_peak with explicit mag_min/mag_max "
+                f"→ using [{mag_min}, {mag_max}] (skipping histogram fill).",
+                always=True,
+            )
+        elif mag_min_cfg is not None:
+            mag_min = float(mag_min_cfg)
+            hist_upper = min(mag_max_global_raw, 40.0)
+            mag_max, bin_left, bin_right = _histogram_peak(
+                mag_min,
+                hist_upper,
+                "dask_mag_hist_peak_from_min",
+            )
+            log_fn(
+                "[mag_global] mag_adaptive_range=hist_peak and mag_min provided "
+                f"→ mag_min={mag_min}, mag_max from histogram peak={mag_max} "
+                f"(bin center from [{bin_left:.4f}, {bin_right:.4f}], clipped at < 40).",
+                always=True,
+            )
+        elif mag_max_cfg is not None:
+            mag_max = float(mag_max_cfg)
+            hist_lower = -2.0
+            mag_min, bin_left, bin_right = _histogram_peak(
+                hist_lower,
+                mag_max,
+                "dask_mag_hist_peak_from_max",
+            )
+            log_fn(
+                "[mag_global] mag_adaptive_range=hist_peak and mag_max provided "
+                f"→ mag_min from histogram peak={mag_min} "
+                f"(bin center from [{bin_left:.4f}, {bin_right:.4f}], clipped at > -2), "
+                f"mag_max={mag_max}.",
+                always=True,
+            )
+        else:
+            raw_min = mag_min_global_raw
+            mag_min = max(raw_min, -2.0)
+            hist_upper = min(mag_max_global_raw, 40.0)
+            mag_max, bin_left, bin_right = _histogram_peak(
+                -2.0,
+                hist_upper,
+                "dask_mag_hist_peak_from_none",
+            )
+            log_fn(
+                "[mag_global] mag_adaptive_range=hist_peak with no bounds provided "
+                f"→ mag_min={mag_min} (global minimum clipped to >= -2), "
+                f"mag_max from histogram peak={mag_max} "
+                f"(bin center from [{bin_left:.4f}, {bin_right:.4f}], clipped to [-2, 40]).",
+                always=True,
             )
 
-        algo.mag_min = mag_min
-        algo.mag_max = mag_max
+    if mag_min >= mag_max:
+        raise ValueError(
+            f"algorithm.mag_min ({mag_min}) must be strictly smaller than "
+            f"algorithm.mag_max ({mag_max}) for mag_global selection."
+        )
+
+    algo.mag_min = mag_min
+    algo.mag_max = mag_max
 
     meta_sel = meta_with_mag.copy()
 
