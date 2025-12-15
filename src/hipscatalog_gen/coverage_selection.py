@@ -423,18 +423,13 @@ def apply_fractional_k_per_cov(
             k_floor = int(math.floor(k_local_desired))
             k_floor = max(0, k_floor)
 
-            if k_floor > 0:
-                base_keep = g_sorted.iloc[:k_floor]
-            else:
-                base_keep = g_sorted.iloc[0:0]
-
+            base_keep = g_sorted.iloc[:k_floor] if k_floor > 0 else g_sorted.iloc[0:0]
             remaining = g_sorted.iloc[k_floor:]
 
             extra_keep = 0
             frac_local = max(0.0, min(1.0, k_local_desired - float(k_floor)))
-            if len(remaining) > 0 and frac_local > 0.0:
-                if rng.random() < frac_local:
-                    extra_keep = 1
+            if len(remaining) > 0 and frac_local > 0.0 and rng.random() < frac_local:
+                extra_keep = 1
 
             if extra_keep == 1:
                 extra_row = remaining.iloc[:1]
@@ -511,9 +506,8 @@ def apply_fractional_k_per_cov(
         extra_keep = 0
         frac_local = max(0.0, min(1.0, k_local_desired - float(k_floor)))
 
-        if len(remaining) > 0 and frac_local > 0.0:
-            if rng.random() < frac_local:
-                extra_keep = 1
+        if len(remaining) > 0 and frac_local > 0.0 and rng.random() < frac_local:
+            extra_keep = 1
 
         if extra_keep == 1:
             j = rng.integers(len(remaining))
