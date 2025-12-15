@@ -199,17 +199,10 @@ def write_common_static_products(
         columns.ra: {ra_col}
         columns.dec: {dec_col}
         columns.keep: {cfg.columns.keep}
-        # output
-        output.out_dir: {out_dir}
-        output.cat_name: {cfg.output.cat_name}
-        output.target: {cfg.output.target}
-        output.creator_did: {cfg.output.creator_did}
-        output.obs_title: {cfg.output.obs_title}
         # algorithm.common
         algorithm.selection_mode: {cfg.algorithm.selection_mode}
         algorithm.level_limit: {cfg.algorithm.level_limit}
         algorithm.level_coverage: {cfg.algorithm.level_coverage}
-        algorithm.cov_order_desc: {cfg.algorithm.order_desc}
         # algorithm.mag_global
         mg_mag_column: {cfg.algorithm.mag_column}
         mg_flux_column: {cfg.algorithm.flux_column}
@@ -231,9 +224,10 @@ def write_common_static_products(
         sg_n_2: {cfg.algorithm.score_n_2}
         sg_n_3: {cfg.algorithm.score_n_3}
         # algorithm.coverage
-        cov_coverage_order: {cfg.algorithm.coverage_order}
         cov_coverage_score_column: {cfg.algorithm.coverage_score_column}
-        cov_tie_buffer: {cfg.algorithm.tie_buffer}
+        cov_use_hats_as_coverage: {cfg.algorithm.use_hats_as_coverage}
+        cov_order_desc: {cfg.algorithm.order_desc}
+        cov_coverage_order: {cfg.algorithm.coverage_order}
         cov_density_mode: {cfg.algorithm.density_mode}
         cov_k_per_cov_initial: {cfg.algorithm.k_per_cov_initial}
         cov_targets_total_initial: {cfg.algorithm.targets_total_initial}
@@ -244,6 +238,7 @@ def write_common_static_products(
         cov_fractional_mode_logic: {cfg.algorithm.fractional_mode_logic}
         cov_k_per_cov_per_level: {cfg.algorithm.k_per_cov_per_level}
         cov_targets_total_per_level: {cfg.algorithm.targets_total_per_level}
+        cov_tie_buffer: {cfg.algorithm.tie_buffer}
         # cluster
         cluster.mode: {cfg.cluster.mode}
         cluster.n_workers: {cfg.cluster.n_workers}
@@ -253,6 +248,12 @@ def write_common_static_products(
         cluster.avoid_computes_wherever_possible: {cfg.cluster.avoid_computes_wherever_possible}
         cluster.diagnostics_mode: {cfg.cluster.diagnostics_mode}
         cluster.slurm: {cfg.cluster.slurm}
+        # output
+        output.out_dir: {out_dir}
+        output.cat_name: {cfg.output.cat_name}
+        output.target: {cfg.output.target}
+        output.creator_did: {cfg.output.creator_did}
+        output.obs_title: {cfg.output.obs_title}
         """
     ).strip("\n")
     write_arguments(out_dir, arg_text + "\n")
