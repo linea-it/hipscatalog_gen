@@ -14,7 +14,7 @@
 #
 # HATS catalogs:
 #   - Opened via lsdb.open_catalog()
-#   - Columns restricted to RA/DEC, score dependencies, mag_column (if mag_global)
+#   - Columns restricted to RA/DEC, coverage_score_column dependencies, mag_column (if mag_global)
 #     plus any columns listed in columns.keep.
 #   - When algorithm.use_hats_as_coverage=true, HATS partitions are used
 #     as coverage cells (__icov__) instead of HEALPix coverage_order.
@@ -41,7 +41,7 @@ input:
   # For CSV/TSV only:
   #   header: true  → first row has column names
   #   header: false → no header; columns are accessed by 1-based indices
-  #                   in the "columns" section (ra/dec/score).
+  #                   in the "columns" section (ra/dec).
   # Ignored for Parquet and HATS.
   # header: true
 
@@ -52,7 +52,7 @@ input:
 
 
 # -----------------------------------------------------------------------------
-# Column mapping and score definition
+# Column mapping
 # -----------------------------------------------------------------------------
 columns:
   # RA/DEC column names or 1-based indices (if input.header=false for CSV/TSV).
@@ -63,25 +63,6 @@ columns:
   ra: coord_ra
   dec: coord_dec
 
-  # Score expression used to rank sources within each coverage cell/tile.
-  #
-  #   - Can be a column name ("mag_r") or a Python expression using columns and
-  #     numpy (np / numpy), e.g.: "(flux_g / err_g)**2".
-  #   - Evaluated on pandas partitions; invalid/NaN/±inf values are handled
-  #     and replaced with worst scores.
-  #
-  # order_desc=false → lower score is better (ascending sort).
-  # order_desc=true  → higher score is better (descending sort).
-  #
-  # In coverage mode, this directly controls which rows are kept and how
-  # fractional selection works inside each coverage cell.
-  #
-  # In mag_global mode, this expression is **not used at all**: selection is
-  # purely based on mag_column and RA/DEC. The score still affects which
-  # columns are requested from the input (score dependencies), but it does
-  # not affect the selection logic.
-  score: "i_cModelMag_dered"
-
   # Optional explicit list of columns to keep in output tiles.
   #
   # Behavior is unified across all formats (Parquet, CSV, TSV, HATS):
@@ -89,7 +70,7 @@ columns:
   #   - If omitted or empty:
   #       → Keep only the minimal required subset:
   #           * RA and DEC columns;
-  #           * any columns referenced in the score expression;
+  #           * any columns referenced in the coverage_score_column expression;
   #           * the magnitude column (if selection_mode = "mag_global").
   #
   #   - If provided:
@@ -151,6 +132,19 @@ algorithm:
   # ==============================
   # coverage mode ONLY
   # ==============================
+  # Score expression used to rank sources within each coverage cell/tile.
+  #
+  #   - Can be a column name ("mag_r") or a Python expression using columns and
+  #     numpy (np / numpy), e.g.: "(flux_g / err_g)**2".
+  #   - Evaluated on pandas partitions; invalid/NaN/±inf values are handled
+  #     and replaced with worst scores.
+  #
+  # order_desc=false → lower score is better (ascending sort).
+  # order_desc=true  → higher score is better (descending sort).
+  #
+  # In coverage mode, this directly controls which rows are kept and how
+  # fractional selection works inside each coverage cell.
+  coverage_score_column: "i_cModelMag_dered"
   use_hats_as_coverage: false     # HATS partitions as coverage cells (__icov__)
   order_desc: false               # Score ordering (coverage mode)
   coverage_order: 8              # HEALPix order for __icov__ when not using HATS

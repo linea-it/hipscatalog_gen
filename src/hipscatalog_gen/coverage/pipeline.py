@@ -176,6 +176,10 @@ def run_coverage_selection(
     is_hats: bool,
 ) -> None:
     """Execute the coverage-based selection loop."""
+    score_col = getattr(cfg.algorithm, "coverage_score_column", None)
+    if not score_col:
+        raise ValueError("algorithm.coverage_score_column must be set for coverage selection.")
+
     if float(cfg.algorithm.k_per_cov_initial) <= 0.0 and not (cfg.algorithm.k_per_cov_per_level or {}):
         log_fn(
             "[selection] k_per_cov_initial <= 0 and no per-level overrides → "
@@ -317,8 +321,8 @@ def run_coverage_selection(
                 k_per_cov_desired_map = None
 
             needed_cols = list(remainder_ddf.columns)
-            if cfg.columns.score not in needed_cols:
-                needed_cols.append(cfg.columns.score)
+            if score_col not in needed_cols:
+                needed_cols.append(score_col)
             if "__icov__" not in needed_cols:
                 needed_cols.append("__icov__")
             sel_ddf = remainder_ddf[needed_cols]
@@ -326,7 +330,7 @@ def run_coverage_selection(
             meta_cand = _get_meta_df(sel_ddf)
             cand_ddf = sel_ddf.map_partitions(
                 _candidates_by_coverage_partition,
-                score_col=cfg.columns.score,
+                score_col=score_col,
                 order_desc=cfg.algorithm.order_desc,
                 k_per_cov=k_per_cov_for_selection,
                 tie_buffer=int(cfg.algorithm.tie_buffer),
@@ -358,7 +362,7 @@ def run_coverage_selection(
             if avoid_computes:
                 selected_ddf = _reduce_coverage_exact_dask(
                     cand_ddf,
-                    score_col=cfg.columns.score,
+                    score_col=score_col,
                     order_desc=cfg.algorithm.order_desc,
                     k_per_cov=k_per_cov_for_selection,
                     ra_col=ra_col,
@@ -383,7 +387,7 @@ def run_coverage_selection(
 
                 selected_pdf = _reduce_coverage_exact(
                     cand_pdf,
-                    score_col=cfg.columns.score,
+                    score_col=score_col,
                     order_desc=cfg.algorithm.order_desc,
                     k_per_cov=k_per_cov_for_selection,
                     ra_col=ra_col,
@@ -399,7 +403,7 @@ def run_coverage_selection(
             selected_pdf, _ = apply_fractional_k_per_cov(
                 selected_pdf,
                 k_desired=k_desired,
-                score_col=cfg.columns.score,
+                score_col=score_col,
                 order_desc=cfg.algorithm.order_desc,
                 mode=getattr(cfg.algorithm, "fractional_mode", "random"),
                 mode_logic=getattr(
@@ -466,7 +470,7 @@ def run_coverage_selection(
 
             thr_cov = build_cov_thresholds(
                 selected_pdf,
-                score_col=cfg.columns.score,
+                score_col=score_col,
                 order_desc=cfg.algorithm.order_desc,
             )
             if len(thr_cov) == 0:
@@ -480,7 +484,7 @@ def run_coverage_selection(
 
             remainder_ddf = remainder_ddf.map_partitions(
                 filter_remainder_by_coverage_partition,
-                score_expr=cfg.columns.score,
+                score_expr=score_col,
                 order_desc=cfg.algorithm.order_desc,
                 thr_cov=thr_cov,
                 ra_col=ra_col,

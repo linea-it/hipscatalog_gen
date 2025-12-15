@@ -28,6 +28,7 @@ class AlgoOpts:
         level_coverage: Coverage / MOC order (lC).
         order_desc: If True, sort score in descending order.
         coverage_order: HEALPix order used for coverage cells (__icov__).
+        coverage_score_column: Score column/expression used for coverage mode.
         k_per_cov_per_level: Optional per-depth overrides of k per coverage cell.
         targets_total_per_level: Optional per-depth total caps (rows per level).
         tie_buffer: Score tie buffer near the selection cut.
@@ -59,6 +60,7 @@ class AlgoOpts:
     level_coverage: int  # MOC / coverage order (lC)
     order_desc: bool  # False → ascending score (lower is better)
     coverage_order: int  # HEALPix order for __icov__ coverage cells
+    coverage_score_column: Optional[str] = None  # score expression/column for coverage mode
 
     # Optional per-level overrides for k (hard overrides by depth).
     # Example: {3: 0.6, 4: 1.2}
@@ -142,11 +144,10 @@ class AlgoOpts:
 
 @dataclass
 class ColumnsCfg:
-    """Column mapping for RA/DEC, score and extra fields."""
+    """Column mapping for RA/DEC and extra fields."""
 
     ra: str  # RA column name (or index for ASCII without header)
     dec: str  # DEC column name
-    score: str  # score expression or column used for ranking
     keep: Optional[List[str]] = None  # optional explicit list of columns to keep
 
 
@@ -225,19 +226,17 @@ ra    [required] str
     RA column name.
 dec   [required] str
     DEC column name.
-score [required] str
-    Score column or expression used for ranking.
 keep  [optional, default=None] list[str] or null
     Controls which columns are kept in the HiPS tiles:
       - Not set / null (default):
-          Keep all input columns. RA, DEC, score dependencies and
+          Keep all input columns. RA, DEC, coverage_score_column dependencies and
           mag_column (when used) are moved to the beginning of the
           output column order.
       - Empty list []:
           Keep only the minimal set required by the pipeline:
-          RA, DEC, score dependencies and mag_column (when used).
+          RA, DEC, coverage_score_column dependencies and mag_column (when used).
       - Non-empty list:
-          Keep the minimal set (RA, DEC, score deps, mag_column if any)
+          Keep the minimal set (RA, DEC, coverage_score_column deps, mag_column if any)
           plus the explicitly listed columns.
 
 algorithm
@@ -254,6 +253,9 @@ level_coverage         [optional, default=8 if level_limit >= 8 else level_limit
 coverage_order         [optional, default=8 if level_limit >= 8 else level_limit]
     HEALPix order used to define coverage cells (__icov__). If only one of
     level_coverage or coverage_order is set, its value is used for both.
+coverage_score_column  [required in coverage mode] str
+    Score column or expression used to rank sources inside each coverage
+    cell (__icov__). Ignored in mag_global mode.
 order_desc             [optional, default=False]
     If False, lower score is better; if True, higher score is better.
 k_per_cov_per_level    [optional, default=None] dict[int, float]
@@ -382,10 +384,10 @@ This is the smallest valid configuration you can pass to
         "columns": {
             "ra": "ra",
             "dec": "dec",
-            "score": "score",
         },
         "algorithm": {
-            "level_limit": 10
+            "level_limit": 10,
+            "coverage_score_column": "score",
         },
         "cluster": {},
         "output": {
@@ -406,10 +408,10 @@ This is the smallest valid YAML file you can pass to ``load_config()``::
     columns:
       ra: "ra"
       dec: "dec"
-      score: "score"
 
     algorithm:
       level_limit: 10
+      coverage_score_column: "score"
 
     cluster: {}
 
@@ -438,6 +440,8 @@ def display_available_configs() -> None:
 def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     """Internal helper to build a Config from a raw mapping."""
     algo = y["algorithm"]
+
+    selection_mode = str(algo.get("selection_mode", "coverage")).lower()
 
     # Coverage / MOC orders
     level_limit = int(algo["level_limit"])
@@ -524,6 +528,16 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     n_2 = _to_int_or_none(n_2_raw, "n_2")
     n_3 = _to_int_or_none(n_3_raw, "n_3")
 
+    coverage_score_column = algo.get("coverage_score_column")
+    legacy_score_column = y.get("columns", {}).get("score")
+    if coverage_score_column is None and legacy_score_column is not None:
+        coverage_score_column = legacy_score_column
+
+    if selection_mode == "coverage" and not coverage_score_column:
+        raise ValueError(
+            "selection_mode='coverage' requires algorithm.coverage_score_column " "to be defined."
+        )
+
     cfg = Config(
         input=InputCfg(
             paths=y["input"]["paths"],
@@ -534,15 +548,15 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         columns=ColumnsCfg(
             ra=y["columns"]["ra"],
             dec=y["columns"]["dec"],
-            score=y["columns"]["score"],
             keep=y["columns"].get("keep"),
         ),
         algorithm=AlgoOpts(
-            selection_mode=str(algo.get("selection_mode", "coverage")).lower(),
+            selection_mode=selection_mode,
             level_limit=level_limit,
             level_coverage=level_coverage,
             order_desc=bool(algo.get("order_desc", False)),
             coverage_order=coverage_order,
+            coverage_score_column=coverage_score_column,
             # Per-level overrides for k (float values).
             k_per_cov_per_level=(
                 {int(k): float(v) for k, v in algo.get("k_per_cov_per_level", {}).items()}
