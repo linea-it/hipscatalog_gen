@@ -14,7 +14,7 @@
 #
 # HATS catalogs:
 #   - Opened via lsdb.open_catalog()
-#   - Columns restricted to RA/DEC, coverage_score_column dependencies, mag_column (if mag_global)
+#   - Columns restricted to RA/DEC, score expression dependencies, mg_mag_column (if mag_global)
 #     plus any columns listed in columns.keep.
 #   - When algorithm.use_hats_as_coverage=true, HATS partitions are used
 #     as coverage cells (__icov__) instead of HEALPix coverage_order.
@@ -70,7 +70,7 @@ columns:
   #   - If omitted or empty:
   #       → Keep only the minimal required subset:
   #           * RA and DEC columns;
-  #           * any columns referenced in the coverage_score_column expression;
+  #           * any columns referenced in the score expression used by the mode;
   #           * the magnitude column (if selection_mode = "mag_global").
   #
   #   - If provided:
@@ -92,24 +92,36 @@ algorithm:
   # ==============================
   # Common settings (all modes)
   # ==============================
-  selection_mode: "coverage"  # "coverage" | "mag_global"
+  selection_mode: "coverage"  # "coverage" | "mag_global" | "score_global"
   level_limit: 11             # HiPS max depth (4..11)
   level_coverage: 10          # Depth used for coverage densmap and MOC
 
   # ==============================
   # mag_global mode ONLY
-  # (precedence: mag_column OR flux_column)
+  # (precedence: mg_mag_column OR mg_flux_column)
   # ==============================
-  mag_column: null            # Magnitude column (mutually exclusive with flux_column)
-  flux_column: null           # Flux column to derive magnitudes (requires mag_offset)
-  mag_offset: null            # Required if flux_column is set
-  mag_min: null               # Optional lower mag bound (auto if null)
-  mag_max: null               # Optional upper mag bound (auto if null)
-  mag_completeness: false     # Use full mag range, ignore mag_min/max
-  mag_hist_nbins: 512         # Histogram bins for mag_global
-  n_1: null                   # Optional targets for depths 1..3
-  n_2: null
-  n_3: null
+  mg_mag_column: null            # Magnitude column (mutually exclusive with mg_flux_column)
+  mg_flux_column: null           # Flux column to derive magnitudes (requires mg_mag_offset)
+  mg_mag_offset: null            # Required if mg_flux_column is set
+  mg_mag_min: null               # Optional lower mag bound (auto if null)
+  mg_mag_max: null               # Optional upper mag bound (auto if null)
+  mg_mag_completeness: false     # Use full mag range, ignore mg_mag_min/max
+  mg_mag_hist_nbins: 512         # Histogram bins for mag_global
+  mg_n_1: null                   # Optional targets for depths 1..3
+  mg_n_2: null
+  mg_n_3: null
+
+  # ==============================
+  # score_global mode ONLY
+  # ==============================
+  sg_score_column: null           # Column or expression to evaluate globally
+  sg_score_min: null              # Optional lower bound (auto if null)
+  sg_score_max: null              # Optional upper bound (auto if null)
+  sg_score_adaptive_range: "complete"  # "complete" | "hist_peak"
+  sg_score_hist_nbins: 512        # Histogram bins for score_global
+  sg_n_1: null                    # Optional targets for depths 1..3
+  sg_n_2: null
+  sg_n_3: null
 
   # ==============================
   # coverage mode ONLY
@@ -126,21 +138,21 @@ algorithm:
   #
   # In coverage mode, this directly controls which rows are kept and how
   # fractional selection works inside each coverage cell.
-  coverage_score_column: "MAG_AUTO_I_DERED"
-  use_hats_as_coverage: false     # HATS partitions as coverage cells (__icov__)
-  order_desc: false               # Score ordering (coverage mode)
-  coverage_order: 10              # HEALPix order for __icov__ when not using HATS
-  density_mode: "exp"             # "constant" | "linear" | "exp" | "log"
-  k_per_cov_initial: 0.05          # Base k per coverage cell at depth 1
-  targets_total_initial: null     # Mutually exclusive with k_per_cov_initial
-  density_exp_base: 2.0           # Base for density_mode == "exp"
-  density_bias_mode: "none"       # "none" | "proportional" | "inverse"
-  density_bias_exponent: 1.0      # Bias strength
-  fractional_mode: "score"        # "random" | "score"
-  fractional_mode_logic: "local"  # "auto" | "local" | "global"
-  k_per_cov_per_level: {}         # Optional per-depth k overrides
-  targets_total_per_level: {}     # Optional per-depth total caps
-  tie_buffer: 10                  # Extra rows kept near cut
+  cov_coverage_score_column: "MAG_AUTO_I_DERED"
+  cov_use_hats_as_coverage: false     # HATS partitions as coverage cells (__icov__)
+  cov_order_desc: false               # Score ordering (coverage mode)
+  cov_coverage_order: 10              # HEALPix order for __icov__ when not using HATS
+  cov_density_mode: "exp"             # "constant" | "linear" | "exp" | "log"
+  cov_k_per_cov_initial: 0.05          # Base k per coverage cell at depth 1
+  cov_targets_total_initial: null     # Mutually exclusive with k_per_cov_initial
+  cov_density_exp_base: 2.0           # Base for density_mode == "exp"
+  cov_density_bias_mode: "none"       # "none" | "proportional" | "inverse"
+  cov_density_bias_exponent: 1.0      # Bias strength
+  cov_fractional_mode: "score"        # "random" | "score"
+  cov_fractional_mode_logic: "local"  # "auto" | "local" | "global"
+  cov_k_per_cov_per_level: {}         # Optional per-depth k overrides
+  cov_targets_total_per_level: {}     # Optional per-depth total caps
+  cov_tie_buffer: 10                  # Extra rows kept near cut
 # -----------------------------------------------------------------------------
 # Cluster settings (Dask or SLURM)
 # -----------------------------------------------------------------------------
@@ -170,7 +182,7 @@ cluster:
   #               on intermediate collections (more streaming, less peak memory).
   #     - false → follow the standard behavior with explicit .compute() calls.
   #
-  # These flags affect both modes ("coverage" and "mag_global").
+  # These flags affect all selection modes.
   persist_ddfs: false
   avoid_computes_wherever_possible: true
 

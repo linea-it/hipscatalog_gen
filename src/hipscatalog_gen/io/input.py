@@ -47,7 +47,14 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     mag_col_cfg: Optional[str] = None
     flux_col_cfg: Optional[str] = None
     coverage_score_expr = getattr(cfg.algorithm, "coverage_score_column", None) or ""
-    if getattr(cfg.algorithm, "selection_mode", "coverage").lower() == "mag_global":
+    score_global_expr = getattr(cfg.algorithm, "score_column", None) or ""
+    selection_mode = getattr(cfg.algorithm, "selection_mode", "coverage").lower()
+    active_score_expr = (
+        coverage_score_expr
+        if selection_mode == "coverage"
+        else (score_global_expr if selection_mode == "score_global" else "")
+    )
+    if selection_mode == "mag_global":
         mag_col_cfg = cfg.algorithm.mag_column
         flux_col_cfg = getattr(cfg.algorithm, "flux_column", None)
 
@@ -70,7 +77,7 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
         requested_keep = requested_keep_cfg or []
 
         # Extract potential score dependencies from the score expression.
-        score_tokens = set(_ID_RE.findall(str(coverage_score_expr))) if coverage_score_expr else set()
+        score_tokens = set(_ID_RE.findall(str(active_score_expr))) if active_score_expr else set()
 
         # Always request RA, DEC and score dependencies; mag/flux if applicable.
         must_keep = [cfg.columns.ra, cfg.columns.dec, *score_tokens]
@@ -175,7 +182,7 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
 
     # 2) Column selection (preserve order; ensure score deps).
     available_cols = list(ddf0.columns)
-    score_dependencies = _score_deps(coverage_score_expr, available_cols)
+    score_dependencies = _score_deps(active_score_expr, available_cols)
 
     requested_keep_cfg = cfg.columns.keep
     requested_keep = requested_keep_cfg or []

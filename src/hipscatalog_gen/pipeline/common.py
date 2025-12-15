@@ -38,13 +38,15 @@ def log_prologue(cfg: Any, out_dir: Path, log_fn) -> None:
         f"START HiPS catalog pipeline: " f"cat_name={cfg.output.cat_name} out_dir={out_dir}",
         always=True,
     )
-    log_fn(
+    sel_mode = (getattr(cfg.algorithm, "selection_mode", "") or "").lower()
+    base = (
         f"Config -> lM={cfg.algorithm.level_limit} "
         f"lC={cfg.algorithm.level_coverage} "
-        f"Oc={cfg.algorithm.coverage_order} "
-        f"order_desc={cfg.algorithm.order_desc}",
-        always=True,
+        f"selection_mode={sel_mode}"
     )
+    if sel_mode == "coverage":
+        base += f" Oc={cfg.algorithm.coverage_order} order_desc={cfg.algorithm.order_desc}"
+    log_fn(base, always=True)
 
 
 def log_epilogue(out_dir: Path, log_lines: List[str], t0: float, log_fn) -> None:
@@ -212,6 +214,14 @@ def write_common_static_products(
         n_1: {cfg.algorithm.n_1}
         n_2: {cfg.algorithm.n_2}
         n_3: {cfg.algorithm.n_3}
+        score_column: {cfg.algorithm.score_column}
+        score_min: {cfg.algorithm.score_min}
+        score_max: {cfg.algorithm.score_max}
+        score_adaptive_range: {cfg.algorithm.score_adaptive_range}
+        score_hist_nbins: {cfg.algorithm.score_hist_nbins}
+        score_n_1: {cfg.algorithm.score_n_1}
+        score_n_2: {cfg.algorithm.score_n_2}
+        score_n_3: {cfg.algorithm.score_n_3}
         k_per_cov_per_level: {cfg.algorithm.k_per_cov_per_level}
         targets_total_per_level: {cfg.algorithm.targets_total_per_level}
         tie_buffer: {cfg.algorithm.tie_buffer}
