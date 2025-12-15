@@ -5,7 +5,7 @@ import sys
 from typing import List, Optional
 
 from .config import load_config
-from .pipeline import run_pipeline
+from .pipeline.main import run_pipeline
 
 __all__ = ["main"]
 
@@ -21,7 +21,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     parser = argparse.ArgumentParser(
         description=(
-            "HiPS Catalog Pipeline (Dask, Parquet, coverage/mag_global selection). "
+            "HiPS Catalog Pipeline (Dask, Parquet, coverage/mag_global/score_global selection). "
             "Use a YAML config file to control inputs, cluster, and algorithm options."
         )
     )

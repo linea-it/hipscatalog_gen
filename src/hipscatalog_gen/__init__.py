@@ -11,7 +11,7 @@ except PackageNotFoundError:
     __version__ = "0.0.0"
 
 from .config import Config, load_config  # noqa: E402
-from .pipeline import run_pipeline  # noqa: E402
+from .pipeline.main import run_pipeline  # noqa: E402
 
 __all__ = [
     "Config",
