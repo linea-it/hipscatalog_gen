@@ -1,0 +1,647 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hipscatalog_gen.coverage.utils &mdash; hipscatalog-gen 0.1.dev1+gab123b0f1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=05545bfd"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=d07363f3"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            hipscatalog-gen
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">hipscatalog-gen</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hipscatalog_gen.coverage.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hipscatalog_gen.coverage.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lsdb.catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Catalog</span> <span class="k">as</span> <span class="n">LsdbCatalog</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_get_meta_df</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;build_cov_thresholds&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;filter_remainder_by_coverage_partition&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_candidates_by_coverage_partition&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_reduce_coverage_exact&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_reduce_coverage_exact_dask&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;apply_fractional_k_per_cov&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Coverage-based selection helpers</span>
+<span class="c1"># =============================================================================</span>
+
+
+<div class="viewcode-block" id="build_cov_thresholds">
+<a class="viewcode-back" href="../../../api/hipscatalog_gen.coverage.html#hipscatalog_gen.coverage.utils.build_cov_thresholds">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_cov_thresholds</span><span class="p">(</span>
+    <span class="n">selected</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">score_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">order_desc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute per-coverage score thresholds from already kept rows.</span>
+
+<span class="sd">    For each coverage cell (__icov__), the worst kept score is recorded:</span>
+<span class="sd">        * ascending score → max(score)</span>
+<span class="sd">        * descending score → min(score)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        selected: DataFrame with already kept rows (must have __icov__ and score_col).</span>
+<span class="sd">        score_col: Score column name.</span>
+<span class="sd">        order_desc: If True, scores are sorted in descending order.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Mapping {icov: threshold_score}.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="n">order_desc</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__icov__&quot;</span><span class="p">)[</span><span class="n">score_col</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__icov__&quot;</span><span class="p">)[</span><span class="n">score_col</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+
+
+<div class="viewcode-block" id="filter_remainder_by_coverage_partition">
+<a class="viewcode-back" href="../../../api/hipscatalog_gen.coverage.html#hipscatalog_gen.coverage.utils.filter_remainder_by_coverage_partition">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_remainder_by_coverage_partition</span><span class="p">(</span>
+    <span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">score_expr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">order_desc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">thr_cov</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">ra_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dec_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter remainder rows so kept rows never reappear.</span>
+
+<span class="sd">    Rows from pixels present in thr_cov are kept only if they are strictly</span>
+<span class="sd">    worse than the threshold for that pixel. Rows from pixels not in thr_cov</span>
+<span class="sd">    are kept as they are.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pdf: Input pandas DataFrame partition.</span>
+<span class="sd">        score_expr: Score column or expression.</span>
+<span class="sd">        order_desc: If True, higher scores are better.</span>
+<span class="sd">        thr_cov: Mapping {icov: threshold_score}.</span>
+<span class="sd">        ra_col: RA column name (unused, kept for interface consistency).</span>
+<span class="sd">        dec_col: DEC column name (unused, kept for interface consistency).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Filtered pandas DataFrame.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pdf</span>
+
+    <span class="c1"># Score computation: direct column or expression.</span>
+    <span class="k">if</span> <span class="n">score_expr</span> <span class="ow">in</span> <span class="n">pdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">sc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">pdf</span><span class="p">[</span><span class="n">score_expr</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="nb">compile</span><span class="p">(</span><span class="n">score_expr</span><span class="p">,</span> <span class="s2">&quot;&lt;score&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;eval&quot;</span><span class="p">)</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;__builtins__&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;np&quot;</span><span class="p">:</span> <span class="n">np</span><span class="p">,</span> <span class="s2">&quot;numpy&quot;</span><span class="p">:</span> <span class="n">np</span><span class="p">}</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">col</span><span class="p">:</span> <span class="n">pdf</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">pdf</span><span class="o">.</span><span class="n">columns</span><span class="p">})</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">sc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
+
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">replace</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="k">if</span> <span class="n">order_desc</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;__icov__&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pdf</span>
+
+    <span class="n">icov</span> <span class="o">=</span> <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__icov__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">thr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">thr_cov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">icov</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">order_desc</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">s</span> <span class="o">&lt;</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">thr</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">thr</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pdf</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_candidates_by_coverage_partition</span><span class="p">(</span>
+    <span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">score_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">order_desc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">k_per_cov</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">tie_buffer</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">ra_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dec_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select candidate rows per coverage cell (__icov__) with a tie buffer.</span>
+
+<span class="sd">    Keeps up to (k + tie_buffer) rows per coverage cell:</span>
+<span class="sd">        * If k_per_cov is scalar → same k for all cells.</span>
+<span class="sd">        * If dict → k_per_cov[icov] for each cell.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pdf: Input pandas DataFrame.</span>
+<span class="sd">        score_col: Column used for ranking within each coverage cell.</span>
+<span class="sd">        order_desc: If True, higher scores are better.</span>
+<span class="sd">        k_per_cov: Scalar or mapping {icov: k}.</span>
+<span class="sd">        tie_buffer: Extra rows kept near the cut to avoid hard score edges.</span>
+<span class="sd">        ra_col: RA column name, used as tie-breaker.</span>
+<span class="sd">        dec_col: DEC column name, used as tie-breaker.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        DataFrame with candidate rows, including at most (k + tie_buffer)</span>
+<span class="sd">        rows per coverage cell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pdf</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">asc</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">order_desc</span>
+    <span class="n">pdf</span> <span class="o">=</span> <span class="n">pdf</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+        <span class="p">[</span><span class="s2">&quot;__icov__&quot;</span><span class="p">,</span> <span class="n">score_col</span><span class="p">,</span> <span class="n">ra_col</span><span class="p">,</span> <span class="n">dec_col</span><span class="p">],</span>
+        <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="n">asc</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span>
+        <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;mergesort&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__rk__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pdf</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__icov__&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cumcount</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k_per_cov</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">k_map</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">k_per_cov</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+        <span class="n">need_vec</span> <span class="o">=</span> <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__icov__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">k_map</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">tie_buffer</span><span class="p">)</span>
+        <span class="n">need_vec</span> <span class="o">=</span> <span class="n">need_vec</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">pdf</span><span class="p">[</span><span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__rk__&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">need_vec</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">need</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k_per_cov</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">tie_buffer</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">pdf</span><span class="p">[</span><span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__rk__&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">need</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;__rk__&quot;</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reduce_coverage_exact</span><span class="p">(</span>
+    <span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">score_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">order_desc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">k_per_cov</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">ra_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dec_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep up to k rows per coverage cell (__icov__), per pandas DataFrame.</span>
+
+<span class="sd">    If a cell has fewer than k rows, all rows are kept.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pdf: Input pandas DataFrame.</span>
+<span class="sd">        score_col: Column used for ranking within each coverage cell.</span>
+<span class="sd">        order_desc: If True, higher scores are better.</span>
+<span class="sd">        k_per_cov: Scalar or mapping {icov: k}.</span>
+<span class="sd">        ra_col: RA column name (tie-breaker).</span>
+<span class="sd">        dec_col: DEC column name (tie-breaker).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        DataFrame with up to k rows per coverage cell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pdf</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">asc</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">order_desc</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">icov</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">pdf</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__icov__&quot;</span><span class="p">):</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k_per_cov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">icov</span><span class="p">),</span> <span class="mi">0</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k_per_cov</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">k_per_cov</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">gg</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">score_col</span><span class="p">,</span> <span class="n">ra_col</span><span class="p">,</span> <span class="n">dec_col</span><span class="p">],</span>
+            <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="n">asc</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span>
+            <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;mergesort&quot;</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gg</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">out</span> <span class="k">else</span> <span class="n">pdf</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reduce_coverage_exact_dask</span><span class="p">(</span>
+    <span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">score_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">order_desc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">k_per_cov</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="n">ra_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dec_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dask-based equivalent of `_reduce_coverage_exact`.</span>
+
+<span class="sd">    Keeps up to k rows per coverage cell (__icov__), with the same ordering</span>
+<span class="sd">    and tie-breaking rules as the pandas version:</span>
+<span class="sd">        * sort by score_col, then RA, then DEC</span>
+<span class="sd">        * if a cell has fewer rows than k, keep them all</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ddf_like: Dask DataFrame or LSDB Catalog.</span>
+<span class="sd">        score_col: Column used for ranking within each coverage cell.</span>
+<span class="sd">        order_desc: If True, higher scores are better.</span>
+<span class="sd">        k_per_cov: Scalar or mapping {icov: k}.</span>
+<span class="sd">        ra_col: RA column name.</span>
+<span class="sd">        dec_col: DEC column name.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dask collection with up to k rows per coverage cell.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">asc</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">order_desc</span>
+    <span class="n">is_dict</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k_per_cov</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+
+    <span class="c1"># Prepare typed holders with explicit casts so mypy não reclama.</span>
+    <span class="k">if</span> <span class="n">is_dict</span><span class="p">:</span>
+        <span class="n">k_map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">k_per_cov</span><span class="p">)</span>
+        <span class="n">k_scalar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">k_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">k_scalar</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">k_per_cov</span><span class="p">))</span>
+
+    <span class="c1"># Scalar and non-positive → empty result of same schema.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_dict</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">k_scalar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="n">k_scalar</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">empty_meta</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ddf_like</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pdf</span><span class="p">:</span> <span class="n">pdf</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">],</span> <span class="n">meta</span><span class="o">=</span><span class="n">empty_meta</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_take_topk</span><span class="p">(</span><span class="n">group</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Select top-k rows within a single __icov__ group.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">group</span>
+
+        <span class="k">if</span> <span class="n">is_dict</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">k_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># for type checkers</span>
+            <span class="n">icov_val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="s2">&quot;__icov__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">icov_val</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">k_scalar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># for type checkers</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k_scalar</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">k</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">group</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">group_sorted</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">score_col</span><span class="p">,</span> <span class="n">ra_col</span><span class="p">,</span> <span class="n">dec_col</span><span class="p">],</span>
+            <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="n">asc</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span>
+            <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;mergesort&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">group_sorted</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">)</span>
+
+    <span class="c1"># LSDB Catalog: operate on internal Dask DataFrame.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="n">LsdbCatalog</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">&quot;_ddf&quot;</span><span class="p">):</span>
+        <span class="n">base_ddf</span> <span class="o">=</span> <span class="n">ddf_like</span><span class="o">.</span><span class="n">_ddf</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">cols_all</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">base_ddf</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">base_ddf</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__icov__&quot;</span><span class="p">,</span> <span class="n">group_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="n">cols_all</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_take_topk</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">)</span>
+
+    <span class="c1"># Generic Dask DataFrame path.</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">&quot;groupby&quot;</span><span class="p">):</span>
+        <span class="n">cols_all</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ddf_like</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ddf_like</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__icov__&quot;</span><span class="p">,</span> <span class="n">group_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="n">cols_all</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_take_topk</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">)</span>
+
+    <span class="c1"># Fallback: unsupported type → return input unchanged.</span>
+    <span class="k">return</span> <span class="n">ddf_like</span>
+
+
+<div class="viewcode-block" id="apply_fractional_k_per_cov">
+<a class="viewcode-back" href="../../../api/hipscatalog_gen.coverage.html#hipscatalog_gen.coverage.utils.apply_fractional_k_per_cov">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_fractional_k_per_cov</span><span class="p">(</span>
+    <span class="n">selected</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">k_desired</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">score_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">order_desc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;random&quot;</span><span class="p">,</span>
+    <span class="n">mode_logic</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">ra_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">dec_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">k_per_cov_desired_map</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply fractional-k adjustment on top of per-coverage selection.</span>
+
+<span class="sd">    This function adjusts the integer per-coverage selection using:</span>
+<span class="sd">        * local or global logic, and</span>
+<span class="sd">        * random or score-based selection.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        selected: DataFrame limited to &lt;= k_int rows per __icov__.</span>
+<span class="sd">        k_desired: Base expected number of rows per coverage cell (can be fractional).</span>
+<span class="sd">        score_col: Score column name for ranking.</span>
+<span class="sd">        order_desc: If True, higher scores are better.</span>
+<span class="sd">        mode: &quot;random&quot; or &quot;score&quot;.</span>
+<span class="sd">        mode_logic: &quot;auto&quot;, &quot;local&quot; or &quot;global&quot;.</span>
+<span class="sd">        ra_col: RA column name (used as tie-breaker when needed).</span>
+<span class="sd">        dec_col: DEC column name (used as tie-breaker when needed).</span>
+<span class="sd">        k_per_cov_desired_map: Optional mapping {icov: k_desired_icov}.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple (kept_df, dropped_df), where:</span>
+<span class="sd">            kept_df: Rows actually kept at this depth.</span>
+<span class="sd">            dropped_df: Rows not written at this depth (available for deeper levels).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the mode or logic is unknown, or if `selected` is None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">selected</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;apply_fractional_k_per_cov expects a pandas.DataFrame, got None.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">k_desired</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">selected</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">mode</span> <span class="ow">or</span> <span class="s2">&quot;random&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">logic_raw</span> <span class="o">=</span> <span class="p">(</span><span class="n">mode_logic</span> <span class="ow">or</span> <span class="s2">&quot;auto&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;random&quot;</span><span class="p">,</span> <span class="s2">&quot;score&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown fractional_mode: </span><span class="si">{</span><span class="n">mode</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># &quot;auto&quot; preserves backward-compatible behavior.</span>
+    <span class="k">if</span> <span class="n">logic_raw</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+        <span class="n">logic</span> <span class="o">=</span> <span class="s2">&quot;global&quot;</span> <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;score&quot;</span> <span class="k">else</span> <span class="s2">&quot;local&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">logic_raw</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;global&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown fractional_mode_logic: </span><span class="si">{</span><span class="n">mode_logic</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logic</span> <span class="o">=</span> <span class="n">logic_raw</span>
+
+    <span class="k">if</span> <span class="s2">&quot;__icov__&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">selected</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">selected</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_k_desired_for_icov</span><span class="p">(</span><span class="n">icov</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_avail</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">k_per_cov_desired_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">k_per_cov_desired_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">icov</span><span class="p">),</span> <span class="n">k_desired</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">k_desired</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_avail</span><span class="p">))</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># mode == &quot;score&quot; and logic == &quot;global&quot;</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;score&quot;</span> <span class="ow">and</span> <span class="n">logic</span> <span class="o">==</span> <span class="s2">&quot;global&quot;</span><span class="p">:</span>
+        <span class="n">n_cov</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="s2">&quot;__icov__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">n_cov</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">],</span> <span class="n">selected</span>
+
+        <span class="n">k_total_desired</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">k_desired</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_cov</span><span class="p">)</span>
+        <span class="n">n_sel</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span>
+        <span class="n">n_keep</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">k_total_desired</span><span class="p">))</span>
+        <span class="n">n_keep</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_keep</span><span class="p">,</span> <span class="n">n_sel</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">n_keep</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">],</span> <span class="n">selected</span>
+
+        <span class="n">asc</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">order_desc</span>
+        <span class="n">sort_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">score_col</span><span class="p">]</span>
+        <span class="n">ascending</span> <span class="o">=</span> <span class="p">[</span><span class="n">asc</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">ra_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ra_col</span> <span class="ow">in</span> <span class="n">selected</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">sort_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ra_col</span><span class="p">)</span>
+            <span class="n">ascending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dec_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">dec_col</span> <span class="ow">in</span> <span class="n">selected</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">sort_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dec_col</span><span class="p">)</span>
+            <span class="n">ascending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">selected_sorted</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+            <span class="n">sort_cols</span><span class="p">,</span>
+            <span class="n">ascending</span><span class="o">=</span><span class="n">ascending</span><span class="p">,</span>
+            <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;mergesort&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">kept_df</span> <span class="o">=</span> <span class="n">selected_sorted</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">n_keep</span><span class="p">]</span>
+        <span class="n">dropped_df</span> <span class="o">=</span> <span class="n">selected_sorted</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n_keep</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">kept_df</span><span class="p">,</span> <span class="n">dropped_df</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># mode == &quot;score&quot; and logic == &quot;local&quot;</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;score&quot;</span> <span class="ow">and</span> <span class="n">logic</span> <span class="o">==</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span>
+        <span class="n">asc</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">order_desc</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+
+        <span class="n">kept_parts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dropped_parts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">icov</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">selected</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__icov__&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">sort_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">score_col</span><span class="p">]</span>
+            <span class="n">ascending</span> <span class="o">=</span> <span class="p">[</span><span class="n">asc</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">ra_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ra_col</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">sort_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ra_col</span><span class="p">)</span>
+                <span class="n">ascending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dec_col</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">dec_col</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">sort_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dec_col</span><span class="p">)</span>
+                <span class="n">ascending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="n">g_sorted</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+                <span class="n">sort_cols</span><span class="p">,</span>
+                <span class="n">ascending</span><span class="o">=</span><span class="n">ascending</span><span class="p">,</span>
+                <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;mergesort&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">n_avail</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">g_sorted</span><span class="p">)</span>
+            <span class="n">k_local_desired</span> <span class="o">=</span> <span class="n">_k_desired_for_icov</span><span class="p">(</span><span class="n">icov</span><span class="p">,</span> <span class="n">n_avail</span><span class="p">)</span>
+
+            <span class="n">k_floor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">k_local_desired</span><span class="p">))</span>
+            <span class="n">k_floor</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">k_floor</span><span class="p">)</span>
+
+            <span class="n">base_keep</span> <span class="o">=</span> <span class="n">g_sorted</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">k_floor</span><span class="p">]</span> <span class="k">if</span> <span class="n">k_floor</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">g_sorted</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">g_sorted</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">k_floor</span><span class="p">:]</span>
+
+            <span class="n">extra_keep</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">frac_local</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">k_local_desired</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">k_floor</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">frac_local</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">frac_local</span><span class="p">:</span>
+                <span class="n">extra_keep</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">extra_keep</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">extra_row</span> <span class="o">=</span> <span class="n">remaining</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">final_keep</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">base_keep</span><span class="p">,</span> <span class="n">extra_row</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">final_drop</span> <span class="o">=</span> <span class="n">remaining</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">final_keep</span> <span class="o">=</span> <span class="n">base_keep</span>
+                <span class="n">final_drop</span> <span class="o">=</span> <span class="n">remaining</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_keep</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">kept_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">final_keep</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_drop</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">dropped_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">final_drop</span><span class="p">)</span>
+
+        <span class="n">kept_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">kept_parts</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="n">kept_parts</span> <span class="k">else</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dropped_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dropped_parts</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="n">dropped_parts</span> <span class="k">else</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">kept_df</span><span class="p">,</span> <span class="n">dropped_df</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># mode == &quot;random&quot; and logic == &quot;global&quot;</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;random&quot;</span> <span class="ow">and</span> <span class="n">logic</span> <span class="o">==</span> <span class="s2">&quot;global&quot;</span><span class="p">:</span>
+        <span class="n">n_cov</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="s2">&quot;__icov__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">n_cov</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">],</span> <span class="n">selected</span>
+
+        <span class="n">k_total_desired</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">k_desired</span><span class="p">)</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_cov</span><span class="p">)</span>
+        <span class="n">n_sel</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span>
+        <span class="n">n_keep</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">k_total_desired</span><span class="p">))</span>
+        <span class="n">n_keep</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_keep</span><span class="p">,</span> <span class="n">n_sel</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">n_keep</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">],</span> <span class="n">selected</span>
+
+        <span class="n">shuffled</span> <span class="o">=</span> <span class="n">selected</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">kept_df</span> <span class="o">=</span> <span class="n">shuffled</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">n_keep</span><span class="p">]</span>
+        <span class="n">dropped_df</span> <span class="o">=</span> <span class="n">shuffled</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">n_keep</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">kept_df</span><span class="p">,</span> <span class="n">dropped_df</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># mode == &quot;random&quot; and logic == &quot;local&quot;</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="n">k_floor_global</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">k_desired</span><span class="p">)</span>
+    <span class="n">frac_global</span> <span class="o">=</span> <span class="n">k_desired</span> <span class="o">-</span> <span class="n">k_floor_global</span>
+
+    <span class="k">if</span> <span class="n">frac_global</span> <span class="o">&lt;=</span> <span class="mf">1e-9</span> <span class="ow">and</span> <span class="n">k_per_cov_desired_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">selected</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+    <span class="n">kept_parts_rand</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dropped_parts_rand</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">icov</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">selected</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__icov__&quot;</span><span class="p">):</span>
+        <span class="n">n_avail</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n_avail</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">k_local_desired</span> <span class="o">=</span> <span class="n">_k_desired_for_icov</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">icov</span><span class="p">),</span> <span class="n">n_avail</span><span class="p">)</span>
+
+        <span class="n">k_floor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">k_local_desired</span><span class="p">))</span>
+        <span class="n">k_floor</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">k_floor</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">k_floor</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">perm</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">n_avail</span><span class="p">)</span>
+            <span class="n">base_idx</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[:</span><span class="n">k_floor</span><span class="p">]</span>
+            <span class="n">remaining_idx</span> <span class="o">=</span> <span class="n">perm</span><span class="p">[</span><span class="n">k_floor</span><span class="p">:]</span>
+
+            <span class="n">base_keep</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">base_idx</span><span class="p">]</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">remaining_idx</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">base_keep</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">g</span>
+
+        <span class="n">extra_keep</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">frac_local</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">k_local_desired</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">k_floor</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">remaining</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">frac_local</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="n">rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">frac_local</span><span class="p">:</span>
+            <span class="n">extra_keep</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">extra_keep</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">remaining</span><span class="p">))</span>
+            <span class="n">extra_row</span> <span class="o">=</span> <span class="n">remaining</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="n">j</span><span class="p">]]</span>
+            <span class="n">remaining_without_extra</span> <span class="o">=</span> <span class="n">remaining</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">remaining</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+
+            <span class="n">final_keep</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">base_keep</span><span class="p">,</span> <span class="n">extra_row</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">final_drop</span> <span class="o">=</span> <span class="n">remaining_without_extra</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">final_keep</span> <span class="o">=</span> <span class="n">base_keep</span>
+            <span class="n">final_drop</span> <span class="o">=</span> <span class="n">remaining</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_keep</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">kept_parts_rand</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">final_keep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_drop</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">dropped_parts_rand</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">final_drop</span><span class="p">)</span>
+
+    <span class="n">kept_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">kept_parts_rand</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="n">kept_parts_rand</span> <span class="k">else</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dropped_df</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dropped_parts_rand</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="n">dropped_parts_rand</span> <span class="k">else</span> <span class="n">selected</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">kept_df</span><span class="p">,</span> <span class="n">dropped_df</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
