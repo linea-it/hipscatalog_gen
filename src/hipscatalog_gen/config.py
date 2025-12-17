@@ -131,6 +131,7 @@ class OutputCfg:
     target: str
     creator_did: Optional[str] = None
     obs_title: Optional[str] = None
+    overwrite: bool = False
 
 
 @dataclass
@@ -306,6 +307,8 @@ creator_did  [optional, default=None] str
     Dataset identifier for the creator, used in metadata.
 obs_title    [optional, default=None] str
     Human-readable title for the observation/catalog, used in metadata.
+overwrite    [optional, default=False] bool
+    If True and output.out_dir already exists, delete its contents before writing.
 
 
 Examples
@@ -592,6 +595,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             target=y["output"].get("target", "0 0"),
             creator_did=y["output"].get("creator_did"),
             obs_title=y["output"].get("obs_title"),
+            overwrite=bool(y["output"].get("overwrite", False)),
         ),
     )
 

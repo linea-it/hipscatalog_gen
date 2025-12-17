@@ -226,6 +226,10 @@ output:
   #   - process.log             (full textual log)
   out_dir: "/path/to/output/hips_catalog"
 
+  # If false and out_dir already exists, the run fails.
+  # If true, delete its contents before writing the new HiPS catalog.
+  overwrite: false
+
   # Catalog / HiPS name:
   #   - Used in metadata (properties, metadata.xml).
   #   - Used for some internal titles and logs.

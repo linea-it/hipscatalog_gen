@@ -32,15 +32,7 @@ dask.config.set({"dataframe.shuffle.method": "tasks"})
 
 @dataclass
 class ClusterRuntime:
-    """Runtime handles for the Dask cluster.
-
-    Attributes:
-        cluster: Low-level cluster object (LocalCluster or SLURMCluster).
-        client: Connected Dask client.
-        persist_ddfs: Whether to persist large intermediates in memory.
-        avoid_computes: Whether to avoid large `.compute()` calls when possible.
-        diagnostics_mode: Diagnostics mode ("per_step", "global", "off").
-    """
+    """Runtime handles for the Dask cluster."""
 
     cluster: Any
     client: Client
@@ -56,22 +48,25 @@ def setup_cluster(
 ) -> Tuple[ClusterRuntime, Callable[[str], ContextManager[Any]]]:
     """Create and configure the Dask cluster and diagnostics context.
 
-    This function preserves the original cluster logic:
-      * `mode="local"` → LocalCluster
-      * `mode="slurm"` → SLURMCluster (when available)
-      * logs dashboard URL and memory/compute policy
-      * wires diagnostics mode for performance reports
+    Cluster selection rules:
+
+    - ``mode="local"`` uses ``LocalCluster``.
+    - ``mode="slurm"`` uses ``SLURMCluster`` (when available).
+    - Logs dashboard URL and memory/compute policy.
+    - Wires diagnostics mode for performance reports.
 
     Args:
         cfg: Cluster configuration.
         report_dir: Directory where per-step diagnostics reports are written.
-        log_fn: Logging callback `(message, always)`.
+        log_fn: Logging callback ``(message, always)``.
 
     Returns:
-        Tuple (runtime, diag_ctx_factory) where:
-            runtime: ClusterRuntime with cluster/client and flags.
-            diag_ctx_factory: function `label -> context manager` used as
-                `with diag_ctx_factory("step_name"):` around pipeline steps.
+        Tuple[ClusterRuntime, Callable[[str], ContextManager[Any]]]: A pair
+        ``(runtime, diag_ctx_factory)``, where:
+
+        - ``runtime``: ClusterRuntime with cluster/client and flags.
+        - ``diag_ctx_factory``: function ``label -> context manager`` used as
+          ``with diag_ctx_factory("step_name"):`` around pipeline steps.
     """
     # ------------------------------------------------------------------
     # Cluster creation (local or SLURM)
@@ -136,9 +131,10 @@ def setup_cluster(
         """Return a diagnostics context for a labeled pipeline step.
 
         Modes:
-            * "per_step" → one HTML report per labeled step.
-            * "global"   → handled by an outer global report (no-op here).
-            * "off"      → diagnostics disabled (no-op).
+
+        - ``per_step``: one HTML report per labeled step.
+        - ``global``: handled by an outer global report (no-op here).
+        - ``off``: diagnostics disabled (no-op).
         """
         if diagnostics_mode == "per_step":
             return performance_report(filename=str(report_dir / f"{label}.html"))

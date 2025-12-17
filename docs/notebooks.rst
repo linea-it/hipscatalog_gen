@@ -2,5 +2,6 @@ Notebooks
 ========================================================================================
 
 .. toctree::
+   :maxdepth: 1
 
-    Introducing Jupyter Notebooks <notebooks/intro_notebook>
+    Simple Pipeline Run <notebooks/simple-pipeline-run>

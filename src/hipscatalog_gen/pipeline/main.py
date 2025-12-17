@@ -16,6 +16,7 @@ Command-line interface:
 from __future__ import annotations
 
 # Standard library
+import shutil
 import time
 
 # Internal modules
@@ -53,11 +54,6 @@ def run_pipeline(cfg: Config) -> None:
             and output options.
     """
     out_dir = Path(cfg.output.out_dir)
-    _mkdirs(out_dir)
-
-    report_dir = out_dir / "dask_reports"
-    _mkdirs(report_dir)
-
     t0 = time.time()
     log_lines: List[str] = []
 
@@ -65,6 +61,25 @@ def run_pipeline(cfg: Config) -> None:
         line = f"{_ts()} | {msg}"
         print(line)
         log_lines.append(line)
+
+    overwrite = bool(getattr(cfg.output, "overwrite", False))
+    if out_dir.exists():
+        if overwrite:
+            _log(f"[output] overwrite=True -> deleting existing contents under {out_dir}", True)
+            if out_dir.is_file():
+                out_dir.unlink()
+            else:
+                shutil.rmtree(out_dir)
+        else:
+            raise ValueError(
+                f"output.out_dir already exists at {out_dir}. "
+                "Set output.overwrite=true to delete it before writing a new catalog."
+            )
+
+    _mkdirs(out_dir)
+
+    report_dir = out_dir / "dask_reports"
+    _mkdirs(report_dir)
 
     log_prologue(cfg, out_dir, _log)
 
