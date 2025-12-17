@@ -28,24 +28,31 @@ Mode-specific parameters in the YAML use the prefixes:
 
 ## Quick Start
 
+Recommended (conda + Python 3.13):
+
     git clone https://github.com/linea-it/hipscatalog_gen.git
     cd hipscatalog_gen
+    conda create -n hipscatalog-gen python=3.13
+    conda activate hipscatalog-gen
     pip install -e .[dev]
 
 Then run:
 
     python -m hipscatalog_gen.cli --config config.yaml
 
-For conda-based setups, see "Environment Setup" below.
+--------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------
+## Environment Setup (conda)
 
-## Environment Setup
+Create an isolated environment (example with Python 3.13), then install inside it:
 
-All required packages are specified in the file environment.yaml at the ./examples/scripts folder.
+    conda create -n hipscatalog-gen python=3.13
+    conda activate hipscatalog-gen
+    pip install -e .[dev]
 
-    conda env create -f environment.yaml
-    conda activate hipscatalog_gen_env
+Optionally expose the env as a Jupyter kernel:
+
+    python -m ipykernel install --user --name hipscatalog-gen --display-name "hipscatalog-gen"
 
 -------------------------------------------------------------------------------
 
@@ -72,32 +79,15 @@ The pipeline can be executed either as a Python library or from the command line
 
 ### Run as a library
 
-    from hipscatalog_gen import load_config, run_pipeline
+    from hipscatalog_gen.config import load_config, load_config_from_dict, display_available_configs
+    from hipscatalog_gen.pipeline.main import run_pipeline
+
     cfg = load_config("config.yaml")
     run_pipeline(cfg)
 
 ### Run from the command line
 
     python -m hipscatalog_gen.cli --config config.yaml
-
--------------------------------------------------------------------------------
-
-## SLURM Cluster Usage
-
-To run on a SLURM cluster:
-
-1. Configure the cluster section in config.yaml with:
-   - cluster.mode: slurm
-   - cluster.n_workers, cluster.threads_per_worker, cluster.memory_per_worker
-   - SLURM options under cluster.slurm (queue, account, etc.)
-
-2. Use ./examples/scripts/run_hips.sbatch as an example batch script.
-
-3. Submit and monitor:
-       sbatch run_hips.sbatch
-       squeue -u $USER
-
--------------------------------------------------------------------------------
 
 ## Output Structure
 
@@ -109,6 +99,7 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - Moc.fits / Moc.json     → Multi-Order Coverage maps.
 - properties / metadata.xml → HiPS metadata descriptors.
 - process.log / arguments  → Run logs and configuration snapshot.
+- Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.
 
 -------------------------------------------------------------------------------
 

@@ -1,51 +1,89 @@
-
-.. hipscatalog_gen documentation main file.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to hipscatalog_gen's documentation!
+hipscatalog-gen: HiPS catalog pipeline
 ========================================================================================
 
-Dev Guide - Getting Started
----------------------------
+hipscatalog-gen builds HiPS-compliant catalog hierarchies from large astronomical tables using Dask and LSDB. It extends ideas from the CDS ``Hipsgen-cat.jar`` in a scalable Python pipeline suited for survey-scale workflows.
 
-Before installing any dependencies or writing code, it's a great idea to create a
-virtual environment. LINCC-Frameworks engineers primarily use `conda` to manage virtual
-environments. If you have conda installed locally, you can run the following to
-create and activate a new environment.
+Overview
+--------
+
+- Three selection modes (``algorithm.selection_mode``):
+
+  - ``mag_global``: magnitude-complete selection (``mg_*`` parameters).
+  - ``score_global``: selection driven by an arbitrary score/expression (``sg_*``).
+  - ``coverage``: coverage-based selection per HEALPix/HATS cell (``cov_*``).
+
+- Runs locally; outputs full HiPS layouts (tiles, all-sky, MOC, metadata, density maps).
+
+Quick start
+-----------
 
 .. code-block:: console
 
-   >> conda create env -n <env_name> python=3.11
-   >> conda activate <env_name>
+   git clone https://github.com/linea-it/hipscatalog_gen.git
+   cd hipscatalog_gen
+   conda create -n hipscatalog-gen python=3.13
+   conda activate hipscatalog-gen
+   pip install -e .[dev]
+   python -m hipscatalog_gen.cli --config config.yaml
 
-
-Once you have created a new environment, you can install this project for local
-development using the following commands:
+Environment (conda)
+-------------------
 
 .. code-block:: console
 
-   >> pip install -e .'[dev]'
-   >> pre-commit install
-   >> conda install pandoc
+   conda create -n hipscatalog-gen python=3.13
+   conda activate hipscatalog-gen
+   pip install -e .[dev]
 
+Optional: expose the env as a Jupyter kernel:
 
-Notes:
+.. code-block:: console
 
-1) The single quotes around ``'[dev]'`` may not be required for your operating system.
-2) ``pre-commit install`` will initialize pre-commit for this local repository, so
-   that a set of tests will be run prior to completing a local commit. For more
-   information, see the Python Project Template documentation on
-   `pre-commit <https://lincc-ppt.readthedocs.io/en/latest/practices/precommit.html>`_.
-3) Installing ``pandoc`` allows you to verify that automatic rendering of Jupyter notebooks
-   into documentation for ReadTheDocs works as expected. For more information, see
-   the Python Project Template documentation on
-   `Sphinx and Python Notebooks <https://lincc-ppt.readthedocs.io/en/latest/practices/sphinx.html#python-notebooks>`_.
+   python -m ipykernel install --user --name hipscatalog-gen --display-name "hipscatalog-gen"
 
+Configuration
+-------------
+
+- Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters (``mg_*``, ``sg_*``, ``cov_*``). More examples live under ``examples/configs/``.
+
+Run the pipeline
+----------------
+
+Library:
+
+.. code-block:: python
+
+   from hipscatalog_gen.config import load_config, load_config_from_dict, display_available_configs
+   from hipscatalog_gen.pipeline.main import run_pipeline
+
+   cfg = load_config("config.yaml")
+   run_pipeline(cfg)
+
+CLI:
+
+.. code-block:: console
+
+   python -m hipscatalog_gen.cli --config config.yaml
+
+Outputs (HiPS layout)
+---------------------
+
+- ``Norder*/Dir*/Npix*.tsv``: per-depth tiles; optional ``Norder*/Allsky.tsv``.
+- ``densmap_o<depth>.fits``: density maps up to ``algorithm.level_limit``.
+- ``Moc.fits`` / ``Moc.json``: coverage maps.
+- ``properties`` and ``metadata.xml``: HiPS metadata descriptors.
+- ``process.log`` and ``arguments``: logs and config snapshot.
+- Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.
+
+Navigation
+----------
+
+- API reference (generated from code).
+- Example notebooks, including an intro and a simple pipeline run.
 
 .. toctree::
    :hidden:
 
    Home page <self>
-   API Reference <autoapi/index>
+   API Reference <api/index>
    Notebooks <notebooks>
