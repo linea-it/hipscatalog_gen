@@ -83,8 +83,13 @@ def _assign_targets_per_depth(
     score_max: float,
     n_tot_score: float,
     log_fn,
-) -> np.ndarray:
-    """Reuse score_global target allocation with fixed targets map."""
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Reuse score_global target allocation with fixed targets map.
+
+    Returns
+        level_edges: score edges per depth (len = depths_sel + 1)
+        targets_per_depth: expected total rows per depth (float)
+    """
     weights_list: List[float] = []
     for d in depths_sel:
         counts_d = densmaps[d]
@@ -146,7 +151,9 @@ def _assign_targets_per_depth(
     level_edges = np.maximum.accumulate(level_edges)
     level_edges[0] = score_min
     level_edges[-1] = score_max
-    return level_edges
+    targets_per_depth = np.empty(len(depths_sel), dtype="float64")
+    targets_per_depth[:] = T
+    return level_edges, targets_per_depth
 
 
 def _redistribute_by_density(
@@ -531,7 +538,7 @@ def run_score_density_hybrid_selection(
         2: getattr(algo, "sdh_n_2", None),
         3: getattr(algo, "sdh_n_3", None),
     }
-    level_edges = _assign_targets_per_depth(
+    level_edges, targets_per_depth = _assign_targets_per_depth(
         densmaps=densmaps,
         depths_sel=depths_sel,
         fixed_targets=fixed_targets,
@@ -559,62 +566,40 @@ def run_score_density_hybrid_selection(
         depth_t0 = time.time()
         s_lo = level_edges[i]
         s_hi = level_edges[i + 1]
+        n_target = int(round(targets_per_depth[i])) if i < len(targets_per_depth) else None
 
         with diag_ctx(f"dask_depth_sdh_{depth:02d}"):
-            if depth != depths_sel[-1]:
-                score_mask = (remainder_ddf[score_col_internal] >= s_lo) & (
-                    remainder_ddf[score_col_internal] < s_hi
-                )
-            else:
-                score_mask = (remainder_ddf[score_col_internal] >= s_lo) & (
-                    remainder_ddf[score_col_internal] <= s_hi
-                )
-
-            depth_ddf = remainder_ddf[score_mask]
-            selected_pdf = depth_ddf.compute()
-            _log_depth_stats(
-                log_fn,
-                depth,
-                "selected",
-                counts=densmaps[depth],
-                selected_len=len(selected_pdf),
-            )
-
-            if len(selected_pdf) == 0:
-                log_fn(
-                    f"[DEPTH {depth}] score_density_hybrid: no rows in "
-                    f"score slice [{s_lo:.6f}, {s_hi:.6f}] → skipping.",
-                    always=True,
-                )
-                log_fn(
-                    f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
-                    always=True,
-                )
-                continue
-
-            ra_vals = pd.to_numeric(selected_pdf[ra_col], errors="coerce").to_numpy()
-            dec_vals = pd.to_numeric(selected_pdf[dec_col], errors="coerce").to_numpy()
-
-            theta = np.deg2rad(90.0 - dec_vals)
-            phi = np.deg2rad(ra_vals % 360.0)
-
-            NSIDE_L = 1 << depth
-            ipixL = hp.ang2pix(
-                NSIDE_L,
-                theta,
-                phi,
-                nest=True,
-            ).astype(np.int64)
-            selected_pdf["__ipix__"] = ipixL
-
-            # Density redistribution only for depths 1–3
             if depth <= 3:
+                depth_pdf = remainder_ddf.compute()
+                if len(depth_pdf) == 0 or (n_target is not None and n_target <= 0):
+                    log_fn(
+                        f"[DEPTH {depth}] score_density_hybrid: nothing to select for this depth.",
+                        always=True,
+                    )
+                    log_fn(
+                        f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
+                        always=True,
+                    )
+                    continue
+
+                # Compute ipix for this depth
+                ra_vals = pd.to_numeric(depth_pdf[ra_col], errors="coerce").to_numpy()
+                dec_vals = pd.to_numeric(depth_pdf[dec_col], errors="coerce").to_numpy()
+                theta = np.deg2rad(90.0 - dec_vals)
+                phi = np.deg2rad(ra_vals % 360.0)
+                NSIDE_L = 1 << depth
+                ipixL = hp.ang2pix(NSIDE_L, theta, phi, nest=True).astype(np.int64)
+                depth_pdf = depth_pdf.copy()
+                depth_pdf["__ipix__"] = ipixL
+
+                target_total = n_target if n_target is not None else len(depth_pdf)
+                target_total = min(target_total, len(depth_pdf))
+
                 base_order = (
                     int(densmap_ref_order)
                     if densmap_ref_order is not None
                     else int(getattr(algo, "sdh_coverage_order", cfg.algorithm.level_coverage))
                 )
-                counts_ref: np.ndarray
                 if densmap_ref_base is not None:
                     counts_ref = np.asarray(densmap_ref_base, dtype=np.int64)
                 else:
@@ -625,15 +610,140 @@ def run_score_density_hybrid_selection(
                 elif len(counts_ref) != len(densmaps[depth]):
                     counts_ref = densmaps[depth]
 
-                weight = _resolve_weight_for_level(algo, depth)
-                selected_pdf = _redistribute_by_density(
-                    selected_pdf,
-                    counts_ref=counts_ref,
-                    weight=weight,
-                    order_desc=cfg.algorithm.order_desc,
-                    seed=getattr(algo, "sdh_shuffle_seed", None),
-                    log_fn=log_fn,
+                # Subset to ipix present
+                ipix_present = np.asarray(sorted(depth_pdf["__ipix__"].unique()), dtype=np.int64)
+                counts_subset = counts_ref[ipix_present]
+                weights_subset = _compute_density_weights(
+                    counts_subset, _resolve_weight_for_level(algo, depth)
                 )
+                if weights_subset.sum() <= 0.0:
+                    quotas = np.zeros_like(ipix_present, dtype=np.int64)
+                else:
+                    desired = weights_subset * float(target_total)
+                    quotas = np.floor(desired).astype(np.int64)
+                    remainder_quota = target_total - int(quotas.sum())
+                    if remainder_quota > 0:
+                        frac = desired - quotas.astype(np.float64)
+                        rng = np.random.default_rng(int(getattr(algo, "sdh_shuffle_seed", 0) or 0))
+                        frac = frac + rng.random(len(frac)) * 1e-6
+                        order_q = np.argsort(-frac)
+                        for idx_q in order_q[:remainder_quota]:
+                            quotas[idx_q] += 1
+
+                quota_map = {int(ip): int(q) for ip, q in zip(ipix_present, quotas, strict=False) if q > 0}
+
+                # Select best per ipix up to quota
+                depth_pdf = depth_pdf.sort_values(
+                    "__score__", ascending=not cfg.algorithm.order_desc, kind="mergesort"
+                )
+                selected_parts: List[pd.DataFrame] = []
+                leftovers: List[pd.DataFrame] = []
+                for ipix_val, g in depth_pdf.groupby("__ipix__", sort=False):
+                    quota = quota_map.get(int(ipix_val), 0)
+                    if quota <= 0:
+                        leftovers.append(g)
+                        continue
+                    if quota >= len(g):
+                        selected_parts.append(g)
+                    else:
+                        selected_parts.append(g.iloc[:quota])
+                        leftovers.append(g.iloc[quota:])
+
+                selected_pdf = (
+                    pd.concat(selected_parts, ignore_index=False)
+                    if selected_parts
+                    else pd.DataFrame(columns=depth_pdf.columns)
+                )
+
+                remaining_needed = target_total - len(selected_pdf)
+                if remaining_needed > 0 and leftovers:
+                    extras_pool = pd.concat(leftovers, ignore_index=False)
+                    extras_pool = extras_pool.sort_values(
+                        "__score__", ascending=not cfg.algorithm.order_desc, kind="mergesort"
+                    )
+                    selected_pdf = pd.concat(
+                        [selected_pdf, extras_pool.iloc[:remaining_needed]], ignore_index=False
+                    )
+
+                _log_depth_stats(
+                    log_fn,
+                    depth,
+                    "selected",
+                    counts=densmaps[depth],
+                    selected_len=len(selected_pdf),
+                )
+
+                if len(selected_pdf) == 0:
+                    log_fn(
+                        f"[DEPTH {depth}] score_density_hybrid: no rows selected for this depth.",
+                        always=True,
+                    )
+                    log_fn(
+                        f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
+                        always=True,
+                    )
+                    continue
+
+                # Remove selected from remainder for next depths
+                sel_idx = selected_pdf.index.unique().to_numpy()
+                remainder_meta = _get_meta_df(remainder_ddf)
+
+                def _filter_selected(pdf: pd.DataFrame, idx_sel: np.ndarray) -> pd.DataFrame:
+                    if pdf is None or len(pdf) == 0:
+                        return pdf
+                    return pdf.loc[~pdf.index.isin(idx_sel)]
+
+                remainder_ddf = remainder_ddf.map_partitions(
+                    _filter_selected,
+                    sel_idx,
+                    meta=remainder_meta,
+                )
+            else:
+                if depth != depths_sel[-1]:
+                    score_mask = (remainder_ddf[score_col_internal] >= s_lo) & (
+                        remainder_ddf[score_col_internal] < s_hi
+                    )
+                else:
+                    score_mask = (remainder_ddf[score_col_internal] >= s_lo) & (
+                        remainder_ddf[score_col_internal] <= s_hi
+                    )
+
+                depth_ddf = remainder_ddf[score_mask]
+                selected_pdf = depth_ddf.compute()
+                _log_depth_stats(
+                    log_fn,
+                    depth,
+                    "selected",
+                    counts=densmaps[depth],
+                    selected_len=len(selected_pdf),
+                )
+
+                if len(selected_pdf) == 0:
+                    log_fn(
+                        f"[DEPTH {depth}] score_density_hybrid: no rows in "
+                        f"score slice [{s_lo:.6f}, {s_hi:.6f}] → skipping.",
+                        always=True,
+                    )
+                    log_fn(
+                        f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
+                        always=True,
+                    )
+                    continue
+
+                ra_vals = pd.to_numeric(selected_pdf[ra_col], errors="coerce").to_numpy()
+                dec_vals = pd.to_numeric(selected_pdf[dec_col], errors="coerce").to_numpy()
+
+                theta = np.deg2rad(90.0 - dec_vals)
+                phi = np.deg2rad(ra_vals % 360.0)
+
+                NSIDE_L = 1 << depth
+                ipixL = hp.ang2pix(
+                    NSIDE_L,
+                    theta,
+                    phi,
+                    nest=True,
+                ).astype(np.int64)
+                selected_pdf["__ipix__"] = ipixL
 
             counts = densmaps[depth]
             allsky_needed = depth in (1, 2)
