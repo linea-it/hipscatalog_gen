@@ -161,12 +161,24 @@ def _redistribute_by_density(
     if pdf.empty or weight <= 0.0:
         return pdf.sort_values("__score__", ascending=not order_desc, kind="mergesort")
 
-    weights = _compute_density_weights(counts_ref, weight)
-    if weights.sum() <= 0.0:
+    ipix_present = np.asarray(sorted(pdf["__ipix__"].unique()), dtype=np.int64)
+    if ipix_present.size == 0:
+        return pdf.sort_values("__score__", ascending=not order_desc, kind="mergesort")
+
+    if ipix_present.max(initial=-1) >= len(counts_ref) or ipix_present.min(initial=0) < 0:
+        log_fn(
+            "[score_density_hybrid] ipix out of bounds for provided density map; skipping redistribution.",
+            always=True,
+        )
+        return pdf.sort_values("__score__", ascending=not order_desc, kind="mergesort")
+
+    counts_subset = counts_ref[ipix_present]
+    weights_subset = _compute_density_weights(counts_subset, weight)
+    if weights_subset.sum() <= 0.0:
         return pdf.sort_values("__score__", ascending=not order_desc, kind="mergesort")
 
     n_total = len(pdf)
-    desired = weights * float(n_total)
+    desired = weights_subset * float(n_total)
     quotas = np.floor(desired).astype(np.int64)
     remainder = n_total - int(quotas.sum())
 
@@ -179,7 +191,7 @@ def _redistribute_by_density(
         for idx in order[:remainder]:
             quotas[idx] += 1
 
-    quotas_map = {int(i): int(q) for i, q in enumerate(quotas) if q > 0}
+    quotas_map = {int(ip): int(q) for ip, q in zip(ipix_present, quotas, strict=False) if q > 0}
 
     pdf = pdf.copy()
     pdf["__ipix__"] = pdf["__ipix__"].astype(np.int64)
