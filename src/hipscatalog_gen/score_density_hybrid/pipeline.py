@@ -514,8 +514,7 @@ def run_score_density_hybrid_selection(
     """Execute the score_density_hybrid selection path and write tiles."""
     algo = cfg.algorithm
     score_col_internal = "__score__"
-    if id_col is None:
-        raise ValueError("id_col must be provided for score_density_hybrid selection.")
+    # id_col is optional; when provided, it is used to avoid duplication and track completeness.
     if algo.sdh_score_min is None or algo.sdh_score_max is None:
         raise RuntimeError(
             "score_density_hybrid: internal error — score_min/score_max should have been set earlier."
@@ -708,15 +707,15 @@ def run_score_density_hybrid_selection(
 
                 # Remove selected from remainder for next depths
                 remainder_meta = _get_meta_df(remainder_ddf)
-                remainder_ddf = remainder_ddf.map_partitions(
-                    _filter_selected,
-                    selected_pdf[id_col].to_numpy(),
-                    id_col,
-                    meta=remainder_meta,
-                )
-                if id_col and id_sink is not None and id_col in selected_pdf:
-                    id_sink.update(selected_pdf[id_col].astype(int).tolist())
                 if id_col and id_col in selected_pdf:
+                    remainder_ddf = remainder_ddf.map_partitions(
+                        _filter_selected,
+                        selected_pdf[id_col].to_numpy(),
+                        id_col,
+                        meta=remainder_meta,
+                    )
+                    if id_sink is not None:
+                        id_sink.update(selected_pdf[id_col].astype(int).tolist())
                     selected_pdf = selected_pdf.drop(columns=[id_col])
             else:
                 if depth != depths_sel[-1]:
@@ -766,15 +765,15 @@ def run_score_density_hybrid_selection(
                 selected_pdf["__ipix__"] = ipixL
 
                 remainder_meta = _get_meta_df(remainder_ddf)
-                remainder_ddf = remainder_ddf.map_partitions(
-                    _filter_selected,
-                    selected_pdf[id_col].to_numpy(),
-                    id_col,
-                    meta=remainder_meta,
-                )
-                if id_col and id_sink is not None and id_col in selected_pdf:
-                    id_sink.update(selected_pdf[id_col].astype(int).tolist())
                 if id_col and id_col in selected_pdf:
+                    remainder_ddf = remainder_ddf.map_partitions(
+                        _filter_selected,
+                        selected_pdf[id_col].to_numpy(),
+                        id_col,
+                        meta=remainder_meta,
+                    )
+                    if id_sink is not None:
+                        id_sink.update(selected_pdf[id_col].astype(int).tolist())
                     selected_pdf = selected_pdf.drop(columns=[id_col])
 
             counts = densmaps[depth]

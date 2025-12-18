@@ -129,12 +129,12 @@ def run_pipeline(cfg: Config) -> None:
             cfg, diag_ctx, _log, persist_ddfs
         )
 
-        with diag_ctx("dask_id_counts"):
-            id_total = int(dask_compute(ddf[id_col].count())[0])
-            id_unique = int(dask_compute(ddf[id_col].nunique())[0])
-        _log(f"[id] input id counts: total={id_total}, unique={id_unique}", always=True)
-
         selected_ids: set[int] = set()
+        if id_col:
+            with diag_ctx("dask_id_counts"):
+                id_total = int(dask_compute(ddf[id_col].count())[0])
+                id_unique = int(dask_compute(ddf[id_col].nunique())[0])
+            _log(f"[id] input id counts: total={id_total}, unique={id_unique}", always=True)
 
         selection_mode = (getattr(cfg.algorithm, "selection_mode", "coverage") or "coverage").lower()
 
@@ -226,10 +226,11 @@ def run_pipeline(cfg: Config) -> None:
                 id_sink=selected_ids,
             )
 
-        _log(
-            f"[id] output id counts: total={len(selected_ids)}, unique={len(selected_ids)}",
-            always=True,
-        )
+        if id_col:
+            _log(
+                f"[id] output id counts: total={len(selected_ids)}, unique={len(selected_ids)}",
+                always=True,
+            )
 
     try:
         if diagnostics_mode == "global":

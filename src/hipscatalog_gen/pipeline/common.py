@@ -22,7 +22,7 @@ from ..io.output import (
     write_moc,
     write_properties,
 )
-from ..utils import _detect_hats_catalog_root, _fmt_dur, _validate_and_normalize_radec
+from ..utils import _detect_hats_catalog_root, _fmt_dur, _get_meta_df, _validate_and_normalize_radec
 
 __all__ = [
     "build_and_prepare_input",
@@ -106,7 +106,7 @@ def build_and_prepare_input(
     diag_ctx,
     log_fn,
     persist_ddfs: bool,
-) -> Tuple[Any, str, str, List[str], bool, List[str], str]:
+) -> Tuple[Any, str, str, List[str], bool, List[str], Optional[str]]:
     """Load inputs, validate RA/DEC, repartition, and persist when needed."""
     paths = _collect_input_paths(cfg, log_fn)
     _warn_if_hats_mismatch(paths, cfg, log_fn)
@@ -126,29 +126,38 @@ def build_and_prepare_input(
     if not is_hats:
         ddf = ddf.repartition(partition_size="256MB")
 
-    # Attach unique id for tracking completeness across modes.
-    id_col = "__hipscatalog_gen_id__"
+    id_col: Optional[str] = "__hipscatalog_gen_id__"
+    try:
 
-    def _add_id(pdf: pd.DataFrame, start: int) -> pd.DataFrame:
-        if pdf is None or len(pdf) == 0:
+        def _add_id(pdf: pd.DataFrame, start: int) -> pd.DataFrame:
+            if pdf is None or len(pdf) == 0:
+                pdf = pdf.copy()
+                pdf[id_col] = pd.Series([], dtype="int64")
+                return pdf
             pdf = pdf.copy()
-            pdf[id_col] = pd.Series([], dtype="int64")
+            pdf[id_col] = np.arange(start, start + len(pdf), dtype=np.int64)
             return pdf
-        pdf = pdf.copy()
-        pdf[id_col] = np.arange(start, start + len(pdf), dtype=np.int64)
-        return pdf
 
-    with diag_ctx("dask_attach_unique_id"):
-        sizes = ddf.map_partitions(len).compute()
-    offsets = np.concatenate(([0], np.cumsum(sizes)[:-1]))
-    parts = ddf.to_delayed()
-    meta = ddf._meta.copy()
-    meta[id_col] = pd.Series([], dtype="int64")
-    new_parts = [
-        dask_delayed(_add_id)(part, int(offset)) for part, offset in zip(parts, offsets, strict=False)
-    ]
-    ddf = dd.from_delayed(new_parts, meta=meta)
-    log_fn(f"[id] attached unique id column '{id_col}'", always=True)
+        if hasattr(ddf, "map_partitions") and hasattr(ddf, "to_delayed"):
+            base_ddf = ddf
+        elif hasattr(ddf, "_ddf") and hasattr(ddf._ddf, "map_partitions") and hasattr(ddf._ddf, "to_delayed"):  # type: ignore[attr-defined]
+            base_ddf = ddf._ddf  # type: ignore[attr-defined]
+        else:
+            raise RuntimeError("Cannot attach unique id: collection lacks map_partitions/to_delayed.")
+        with diag_ctx("dask_attach_unique_id"):
+            sizes = base_ddf.map_partitions(len).compute()
+        offsets = np.concatenate(([0], np.cumsum(sizes)[:-1]))
+        parts = base_ddf.to_delayed()
+        meta = _get_meta_df(ddf).copy()
+        meta[id_col] = pd.Series([], dtype="int64")
+        new_parts = [
+            dask_delayed(_add_id)(part, int(offset)) for part, offset in zip(parts, offsets, strict=False)
+        ]
+        ddf = dd.from_delayed(new_parts, meta=meta)
+        log_fn(f"[id] attached unique id column '{id_col}'", always=True)
+    except Exception as exc:  # noqa: PERF203
+        log_fn(f"[id] WARNING: could not attach unique id column ({exc}); skipping id tracking.", always=True)
+        id_col = None
 
     if persist_ddfs and hasattr(ddf, "persist"):
         ddf = ddf.persist()
@@ -157,7 +166,8 @@ def build_and_prepare_input(
         wait(ddf)
 
     # Do not include the id column in keep_cols to avoid writing it.
-    keep_cols = [c for c in keep_cols if c != id_col]
+    if id_col is not None:
+        keep_cols = [c for c in keep_cols if c != id_col]
 
     return ddf, RA_NAME, DEC_NAME, keep_cols, is_hats, paths, id_col
 
