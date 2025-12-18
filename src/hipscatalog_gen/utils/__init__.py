@@ -288,8 +288,15 @@ def _validate_and_normalize_radec(
         ValueError: If RA/DEC ranges are unsupported or non-finite.
     """
     # Convert to numeric with coercion so non-numeric values become NaN.
-    ra_num = dd.to_numeric(ddf_like[ra_col], errors="coerce")
-    dec_num = dd.to_numeric(ddf_like[dec_col], errors="coerce")
+    base = (
+        ddf_like
+        if hasattr(ddf_like, "map_partitions")
+        else ddf_like._ddf
+        if hasattr(ddf_like, "_ddf")
+        else ddf_like
+    )
+    ra_num = dd.to_numeric(base[ra_col], errors="coerce")
+    dec_num = dd.to_numeric(base[dec_col], errors="coerce")
 
     ra_min, ra_max, dec_min, dec_max = dask_compute(
         ra_num.min(),
@@ -340,8 +347,21 @@ def _validate_and_normalize_radec(
             return pdf
 
         meta = _get_meta_df(ddf_like)
-        ddf_like = ddf_like.map_partitions(_shift_ra_partition, meta=meta)
-        return ddf_like
+        target = (
+            ddf_like
+            if hasattr(ddf_like, "map_partitions")
+            else ddf_like._ddf
+            if hasattr(ddf_like, "_ddf")
+            else ddf_like
+        )
+        shifted = target.map_partitions(_shift_ra_partition, meta=meta)
+        if hasattr(ddf_like, "_ddf"):
+            try:
+                ddf_like._ddf = shifted  # type: ignore[attr-defined]
+                return ddf_like
+            except Exception:
+                return shifted
+        return shifted
 
     # Any other RA range is considered unsupported (likely wrong units)
     raise ValueError(
