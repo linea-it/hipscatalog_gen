@@ -358,6 +358,8 @@ def run_mag_global_selection(
     out_dir,
     diag_ctx,
     log_fn,
+    id_col: str | None = None,
+    id_sink: set[int] | None = None,
 ) -> None:
     """Execute the mag_global selection path and write tiles."""
     algo = cfg.algorithm
@@ -433,6 +435,10 @@ def run_mag_global_selection(
 
             depth_ddf = remainder_ddf[mag_mask]
             selected_pdf = depth_ddf.compute()
+            if id_col and id_col in selected_pdf and id_sink is not None:
+                id_sink.update(selected_pdf[id_col].astype(int).tolist())
+            if id_col and id_col in selected_pdf:
+                selected_pdf = selected_pdf.drop(columns=[id_col])
             _log_depth_stats(
                 log_fn,
                 depth,

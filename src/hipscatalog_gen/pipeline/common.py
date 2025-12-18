@@ -5,9 +5,11 @@ import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 from dask import compute as dask_compute
+from dask import delayed as dask_delayed
 from lsdb.catalog import Catalog as LsdbCatalog
 
 from ..healpix.densmap import densmap_for_depth_delayed
@@ -104,7 +106,7 @@ def build_and_prepare_input(
     diag_ctx,
     log_fn,
     persist_ddfs: bool,
-) -> Tuple[Any, str, str, List[str], bool, List[str]]:
+) -> Tuple[Any, str, str, List[str], bool, List[str], str]:
     """Load inputs, validate RA/DEC, repartition, and persist when needed."""
     paths = _collect_input_paths(cfg, log_fn)
     _warn_if_hats_mismatch(paths, cfg, log_fn)
@@ -124,13 +126,40 @@ def build_and_prepare_input(
     if not is_hats:
         ddf = ddf.repartition(partition_size="256MB")
 
+    # Attach unique id for tracking completeness across modes.
+    id_col = "__hipscatalog_gen_id__"
+
+    def _add_id(pdf: pd.DataFrame, start: int) -> pd.DataFrame:
+        if pdf is None or len(pdf) == 0:
+            pdf = pdf.copy()
+            pdf[id_col] = pd.Series([], dtype="int64")
+            return pdf
+        pdf = pdf.copy()
+        pdf[id_col] = np.arange(start, start + len(pdf), dtype=np.int64)
+        return pdf
+
+    with diag_ctx("dask_attach_unique_id"):
+        sizes = ddf.map_partitions(len).compute()
+    offsets = np.concatenate(([0], np.cumsum(sizes)[:-1]))
+    parts = ddf.to_delayed()
+    meta = ddf._meta.copy()
+    meta[id_col] = pd.Series([], dtype="int64")
+    new_parts = [
+        dask_delayed(_add_id)(part, int(offset)) for part, offset in zip(parts, offsets, strict=False)
+    ]
+    ddf = dd.from_delayed(new_parts, meta=meta)
+    log_fn(f"[id] attached unique id column '{id_col}'", always=True)
+
     if persist_ddfs and hasattr(ddf, "persist"):
         ddf = ddf.persist()
         from dask.distributed import wait
 
         wait(ddf)
 
-    return ddf, RA_NAME, DEC_NAME, keep_cols, is_hats, paths
+    # Do not include the id column in keep_cols to avoid writing it.
+    keep_cols = [c for c in keep_cols if c != id_col]
+
+    return ddf, RA_NAME, DEC_NAME, keep_cols, is_hats, paths, id_col
 
 
 def compute_and_write_densmaps(

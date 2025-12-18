@@ -24,6 +24,8 @@ from contextlib import suppress
 from pathlib import Path
 from typing import List
 
+from dask import compute as dask_compute
+
 from ..cluster.runtime import setup_cluster, shutdown_cluster
 from ..config import Config
 from ..coverage.pipeline import add_coverage_column, run_coverage_selection
@@ -123,9 +125,16 @@ def run_pipeline(cfg: Config) -> None:
     diagnostics_mode = runtime.diagnostics_mode
 
     def _run_core_pipeline() -> None:
-        ddf, RA_NAME, DEC_NAME, keep_cols, is_hats, paths = build_and_prepare_input(
+        ddf, RA_NAME, DEC_NAME, keep_cols, is_hats, paths, id_col = build_and_prepare_input(
             cfg, diag_ctx, _log, persist_ddfs
         )
+
+        with diag_ctx("dask_id_counts"):
+            id_total = int(dask_compute(ddf[id_col].count())[0])
+            id_unique = int(dask_compute(ddf[id_col].nunique())[0])
+        _log(f"[id] input id counts: total={id_total}, unique={id_unique}", always=True)
+
+        selected_ids: set[int] = set()
 
         selection_mode = (getattr(cfg.algorithm, "selection_mode", "coverage") or "coverage").lower()
 
@@ -166,6 +175,8 @@ def run_pipeline(cfg: Config) -> None:
                 out_dir=out_dir,
                 diag_ctx=diag_ctx,
                 log_fn=_log,
+                id_col=id_col,
+                id_sink=selected_ids,
             )
         elif selection_mode == "score_global":
             run_score_global_selection(
@@ -178,6 +189,8 @@ def run_pipeline(cfg: Config) -> None:
                 out_dir=out_dir,
                 diag_ctx=diag_ctx,
                 log_fn=_log,
+                id_col=id_col,
+                id_sink=selected_ids,
             )
         elif selection_mode == "score_density_hybrid":
             run_score_density_hybrid_selection(
@@ -192,6 +205,8 @@ def run_pipeline(cfg: Config) -> None:
                 log_fn=_log,
                 densmap_ref_base=densmap_ref_base,
                 densmap_ref_order=sdh_cov_order,
+                id_col=id_col,
+                id_sink=selected_ids,
             )
         else:
             run_coverage_selection(
@@ -207,7 +222,14 @@ def run_pipeline(cfg: Config) -> None:
                 persist_ddfs=persist_ddfs,
                 avoid_computes=avoid_computes,
                 is_hats=is_hats,
+                id_col=id_col,
+                id_sink=selected_ids,
             )
+
+        _log(
+            f"[id] output id counts: total={len(selected_ids)}, unique={len(selected_ids)}",
+            always=True,
+        )
 
     try:
         if diagnostics_mode == "global":

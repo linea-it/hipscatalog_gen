@@ -156,6 +156,17 @@ def _assign_targets_per_depth(
     return level_edges, targets_per_depth
 
 
+def _add_rowid_partition(pdf: pd.DataFrame, start: int) -> pd.DataFrame:
+    """Attach a sequential __sdh_id__ starting from a given offset."""
+    if pdf is None or len(pdf) == 0:
+        pdf = pdf.copy()
+        pdf["__sdh_id__"] = pd.Series([], dtype="int64")
+        return pdf
+    pdf = pdf.copy()
+    pdf["__sdh_id__"] = np.arange(start, start + len(pdf), dtype=np.int64)
+    return pdf
+
+
 def _redistribute_by_density(
     pdf: pd.DataFrame,
     counts_ref: np.ndarray,
@@ -497,10 +508,14 @@ def run_score_density_hybrid_selection(
     log_fn,
     densmap_ref_base: Optional[np.ndarray] = None,
     densmap_ref_order: Optional[int] = None,
+    id_col: Optional[str] = None,
+    id_sink: Optional[set[int]] = None,
 ) -> None:
     """Execute the score_density_hybrid selection path and write tiles."""
     algo = cfg.algorithm
     score_col_internal = "__score__"
+    if id_col is None:
+        raise ValueError("id_col must be provided for score_density_hybrid selection.")
     if algo.sdh_score_min is None or algo.sdh_score_max is None:
         raise RuntimeError(
             "score_density_hybrid: internal error — score_min/score_max should have been set earlier."
@@ -549,6 +564,13 @@ def run_score_density_hybrid_selection(
         n_tot_score=float(n_tot_score),
         log_fn=log_fn,
     )
+
+    def _filter_selected(pdf: pd.DataFrame, idx_sel: np.ndarray, id_column: str) -> pd.DataFrame:
+        if pdf is None or len(pdf) == 0:
+            return pdf
+        if id_column not in pdf.columns:
+            return pdf
+        return pdf.loc[~pdf[id_column].isin(idx_sel)]
 
     log_fn(
         "[selection] score_density_hybrid mode: per-depth score slices:\n"
@@ -685,19 +707,17 @@ def run_score_density_hybrid_selection(
                     continue
 
                 # Remove selected from remainder for next depths
-                sel_idx = selected_pdf.index.unique().to_numpy()
                 remainder_meta = _get_meta_df(remainder_ddf)
-
-                def _filter_selected(pdf: pd.DataFrame, idx_sel: np.ndarray) -> pd.DataFrame:
-                    if pdf is None or len(pdf) == 0:
-                        return pdf
-                    return pdf.loc[~pdf.index.isin(idx_sel)]
-
                 remainder_ddf = remainder_ddf.map_partitions(
                     _filter_selected,
-                    sel_idx,
+                    selected_pdf[id_col].to_numpy(),
+                    id_col,
                     meta=remainder_meta,
                 )
+                if id_col and id_sink is not None and id_col in selected_pdf:
+                    id_sink.update(selected_pdf[id_col].astype(int).tolist())
+                if id_col and id_col in selected_pdf:
+                    selected_pdf = selected_pdf.drop(columns=[id_col])
             else:
                 if depth != depths_sel[-1]:
                     score_mask = (remainder_ddf[score_col_internal] >= s_lo) & (
@@ -707,8 +727,8 @@ def run_score_density_hybrid_selection(
                     score_mask = (remainder_ddf[score_col_internal] >= s_lo) & (
                         remainder_ddf[score_col_internal] <= s_hi
                     )
-
                 depth_ddf = remainder_ddf[score_mask]
+
                 selected_pdf = depth_ddf.compute()
                 _log_depth_stats(
                     log_fn,
@@ -744,6 +764,18 @@ def run_score_density_hybrid_selection(
                     nest=True,
                 ).astype(np.int64)
                 selected_pdf["__ipix__"] = ipixL
+
+                remainder_meta = _get_meta_df(remainder_ddf)
+                remainder_ddf = remainder_ddf.map_partitions(
+                    _filter_selected,
+                    selected_pdf[id_col].to_numpy(),
+                    id_col,
+                    meta=remainder_meta,
+                )
+                if id_col and id_sink is not None and id_col in selected_pdf:
+                    id_sink.update(selected_pdf[id_col].astype(int).tolist())
+                if id_col and id_col in selected_pdf:
+                    selected_pdf = selected_pdf.drop(columns=[id_col])
 
             counts = densmaps[depth]
             allsky_needed = depth in (1, 2)

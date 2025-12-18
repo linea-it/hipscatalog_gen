@@ -174,6 +174,8 @@ def run_coverage_selection(
     persist_ddfs: bool,
     avoid_computes: bool,
     is_hats: bool,
+    id_col: str | None = None,
+    id_sink: set[int] | None = None,
 ) -> None:
     """Execute the coverage-based selection loop."""
     score_col = getattr(cfg.algorithm, "coverage_score_column", None)
@@ -421,6 +423,10 @@ def run_coverage_selection(
                 "selected",
                 selected_len=len(selected_pdf),
             )
+            if id_col and id_col in selected_pdf and id_sink is not None:
+                id_sink.update(selected_pdf[id_col].astype(int).tolist())
+            if id_col and id_col in selected_pdf:
+                selected_pdf = selected_pdf.drop(columns=[id_col])
 
             if len(selected_pdf) > 0:
                 ra_vals = pd.to_numeric(
