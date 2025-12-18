@@ -223,6 +223,19 @@ def write_common_static_products(
         sg_n_1: {cfg.algorithm.score_n_1}
         sg_n_2: {cfg.algorithm.score_n_2}
         sg_n_3: {cfg.algorithm.score_n_3}
+        # algorithm.score_density_hybrid
+        sdh_score_column: {cfg.algorithm.sdh_score_column}
+        sdh_score_min: {cfg.algorithm.sdh_score_min}
+        sdh_score_max: {cfg.algorithm.sdh_score_max}
+        sdh_score_adaptive_range: {cfg.algorithm.sdh_score_adaptive_range}
+        sdh_score_hist_nbins: {cfg.algorithm.sdh_score_hist_nbins}
+        sdh_density_weight: {cfg.algorithm.sdh_density_weight}
+        sdh_density_weight_levels: {cfg.algorithm.sdh_density_weight_levels}
+        sdh_coverage_order: {cfg.algorithm.sdh_coverage_order}
+        sdh_shuffle_seed: {cfg.algorithm.sdh_shuffle_seed}
+        sdh_n_1: {cfg.algorithm.sdh_n_1}
+        sdh_n_2: {cfg.algorithm.sdh_n_2}
+        sdh_n_3: {cfg.algorithm.sdh_n_3}
         # algorithm.coverage
         cov_coverage_score_column: {cfg.algorithm.coverage_score_column}
         cov_use_hats_as_coverage: {cfg.algorithm.use_hats_as_coverage}

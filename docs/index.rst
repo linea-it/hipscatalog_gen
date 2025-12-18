@@ -6,10 +6,11 @@ hipscatalog-gen builds HiPS-compliant catalog hierarchies from large astronomica
 Overview
 --------
 
-- Three selection modes (``algorithm.selection_mode``):
+- Selection modes (``algorithm.selection_mode``):
 
   - ``mag_global``: magnitude-complete selection (``mg_*`` parameters).
   - ``score_global``: selection driven by an arbitrary score/expression (``sg_*``).
+  - ``score_density_hybrid``: score_global with density-weighted distribution on levels 1–3 (``sdh_*``).
   - ``coverage``: coverage-based selection per HEALPix/HATS cell (``cov_*``).
 
 - Runs locally; outputs full HiPS layouts (tiles, all-sky, MOC, metadata, density maps).

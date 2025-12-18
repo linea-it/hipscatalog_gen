@@ -23,7 +23,8 @@ class AlgoOpts:
     """Algorithm options for HiPS selection and density profiles.
 
     Common settings (all modes):
-        selection_mode: High-level strategy ("coverage", "mag_global" or "score_global").
+        selection_mode: High-level strategy ("coverage", "mag_global", "score_global" or
+        "score_density_hybrid").
         level_limit: Maximum HiPS order (NorderL).
         level_coverage: Coverage / MOC order (lC).
 
@@ -35,6 +36,13 @@ class AlgoOpts:
     score_global mode:
         score_column / score_min / score_max / score_adaptive_range / score_hist_nbins.
         score_n_1 / score_n_2 / score_n_3: Optional approximate targets for depths 1–3.
+
+    score_density_hybrid mode:
+        sdh_score_* mirror score_global controls for score range and histogram.
+        sdh_density_weight / sdh_density_weight_levels control the density bias on depths 1–3.
+        sdh_coverage_order defines the densmap order used as the density template.
+        sdh_shuffle_seed makes the redistribution deterministic when set.
+        sdh_n_1 / sdh_n_2 / sdh_n_3: Optional approximate targets for depths 1–3.
 
     coverage mode:
         coverage_score_column / use_hats_as_coverage / order_desc / coverage_order.
@@ -70,6 +78,20 @@ class AlgoOpts:
     score_n_1: Optional[int] = None
     score_n_2: Optional[int] = None
     score_n_3: Optional[int] = None
+
+    # score_density_hybrid mode
+    sdh_score_column: Optional[str] = None
+    sdh_score_min: Optional[float] = None
+    sdh_score_max: Optional[float] = None
+    sdh_score_adaptive_range: str = "complete"
+    sdh_score_hist_nbins: int = 512
+    sdh_density_weight: float = 0.3
+    sdh_density_weight_levels: Optional[Any] = None
+    sdh_coverage_order: Optional[int] = None
+    sdh_shuffle_seed: Optional[int] = None
+    sdh_n_1: Optional[int] = None
+    sdh_n_2: Optional[int] = None
+    sdh_n_3: Optional[int] = None
 
     # coverage mode (including density profile controls)
     coverage_score_column: Optional[str] = None  # score expression/column for coverage mode
@@ -196,6 +218,7 @@ selection_mode         [required]
       - "coverage"   → coverage-based selection per coverage cell (__icov__).
       - "mag_global" → global magnitude-complete selection.
       - "score_global" → global selection using an arbitrary score/column.
+      - "score_density_hybrid" → score_global with density-weighted distribution on levels 1–3.
 level_limit            [required] int
     Maximum HiPS order (NorderL). Must be in [4, 11].
 level_coverage         [optional, default=8 if level_limit >= 8 else level_limit]
@@ -241,6 +264,30 @@ sg_score_adaptive_range [optional, default="complete"] str
 sg_score_hist_nbins    [optional, default=512] int
     Number of bins in the global score histogram.
 sg_n_1, sg_n_2, sg_n_3 [optional, default=None] int
+    Approximate global target counts for depths 1–3. Must be provided in order.
+
+score_density_hybrid mode (prefix sdh_)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sdh_score_column        [required in score_density_hybrid mode] str
+    Column or expression evaluated globally (same semantics as sg_score_column).
+sdh_score_min           [optional, default=None] float
+sdh_score_max           [optional, default=None] float
+    Bounds resolved like score_global using sdh_score_adaptive_range.
+sdh_score_adaptive_range [optional, default="complete"] str
+    Either "complete" or "hist_peak", same as score_global.
+sdh_score_hist_nbins    [optional, default=512] int
+    Number of bins in the global score histogram.
+sdh_density_weight      [optional, default=0.0] float
+    Global density weight applied to levels 1–3 when sdh_density_weight_levels is not given.
+sdh_density_weight_levels [optional, default=None] float or list[float]
+    Per-level weights for levels 1, 2 and 3. If a single float is provided, it is
+    applied to all three levels; if a list is provided, missing entries fall back
+    to sdh_density_weight.
+sdh_coverage_order      [optional, default=level_coverage] int
+    Densmap order used as the density template to reproject into levels 1–3.
+sdh_shuffle_seed        [optional, default=None] int
+    Seed for deterministic shuffling during redistribution of leftovers.
+sdh_n_1, sdh_n_2, sdh_n_3 [optional, default=None] int
     Approximate global target counts for depths 1–3. Must be provided in order.
 
 Coverage mode (prefix cov_)
@@ -395,7 +442,8 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     if raw_selection_mode is None:
         raise ValueError(
             "Missing required parameter: algorithm.selection_mode. "
-            "Set it to 'coverage', 'mag_global' or 'score_global' in the configuration."
+            "Set it to 'coverage', 'mag_global', 'score_global' or "
+            "'score_density_hybrid' in the configuration."
         )
     selection_mode = str(raw_selection_mode).lower()
 
@@ -421,6 +469,8 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
 
     level_coverage = int(raw_level_coverage)
     coverage_order = int(raw_coverage_order)
+    raw_sdh_cov_order = _get_mode_value(algo, "sdh_coverage_order")
+    sdh_coverage_order = int(raw_sdh_cov_order) if raw_sdh_cov_order is not None else level_coverage
 
     # ------------------------------------------------------------------
     # mag_global mode
@@ -435,6 +485,13 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     score_n_1_raw = _get_mode_value(algo, "sg_n_1")
     score_n_2_raw = _get_mode_value(algo, "sg_n_2")
     score_n_3_raw = _get_mode_value(algo, "sg_n_3")
+
+    # ------------------------------------------------------------------
+    # score_density_hybrid mode
+    # ------------------------------------------------------------------
+    sdh_score_n_1_raw = _get_mode_value(algo, "sdh_n_1")
+    sdh_score_n_2_raw = _get_mode_value(algo, "sdh_n_2")
+    sdh_score_n_3_raw = _get_mode_value(algo, "sdh_n_3")
 
     # ------------------------------------------------------------------
     # coverage mode
@@ -498,6 +555,16 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             "algorithm.sg_n_3 is set but algorithm.sg_n_1 and algorithm.sg_n_2 are not "
             "both defined. These controls must be provided in order: sg_n_1, sg_n_2, sg_n_3."
         )
+    if sdh_score_n_2_raw is not None and sdh_score_n_1_raw is None:
+        raise ValueError(
+            "algorithm.sdh_n_2 is set but algorithm.sdh_n_1 is missing. "
+            "These controls must be provided in order: sdh_n_1, then sdh_n_2, then sdh_n_3."
+        )
+    if sdh_score_n_3_raw is not None and (sdh_score_n_1_raw is None or sdh_score_n_2_raw is None):
+        raise ValueError(
+            "algorithm.sdh_n_3 is set but algorithm.sdh_n_1 and algorithm.sdh_n_2 are not "
+            "both defined. These controls must be provided in order: sdh_n_1, sdh_n_2, sdh_n_3."
+        )
 
     def _to_int_or_none(x, name: str) -> Optional[int]:
         if x is None:
@@ -516,6 +583,9 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     score_n_1 = _to_int_or_none(score_n_1_raw, "sg_n_1")
     score_n_2 = _to_int_or_none(score_n_2_raw, "sg_n_2")
     score_n_3 = _to_int_or_none(score_n_3_raw, "sg_n_3")
+    sdh_n_1 = _to_int_or_none(sdh_score_n_1_raw, "sdh_n_1")
+    sdh_n_2 = _to_int_or_none(sdh_score_n_2_raw, "sdh_n_2")
+    sdh_n_3 = _to_int_or_none(sdh_score_n_3_raw, "sdh_n_3")
 
     cfg = Config(
         input=InputCfg(
@@ -554,6 +624,19 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             score_n_1=score_n_1,
             score_n_2=score_n_2,
             score_n_3=score_n_3,
+            # score_density_hybrid mode
+            sdh_score_column=_get_mode_value(algo, "sdh_score_column"),
+            sdh_score_min=_get_mode_value(algo, "sdh_score_min"),
+            sdh_score_max=_get_mode_value(algo, "sdh_score_max"),
+            sdh_score_adaptive_range=_get_mode_value(algo, "sdh_score_adaptive_range", "complete"),
+            sdh_score_hist_nbins=int(_get_mode_value(algo, "sdh_score_hist_nbins", 512)),
+            sdh_density_weight=float(_get_mode_value(algo, "sdh_density_weight", 0.3)),
+            sdh_density_weight_levels=_get_mode_value(algo, "sdh_density_weight_levels"),
+            sdh_coverage_order=sdh_coverage_order,
+            sdh_shuffle_seed=_get_mode_value(algo, "sdh_shuffle_seed"),
+            sdh_n_1=sdh_n_1,
+            sdh_n_2=sdh_n_2,
+            sdh_n_3=sdh_n_3,
             # coverage mode
             coverage_score_column=coverage_score_column,
             use_hats_as_coverage=bool(_get_mode_value(algo, "cov_use_hats_as_coverage", False)),
@@ -641,6 +724,44 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             raise ValueError("algorithm.score_adaptive_range must be either 'complete' or 'hist_peak'.")
         if int(getattr(algo, "score_hist_nbins", 512)) <= 0:
             raise ValueError("algorithm.score_hist_nbins must be a positive integer.")
+    if str(algo.selection_mode).lower() == "score_density_hybrid":
+        if not getattr(algo, "sdh_score_column", None):
+            raise ValueError(
+                "selection_mode='score_density_hybrid' requires algorithm.sdh_score_column to be set."
+            )
+        score_range_mode = str(getattr(algo, "sdh_score_adaptive_range", "complete") or "complete").lower()
+        if score_range_mode not in ("complete", "hist_peak"):
+            raise ValueError("algorithm.sdh_score_adaptive_range must be either 'complete' or 'hist_peak'.")
+        algo.sdh_score_adaptive_range = score_range_mode
+        if int(getattr(algo, "sdh_score_hist_nbins", 512)) <= 0:
+            raise ValueError("algorithm.sdh_score_hist_nbins must be a positive integer.")
+
+        weights_cfg = getattr(algo, "sdh_density_weight_levels", None)
+        if weights_cfg is None or isinstance(weights_cfg, int | float):
+            algo.sdh_density_weight_levels = None if weights_cfg is None else float(weights_cfg)
+        elif isinstance(weights_cfg, list | tuple):
+            if len(weights_cfg) > 3:
+                raise ValueError("algorithm.sdh_density_weight_levels must have at most 3 entries.")
+            algo.sdh_density_weight_levels = [float(w) for w in weights_cfg]
+        else:
+            raise ValueError(
+                "algorithm.sdh_density_weight_levels must be a number or a list/tuple of up to 3 numbers."
+            )
+
+        seed_cfg = getattr(algo, "sdh_shuffle_seed", None)
+        if seed_cfg is not None:
+            try:
+                algo.sdh_shuffle_seed = int(seed_cfg)
+            except Exception as exc:  # noqa: PERF203
+                raise ValueError(f"algorithm.sdh_shuffle_seed must be an integer, got {seed_cfg!r}") from exc
+
+        cov_order_val = getattr(algo, "sdh_coverage_order", None)
+        if cov_order_val is None:
+            cov_order_val = level_coverage
+        cov_order_int = int(cov_order_val)
+        if cov_order_int < 0:
+            raise ValueError("algorithm.sdh_coverage_order must be non-negative.")
+        algo.sdh_coverage_order = cov_order_int
 
     return cfg
 

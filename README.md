@@ -15,14 +15,15 @@ This project was created following the LINCC Frameworks Python Project Template 
 hipscatalog-gen is a Python package for building HiPS-compliant catalog hierarchies from large astronomical tables using Dask and LSDB. It is inspired by and extends the logic of the CDS *Hipsgen-cat.jar* tool, providing a scalable and parallelized Python implementation suitable for large-scale workflows.
 
 
-The pipeline supports three selection modes, configured in the YAML file under algorithm.selection_mode:
+The pipeline supports selection modes, configured in the YAML file under algorithm.selection_mode:
 
-- **mag_global**   — global magnitude-complete selection.
-- **score_global** — global selection driven by an arbitrary score/expression.
-- **coverage**     — coverage-based selection per HEALPix or HATS cell.
+- **mag_global**   — global magnitude-complete selection (`mg_*`).
+- **score_global** — global selection driven by an arbitrary score/expression (`sg_*`).
+- **score_density_hybrid** — score_global with density-weighted distribution on levels 1–3 (`sdh_*`, default weight 0.3).
+- **coverage**     — coverage-based selection per HEALPix or HATS cell (`cov_*`).
 
 Mode-specific parameters in the YAML use the prefixes:
-`mg_*` (mag_global), `sg_*` (score_global), and `cov_*` (coverage).
+`mg_*` (mag_global), `sg_*` (score_global), `sdh_*` (score_density_hybrid), and `cov_*` (coverage).
 
 -------------------------------------------------------------------------------
 
@@ -105,14 +106,14 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 
 ## Mode Comparison (Summary)
 
-| Feature | Mag Global Mode | Score Global Mode | Coverage Mode |
-|----------|----------------|-------------------|---------------|
-| Partition basis | Global sample | Global sample | HEALPix/HATS cells (__icov__) |
-| Main metric | Magnitude column | Arbitrary score/expression | Score + density profile |
-| Completeness goal | Magnitude completeness | Score window completeness | Spatial balance / density control |
-| Depth behavior | Histogram-based (mag_hist_nbins, n_1/n_2/n_3) | Histogram-based (score_hist_nbins, score_n_1/n_2/n_3) | Profile-driven (k_per_cov_*, targets_total_*) |
-| Bias options | Not applicable | Not applicable | density_bias_mode / exponent |
-| Typical use | Magnitude-complete catalogs | Global ranking/quality score selections | Uniform or density-aware selection |
+| Feature | Mag Global | Score Global | Score Density Hybrid | Coverage |
+|---------|------------|--------------|----------------------|----------|
+| Partition basis | Global sample | Global sample | Global sample | HEALPix/HATS cells (__icov__) |
+| Main metric | Magnitude column | Arbitrary score/expression | Arbitrary score/expression + density weights (levels 1–3) | Score + density profile |
+| Completeness goal | Magnitude completeness | Score window completeness | Score window completeness (density reordering on 1–3) | Spatial balance / density control |
+| Depth behavior | Histogram-based (mag_hist_nbins, n_1/n_2/n_3) | Histogram-based (score_hist_nbins, score_n_1/n_2/n_3) | Histogram-based + density quotas (sdh_density_weight[_levels], sdh_n_1/2/3) | Profile-driven (k_per_cov_*, targets_total_*) |
+| Bias options | Not applicable | Not applicable | Density weighting on 1–3 | density_bias_mode / exponent |
+| Typical use | Magnitude-complete catalogs | Global ranking/quality score selections | Global ranking with realistic visual density on low levels | Uniform or density-aware selection |
 
 -------------------------------------------------------------------------------
 

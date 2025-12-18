@@ -28,6 +28,10 @@ from ..cluster.runtime import setup_cluster, shutdown_cluster
 from ..config import Config
 from ..coverage.pipeline import add_coverage_column, run_coverage_selection
 from ..mag_global.pipeline import prepare_mag_global, run_mag_global_selection
+from ..score_density_hybrid.pipeline import (
+    prepare_score_density_hybrid,
+    run_score_density_hybrid_selection,
+)
 from ..score_global.pipeline import prepare_score_global, run_score_global_selection
 from ..utils import _mkdirs, _ts
 from .common import (
@@ -128,6 +132,8 @@ def run_pipeline(cfg: Config) -> None:
             remainder_ddf = prepare_mag_global(ddf, cfg, diag_ctx, _log)
         elif selection_mode == "score_global":
             remainder_ddf = prepare_score_global(ddf, cfg, diag_ctx, _log)
+        elif selection_mode == "score_density_hybrid":
+            remainder_ddf = prepare_score_density_hybrid(ddf, cfg, diag_ctx, _log)
         else:
             remainder_ddf = add_coverage_column(ddf, cfg, is_hats, RA_NAME, DEC_NAME, _log)
 
@@ -156,6 +162,18 @@ def run_pipeline(cfg: Config) -> None:
             )
         elif selection_mode == "score_global":
             run_score_global_selection(
+                remainder_ddf=remainder_ddf,
+                densmaps=densmaps,
+                keep_cols=keep_cols,
+                ra_col=RA_NAME,
+                dec_col=DEC_NAME,
+                cfg=cfg,
+                out_dir=out_dir,
+                diag_ctx=diag_ctx,
+                log_fn=_log,
+            )
+        elif selection_mode == "score_density_hybrid":
+            run_score_density_hybrid_selection(
                 remainder_ddf=remainder_ddf,
                 densmaps=densmaps,
                 keep_cols=keep_cols,
