@@ -270,11 +270,16 @@ def _reduce_coverage_exact_dask(
 
     meta = _get_meta_df(ddf_like)
 
-    # LSDB Catalog: operate on internal Dask DataFrame.
+    # LSDB Catalog: operate on internal Dask DataFrame but re-inject when possible.
     if isinstance(ddf_like, LsdbCatalog) and hasattr(ddf_like, "_ddf"):
         base_ddf = ddf_like._ddf  # type: ignore[attr-defined]
         cols_all = list(base_ddf.columns)
-        return base_ddf.groupby("__icov__", group_keys=False)[cols_all].apply(_take_topk, meta=meta)
+        result_ddf = base_ddf.groupby("__icov__", group_keys=False)[cols_all].apply(_take_topk, meta=meta)
+        try:
+            ddf_like._ddf = result_ddf  # type: ignore[attr-defined]
+            return ddf_like
+        except Exception:
+            return result_ddf
 
     # Generic Dask DataFrame path.
     if hasattr(ddf_like, "groupby"):

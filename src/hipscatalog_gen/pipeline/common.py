@@ -138,22 +138,36 @@ def build_and_prepare_input(
             pdf[id_col] = np.arange(start, start + len(pdf), dtype=np.int64)
             return pdf
 
-        if hasattr(ddf, "map_partitions") and hasattr(ddf, "to_delayed"):
-            base_ddf = ddf
-        elif hasattr(ddf, "_ddf") and hasattr(ddf._ddf, "map_partitions") and hasattr(ddf._ddf, "to_delayed"):  # type: ignore[attr-defined]
-            base_ddf = ddf._ddf  # type: ignore[attr-defined]
-        else:
-            raise RuntimeError("Cannot attach unique id: collection lacks map_partitions/to_delayed.")
-        with diag_ctx("dask_attach_unique_id"):
-            sizes = base_ddf.map_partitions(len).compute()
-        offsets = np.concatenate(([0], np.cumsum(sizes)[:-1]))
-        parts = base_ddf.to_delayed()
+        target_ddf: Any
         meta = _get_meta_df(ddf).copy()
         meta[id_col] = pd.Series([], dtype="int64")
+
+        if isinstance(ddf, LsdbCatalog) and hasattr(ddf, "_ddf"):
+            target_ddf = ddf._ddf  # type: ignore[attr-defined]
+        elif hasattr(ddf, "map_partitions") and hasattr(ddf, "to_delayed"):
+            target_ddf = ddf
+        elif hasattr(ddf, "_ddf") and hasattr(ddf._ddf, "map_partitions") and hasattr(ddf._ddf, "to_delayed"):  # type: ignore[attr-defined]
+            target_ddf = ddf._ddf  # type: ignore[attr-defined]
+        else:
+            raise RuntimeError("Cannot attach unique id: collection lacks map_partitions/to_delayed.")
+
+        with diag_ctx("dask_attach_unique_id"):
+            sizes = target_ddf.map_partitions(len).compute()
+        offsets = np.concatenate(([0], np.cumsum(sizes)[:-1]))
+        parts = target_ddf.to_delayed()
         new_parts = [
             dask_delayed(_add_id)(part, int(offset)) for part, offset in zip(parts, offsets, strict=False)
         ]
-        ddf = dd.from_delayed(new_parts, meta=meta)
+        ddf_with_id = dd.from_delayed(new_parts, meta=meta)
+
+        if isinstance(ddf, LsdbCatalog) and hasattr(ddf, "_ddf"):
+            try:
+                ddf._ddf = ddf_with_id  # type: ignore[attr-defined]
+                ddf = ddf
+            except Exception:
+                ddf = ddf_with_id
+        else:
+            ddf = ddf_with_id
         log_fn(f"[id] attached unique id column '{id_col}'", always=True)
     except Exception as exc:  # noqa: PERF203
         log_fn(f"[id] WARNING: could not attach unique id column ({exc}); skipping id tracking.", always=True)

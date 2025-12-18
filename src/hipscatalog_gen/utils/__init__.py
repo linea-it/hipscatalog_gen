@@ -9,6 +9,7 @@ import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 from dask import compute as dask_compute
+from lsdb.catalog import Catalog as LsdbCatalog
 
 __all__ = [
     "_mkdirs",
@@ -295,6 +296,15 @@ def _validate_and_normalize_radec(
         if hasattr(ddf_like, "_ddf")
         else ddf_like
     )
+    if isinstance(ddf_like, LsdbCatalog) and hasattr(ddf_like, "_ddf"):
+        base = ddf_like._ddf  # type: ignore[attr-defined]
+    elif hasattr(ddf_like, "map_partitions"):
+        base = ddf_like
+    elif hasattr(ddf_like, "_ddf"):
+        base = ddf_like._ddf  # type: ignore[attr-defined]
+    else:
+        base = ddf_like
+
     ra_num = dd.to_numeric(base[ra_col], errors="coerce")
     dec_num = dd.to_numeric(base[dec_col], errors="coerce")
 
@@ -347,15 +357,16 @@ def _validate_and_normalize_radec(
             return pdf
 
         meta = _get_meta_df(ddf_like)
-        target = (
-            ddf_like
-            if hasattr(ddf_like, "map_partitions")
-            else ddf_like._ddf
-            if hasattr(ddf_like, "_ddf")
-            else ddf_like
-        )
+        if isinstance(ddf_like, LsdbCatalog) and hasattr(ddf_like, "_ddf"):
+            target = ddf_like._ddf  # type: ignore[attr-defined]
+        elif hasattr(ddf_like, "map_partitions"):
+            target = ddf_like
+        elif hasattr(ddf_like, "_ddf"):
+            target = ddf_like._ddf  # type: ignore[attr-defined]
+        else:
+            target = ddf_like
         shifted = target.map_partitions(_shift_ra_partition, meta=meta)
-        if hasattr(ddf_like, "_ddf"):
+        if isinstance(ddf_like, LsdbCatalog) and hasattr(ddf_like, "_ddf"):
             try:
                 ddf_like._ddf = shifted  # type: ignore[attr-defined]
                 return ddf_like
