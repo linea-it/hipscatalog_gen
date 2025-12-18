@@ -161,6 +161,8 @@ def _redistribute_by_density(
     if pdf.empty or weight <= 0.0:
         return pdf.sort_values("__score__", ascending=not order_desc, kind="mergesort")
 
+    before_counts = pdf["__ipix__"].value_counts().sort_index().to_dict()
+
     ipix_present = np.asarray(sorted(pdf["__ipix__"].unique()), dtype=np.int64)
     if ipix_present.size == 0:
         return pdf.sort_values("__score__", ascending=not order_desc, kind="mergesort")
@@ -238,6 +240,19 @@ def _redistribute_by_density(
             always=True,
         )
         return pdf
+
+    after_counts = out["__ipix__"].value_counts().sort_index().to_dict()
+    if log_fn is not None:
+        log_fn(
+            "[sdh] density redistribution stats: "
+            f"weight={weight:.3f}, "
+            f"ipix={len(ipix_present)}, "
+            f"before(min={min(before_counts.values(), default=0)}, "
+            f"max={max(before_counts.values(), default=0)}), "
+            f"after(min={min(after_counts.values(), default=0)}, "
+            f"max={max(after_counts.values(), default=0)})",
+            always=True,
+        )
     return out
 
 
