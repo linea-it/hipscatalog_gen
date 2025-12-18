@@ -461,6 +461,8 @@ def run_score_density_hybrid_selection(
     out_dir,
     diag_ctx,
     log_fn,
+    densmap_ref_base: Optional[np.ndarray] = None,
+    densmap_ref_order: Optional[int] = None,
 ) -> None:
     """Execute the score_density_hybrid selection path and write tiles."""
     algo = cfg.algorithm
@@ -580,10 +582,17 @@ def run_score_density_hybrid_selection(
 
             # Density redistribution only for depths 1–3
             if depth <= 3:
-                base_order = int(getattr(algo, "sdh_coverage_order", cfg.algorithm.level_coverage))
-                counts_ref = densmaps.get(base_order, densmaps.get(depth))
-                if counts_ref is None:
-                    counts_ref = densmaps[depth]
+                base_order = (
+                    int(densmap_ref_order)
+                    if densmap_ref_order is not None
+                    else int(getattr(algo, "sdh_coverage_order", cfg.algorithm.level_coverage))
+                )
+                counts_ref: np.ndarray
+                if densmap_ref_base is not None:
+                    counts_ref = np.asarray(densmap_ref_base, dtype=np.int64)
+                else:
+                    counts_ref_opt = densmaps.get(base_order, densmaps.get(depth))
+                    counts_ref = densmaps[depth] if counts_ref_opt is None else counts_ref_opt
                 if base_order >= depth:
                     counts_ref = _project_counts_to_order(counts_ref, base_order, depth)
                 elif len(counts_ref) != len(densmaps[depth]):

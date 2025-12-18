@@ -27,6 +27,7 @@ from typing import List
 from ..cluster.runtime import setup_cluster, shutdown_cluster
 from ..config import Config
 from ..coverage.pipeline import add_coverage_column, run_coverage_selection
+from ..healpix.densmap import densmap_for_depth
 from ..mag_global.pipeline import prepare_mag_global, run_mag_global_selection
 from ..score_density_hybrid.pipeline import (
     prepare_score_density_hybrid,
@@ -134,6 +135,12 @@ def run_pipeline(cfg: Config) -> None:
             remainder_ddf = prepare_score_global(ddf, cfg, diag_ctx, _log)
         elif selection_mode == "score_density_hybrid":
             remainder_ddf = prepare_score_density_hybrid(ddf, cfg, diag_ctx, _log)
+            sdh_cov_order = int(getattr(cfg.algorithm, "sdh_coverage_order", cfg.algorithm.level_coverage))
+            _log(
+                f"[sdh] computing density reference map at order {sdh_cov_order} from input catalog",
+                always=True,
+            )
+            densmap_ref_base = densmap_for_depth(ddf, RA_NAME, DEC_NAME, depth=sdh_cov_order)
         else:
             remainder_ddf = add_coverage_column(ddf, cfg, is_hats, RA_NAME, DEC_NAME, _log)
 
@@ -183,6 +190,8 @@ def run_pipeline(cfg: Config) -> None:
                 out_dir=out_dir,
                 diag_ctx=diag_ctx,
                 log_fn=_log,
+                densmap_ref_base=densmap_ref_base,
+                densmap_ref_order=sdh_cov_order,
             )
         else:
             run_coverage_selection(
