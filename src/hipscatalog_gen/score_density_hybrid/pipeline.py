@@ -7,6 +7,7 @@ import healpy as hp
 import numpy as np
 import pandas as pd
 from dask import compute as dask_compute
+from lsdb.catalog import Catalog as LsdbCatalog
 
 from ..io.output import build_header_line_from_keep
 from ..pipeline.common import write_tiles_with_allsky
@@ -304,7 +305,16 @@ def _reduce_topk_by_group_dask(
 
     meta = _get_meta_df(ddf_like)
     cols_all = list(meta.columns)
-    return ddf_like.groupby(group_col, group_keys=False)[cols_all].apply(_take_topk, meta=meta)
+    # LSDB Catalog: fall back to underlying Dask DataFrame when groupby is absent.
+    if isinstance(ddf_like, LsdbCatalog) and hasattr(ddf_like, "_ddf"):
+        base_ddf = ddf_like._ddf  # type: ignore[attr-defined]
+        cols_all = list(base_ddf.columns)
+        return base_ddf.groupby(group_col, group_keys=False)[cols_all].apply(_take_topk, meta=meta)
+
+    if hasattr(ddf_like, "groupby"):
+        return ddf_like.groupby(group_col, group_keys=False)[cols_all].apply(_take_topk, meta=meta)
+
+    return ddf_like
 
 
 def _drop_selected_ids(pdf: pd.DataFrame, ids: Iterable[int]) -> pd.DataFrame:
