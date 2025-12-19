@@ -582,7 +582,6 @@ def run_score_density_hybrid_selection(
     )
 
     header_line = build_header_line_from_keep(keep_cols)
-
     for i, depth in enumerate(depths_sel):
         depth_t0 = time.time()
         s_lo = level_edges[i]
@@ -590,7 +589,12 @@ def run_score_density_hybrid_selection(
         n_target = int(round(targets_per_depth[i])) if i < len(targets_per_depth) else None
 
         with diag_ctx(f"dask_depth_sdh_{depth:02d}"):
-            if depth <= 3:
+            weight_level = _resolve_weight_for_level(algo, depth) if depth <= 3 else 0.0
+            use_density = depth <= 3 and weight_level > 0.0
+
+            if use_density:
+                # Use the full remaining pool (already clipped to score_min/max globally) and
+                # allocate targets_per_depth rows with a density bias.
                 depth_pdf = remainder_ddf.compute()
                 if len(depth_pdf) == 0 or (n_target is not None and n_target <= 0):
                     log_fn(
@@ -613,8 +617,7 @@ def run_score_density_hybrid_selection(
                 depth_pdf = depth_pdf.copy()
                 depth_pdf["__ipix__"] = ipixL
 
-                target_total = n_target if n_target is not None else len(depth_pdf)
-                target_total = min(target_total, len(depth_pdf))
+                target_total = min(len(depth_pdf), n_target) if n_target is not None else len(depth_pdf)
 
                 base_order = (
                     int(densmap_ref_order)
@@ -634,9 +637,33 @@ def run_score_density_hybrid_selection(
                 # Subset to ipix present
                 ipix_present = np.asarray(sorted(depth_pdf["__ipix__"].unique()), dtype=np.int64)
                 counts_subset = counts_ref[ipix_present]
-                weights_subset = _compute_density_weights(
-                    counts_subset, _resolve_weight_for_level(algo, depth)
-                )
+
+                # Blend from proportional-to-density (weight=0 → close to score_global)
+                # to "all goes to the densest tile" (weight=1).
+                w_clamped = float(max(0.0, min(1.0, weight_level)))
+                seed_val = getattr(algo, "sdh_shuffle_seed", None)
+                rng = np.random.default_rng(int(seed_val)) if seed_val is not None else None
+
+                base_probs = _compute_density_weights(counts_subset, 1.0)
+
+                max_val = counts_subset.max(initial=0)
+                if max_val <= 0:
+                    strong_probs = base_probs
+                else:
+                    densest_mask = counts_subset == max_val
+                    strong_probs = np.zeros_like(counts_subset, dtype=np.float64)
+                    n_densest = int(densest_mask.sum())
+                    if n_densest > 0:
+                        if rng is not None:
+                            # Jitter tie-breaks deterministically.
+                            tie_noise = rng.random(len(counts_subset)) * 1e-6
+                            order = np.argsort(-(densest_mask.astype(float) + tie_noise))
+                            densest_mask = np.zeros_like(densest_mask, dtype=bool)
+                            densest_mask[order[:n_densest]] = True
+                        strong_probs[densest_mask] = 1.0 / float(n_densest)
+
+                weights_subset = (1.0 - w_clamped) * base_probs + w_clamped * strong_probs
+
                 if weights_subset.sum() <= 0.0:
                     quotas = np.zeros_like(ipix_present, dtype=np.int64)
                 else:
@@ -645,7 +672,8 @@ def run_score_density_hybrid_selection(
                     remainder_quota = target_total - int(quotas.sum())
                     if remainder_quota > 0:
                         frac = desired - quotas.astype(np.float64)
-                        rng = np.random.default_rng(int(getattr(algo, "sdh_shuffle_seed", 0) or 0))
+                        seed_val = getattr(algo, "sdh_shuffle_seed", None)
+                        rng = np.random.default_rng(int(seed_val) if seed_val is not None else None)
                         frac = frac + rng.random(len(frac)) * 1e-6
                         order_q = np.argsort(-frac)
                         for idx_q in order_q[:remainder_quota]:
