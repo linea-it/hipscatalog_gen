@@ -223,6 +223,18 @@ def write_common_static_products(
         sg_n_1: {cfg.algorithm.score_n_1}
         sg_n_2: {cfg.algorithm.score_n_2}
         sg_n_3: {cfg.algorithm.score_n_3}
+        # algorithm.score_density_hybrid
+        sdh_score_column: {getattr(cfg.algorithm, "sdh_score_column", None)}
+        sdh_score_min: {getattr(cfg.algorithm, "sdh_score_min", None)}
+        sdh_score_max: {getattr(cfg.algorithm, "sdh_score_max", None)}
+        sdh_score_adaptive_range: {getattr(cfg.algorithm, "sdh_score_adaptive_range", None)}
+        sdh_score_hist_nbins: {getattr(cfg.algorithm, "sdh_score_hist_nbins", None)}
+        sdh_n_1: {getattr(cfg.algorithm, "sdh_n_1", None)}
+        sdh_n_2: {getattr(cfg.algorithm, "sdh_n_2", None)}
+        sdh_n_3: {getattr(cfg.algorithm, "sdh_n_3", None)}
+        sdh_density_bias_n1: {getattr(cfg.algorithm, "sdh_density_bias_n1", None)}
+        sdh_density_bias_n2: {getattr(cfg.algorithm, "sdh_density_bias_n2", None)}
+        sdh_density_bias_n3: {getattr(cfg.algorithm, "sdh_density_bias_n3", None)}
         # algorithm.coverage
         cov_coverage_score_column: {cfg.algorithm.coverage_score_column}
         cov_use_hats_as_coverage: {cfg.algorithm.use_hats_as_coverage}

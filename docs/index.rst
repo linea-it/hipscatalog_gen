@@ -6,10 +6,11 @@ hipscatalog-gen builds HiPS-compliant catalog hierarchies from large astronomica
 Overview
 --------
 
-- Three selection modes (``algorithm.selection_mode``):
+- Four selection modes (``algorithm.selection_mode``):
 
   - ``mag_global``: magnitude-complete selection (``mg_*`` parameters).
   - ``score_global``: selection driven by an arbitrary score/expression (``sg_*``).
+  - ``score_density_hybrid``: density-driven depths 1–3 with score-driven remainder (``sdh_*``).
   - ``coverage``: coverage-based selection per HEALPix/HATS cell (``cov_*``).
 
 - Runs locally; outputs full HiPS layouts (tiles, all-sky, MOC, metadata, density maps).
@@ -44,7 +45,7 @@ Optional: expose the env as a Jupyter kernel:
 Configuration
 -------------
 
-- Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters (``mg_*``, ``sg_*``, ``cov_*``). More examples live under ``examples/configs/``.
+- Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters (``mg_*``, ``sg_*``, ``sdh_*``, ``cov_*``). More examples live under ``examples/configs/``.
 
 Run the pipeline
 ----------------

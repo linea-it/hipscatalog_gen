@@ -19,12 +19,12 @@ def main(argv: Optional[List[str]] = None) -> None:
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(
-        description=(
-            "HiPS Catalog Pipeline (Dask, Parquet, coverage/mag_global/score_global selection). "
-            "Use a YAML config file to control inputs, cluster, and algorithm options."
-        )
+    desc = (
+        "HiPS Catalog Pipeline "
+        "(Dask, Parquet, coverage/mag_global/score_global/score_density_hybrid selection). "
+        "Use a YAML config file to control inputs, cluster, and algorithm options."
     )
+    parser = argparse.ArgumentParser(description=desc)
     parser.add_argument(
         "--config",
         required=True,

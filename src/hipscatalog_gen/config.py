@@ -23,7 +23,8 @@ class AlgoOpts:
     """Algorithm options for HiPS selection and density profiles.
 
     Common settings (all modes):
-        selection_mode: High-level strategy ("coverage", "mag_global" or "score_global").
+        selection_mode: High-level strategy ("coverage", "mag_global", "score_global", or
+        "score_density_hybrid").
         level_limit: Maximum HiPS order (NorderL).
         level_coverage: Coverage / MOC order (lC).
 
@@ -42,6 +43,11 @@ class AlgoOpts:
         density_bias_mode / density_bias_exponent.
         fractional_mode / fractional_mode_logic.
         k_per_cov_per_level / targets_total_per_level / tie_buffer.
+
+    score_density_hybrid mode:
+        sdh_score_column / sdh_score_min / sdh_score_max / sdh_score_adaptive_range / sdh_score_hist_nbins.
+        sdh_n_1 / sdh_n_2 / sdh_n_3: optional fixed totals for depths 1–3.
+        sdh_density_bias_n1 / sdh_density_bias_n2 / sdh_density_bias_n3: density bias per depth (0.0–1.0).
     """
 
     # Common settings
@@ -70,6 +76,19 @@ class AlgoOpts:
     score_n_1: Optional[int] = None
     score_n_2: Optional[int] = None
     score_n_3: Optional[int] = None
+
+    # score_density_hybrid mode
+    sdh_score_column: Optional[str] = None
+    sdh_score_min: Optional[float] = None
+    sdh_score_max: Optional[float] = None
+    sdh_score_adaptive_range: str = "complete"
+    sdh_score_hist_nbins: int = 512
+    sdh_n_1: Optional[int] = None
+    sdh_n_2: Optional[int] = None
+    sdh_n_3: Optional[int] = None
+    sdh_density_bias_n1: float = 0.1
+    sdh_density_bias_n2: float = 0.3
+    sdh_density_bias_n3: float = 0.5
 
     # coverage mode (including density profile controls)
     coverage_score_column: Optional[str] = None  # score expression/column for coverage mode
@@ -196,6 +215,7 @@ selection_mode         [required]
       - "coverage"   → coverage-based selection per coverage cell (__icov__).
       - "mag_global" → global magnitude-complete selection.
       - "score_global" → global selection using an arbitrary score/column.
+      - "score_density_hybrid" → hybrid score selection with density-driven depths 1–3.
 level_limit            [required] int
     Maximum HiPS order (NorderL). Must be in [4, 11].
 level_coverage         [optional, default=8 if level_limit >= 8 else level_limit]
@@ -242,6 +262,23 @@ sg_score_hist_nbins    [optional, default=512] int
     Number of bins in the global score histogram.
 sg_n_1, sg_n_2, sg_n_3 [optional, default=None] int
     Approximate global target counts for depths 1–3. Must be provided in order.
+
+score_density_hybrid mode (prefix sdh_)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sdh_score_column        [required in score_density_hybrid mode] str
+    Column or expression evaluated globally.
+sdh_score_min / sdh_score_max [optional, default=None] float
+    Optional bounds for the score range. When missing, filled according to
+    sdh_score_adaptive_range ("complete" or "hist_peak"), analogously to sg_*.
+sdh_score_adaptive_range [optional, default="complete"] str
+    How to complete missing score_min/score_max: "complete" or "hist_peak".
+sdh_score_hist_nbins    [optional, default=512] int
+    Number of bins in the global score histogram.
+sdh_n_1 / sdh_n_2 / sdh_n_3 [optional, default=None] int
+    Optional fixed totals for depths 1–3 (must be provided in order).
+sdh_density_bias_n1 / sdh_density_bias_n2 / sdh_density_bias_n3
+    [optional, defaults: 0.1, 0.3, 0.5] float in [0, 1]
+    Density bias per depth when distributing targets across tiles.
 
 Coverage mode (prefix cov_)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -395,7 +432,8 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     if raw_selection_mode is None:
         raise ValueError(
             "Missing required parameter: algorithm.selection_mode. "
-            "Set it to 'coverage', 'mag_global' or 'score_global' in the configuration."
+            "Set it to 'coverage', 'mag_global', 'score_global' or 'score_density_hybrid' "
+            "in the configuration."
         )
     selection_mode = str(raw_selection_mode).lower()
 
@@ -435,6 +473,13 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     score_n_1_raw = _get_mode_value(algo, "sg_n_1")
     score_n_2_raw = _get_mode_value(algo, "sg_n_2")
     score_n_3_raw = _get_mode_value(algo, "sg_n_3")
+
+    # ------------------------------------------------------------------
+    # score_density_hybrid mode
+    # ------------------------------------------------------------------
+    sdh_n_1_raw = _get_mode_value(algo, "sdh_n_1")
+    sdh_n_2_raw = _get_mode_value(algo, "sdh_n_2")
+    sdh_n_3_raw = _get_mode_value(algo, "sdh_n_3")
 
     # ------------------------------------------------------------------
     # coverage mode
@@ -498,6 +543,16 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             "algorithm.sg_n_3 is set but algorithm.sg_n_1 and algorithm.sg_n_2 are not "
             "both defined. These controls must be provided in order: sg_n_1, sg_n_2, sg_n_3."
         )
+    if sdh_n_2_raw is not None and sdh_n_1_raw is None:
+        raise ValueError(
+            "algorithm.sdh_n_2 is set but algorithm.sdh_n_1 is missing. "
+            "These controls must be provided in order: sdh_n_1, then sdh_n_2, then sdh_n_3."
+        )
+    if sdh_n_3_raw is not None and (sdh_n_1_raw is None or sdh_n_2_raw is None):
+        raise ValueError(
+            "algorithm.sdh_n_3 is set but algorithm.sdh_n_1 and algorithm.sdh_n_2 are not "
+            "both defined. These controls must be provided in order: sdh_n_1, sdh_n_2, sdh_n_3."
+        )
 
     def _to_int_or_none(x, name: str) -> Optional[int]:
         if x is None:
@@ -516,6 +571,9 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     score_n_1 = _to_int_or_none(score_n_1_raw, "sg_n_1")
     score_n_2 = _to_int_or_none(score_n_2_raw, "sg_n_2")
     score_n_3 = _to_int_or_none(score_n_3_raw, "sg_n_3")
+    sdh_n_1 = _to_int_or_none(sdh_n_1_raw, "sdh_n_1")
+    sdh_n_2 = _to_int_or_none(sdh_n_2_raw, "sdh_n_2")
+    sdh_n_3 = _to_int_or_none(sdh_n_3_raw, "sdh_n_3")
 
     cfg = Config(
         input=InputCfg(
@@ -554,6 +612,18 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             score_n_1=score_n_1,
             score_n_2=score_n_2,
             score_n_3=score_n_3,
+            # score_density_hybrid mode
+            sdh_score_column=_get_mode_value(algo, "sdh_score_column"),
+            sdh_score_min=_get_mode_value(algo, "sdh_score_min"),
+            sdh_score_max=_get_mode_value(algo, "sdh_score_max"),
+            sdh_score_adaptive_range=_get_mode_value(algo, "sdh_score_adaptive_range", "complete"),
+            sdh_score_hist_nbins=int(_get_mode_value(algo, "sdh_score_hist_nbins", 512)),
+            sdh_n_1=sdh_n_1,
+            sdh_n_2=sdh_n_2,
+            sdh_n_3=sdh_n_3,
+            sdh_density_bias_n1=float(_get_mode_value(algo, "sdh_density_bias_n1", 0.1)),
+            sdh_density_bias_n2=float(_get_mode_value(algo, "sdh_density_bias_n2", 0.3)),
+            sdh_density_bias_n3=float(_get_mode_value(algo, "sdh_density_bias_n3", 0.5)),
             # coverage mode
             coverage_score_column=coverage_score_column,
             use_hats_as_coverage=bool(_get_mode_value(algo, "cov_use_hats_as_coverage", False)),
@@ -641,6 +711,24 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             raise ValueError("algorithm.score_adaptive_range must be either 'complete' or 'hist_peak'.")
         if int(getattr(algo, "score_hist_nbins", 512)) <= 0:
             raise ValueError("algorithm.score_hist_nbins must be a positive integer.")
+    if str(algo.selection_mode).lower() == "score_density_hybrid":
+        if not getattr(algo, "sdh_score_column", None):
+            raise ValueError(
+                "selection_mode='score_density_hybrid' requires algorithm.sdh_score_column to be set."
+            )
+        score_range_mode = str(getattr(algo, "sdh_score_adaptive_range", "complete") or "complete").lower()
+        if score_range_mode not in ("complete", "hist_peak"):
+            raise ValueError("algorithm.sdh_score_adaptive_range must be either 'complete' or 'hist_peak'.")
+        algo.sdh_score_adaptive_range = score_range_mode
+        if int(getattr(algo, "sdh_score_hist_nbins", 512)) <= 0:
+            raise ValueError("algorithm.sdh_score_hist_nbins must be a positive integer.")
+        for name in ("sdh_density_bias_n1", "sdh_density_bias_n2", "sdh_density_bias_n3"):
+            val = float(getattr(algo, name, 0.0))
+            if val < 0.0:
+                val = 0.0
+            if val > 1.0:
+                val = 1.0
+            setattr(algo, name, val)
 
     return cfg
 
