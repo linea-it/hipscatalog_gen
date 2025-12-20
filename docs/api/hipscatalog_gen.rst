@@ -12,6 +12,7 @@ Subpackages
    hipscatalog_gen.io
    hipscatalog_gen.mag_global
    hipscatalog_gen.pipeline
+   hipscatalog_gen.score_density_hybrid
    hipscatalog_gen.score_global
    hipscatalog_gen.utils
 
