@@ -225,10 +225,6 @@ def _targets_per_tile(counts_depth: np.ndarray, depth_total: int, bias: float) -
     if len(active_idx) == 0:
         return {}
 
-    if bias >= 1.0:
-        chosen = int(active_idx[int(np.argmax(counts_depth[active_idx]))])
-        return {chosen: int(depth_total)}
-
     weights_uniform = np.ones(len(active_idx), dtype="float64")
     weights_uniform /= float(weights_uniform.sum())
 

@@ -86,9 +86,9 @@ class AlgoOpts:
     sdh_n_1: Optional[int] = None
     sdh_n_2: Optional[int] = None
     sdh_n_3: Optional[int] = None
-    sdh_density_bias_n1: float = 0.1
-    sdh_density_bias_n2: float = 0.3
-    sdh_density_bias_n3: float = 0.5
+    sdh_density_bias_n1: float = 1.0
+    sdh_density_bias_n2: float = 1.0
+    sdh_density_bias_n3: float = 1.0
 
     # coverage mode (including density profile controls)
     coverage_score_column: Optional[str] = None  # score expression/column for coverage mode
@@ -621,9 +621,9 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             sdh_n_1=sdh_n_1,
             sdh_n_2=sdh_n_2,
             sdh_n_3=sdh_n_3,
-            sdh_density_bias_n1=float(_get_mode_value(algo, "sdh_density_bias_n1", 0.1)),
-            sdh_density_bias_n2=float(_get_mode_value(algo, "sdh_density_bias_n2", 0.3)),
-            sdh_density_bias_n3=float(_get_mode_value(algo, "sdh_density_bias_n3", 0.5)),
+            sdh_density_bias_n1=float(_get_mode_value(algo, "sdh_density_bias_n1", 1.0)),
+            sdh_density_bias_n2=float(_get_mode_value(algo, "sdh_density_bias_n2", 1.0)),
+            sdh_density_bias_n3=float(_get_mode_value(algo, "sdh_density_bias_n3", 1.0)),
             # coverage mode
             coverage_score_column=coverage_score_column,
             use_hats_as_coverage=bool(_get_mode_value(algo, "cov_use_hats_as_coverage", False)),
@@ -724,10 +724,8 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             raise ValueError("algorithm.sdh_score_hist_nbins must be a positive integer.")
         for name in ("sdh_density_bias_n1", "sdh_density_bias_n2", "sdh_density_bias_n3"):
             val = float(getattr(algo, name, 0.0))
-            if val < 0.0:
-                val = 0.0
-            if val > 1.0:
-                val = 1.0
+            if val < 0.0 or val > 1.0:
+                raise ValueError(f"algorithm.{name} must be in [0, 1]. Got {val}.")
             setattr(algo, name, val)
 
     return cfg
