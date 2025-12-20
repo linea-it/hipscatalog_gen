@@ -65,16 +65,15 @@ columns:
   #
   # Behavior is unified across all formats (Parquet, CSV, TSV, HATS):
   #
-  #   - If omitted or empty:
-  #       → Keep only the minimal required subset:
-  #           * RA and DEC columns;
-  #           * any columns referenced in the score expression used by the mode;
-  #           * the magnitude column (if selection_mode = "mag_global").
+  #   - If omitted or null:
+  #       → Keep all input columns. RA/DEC, score expression deps, and mag/flux
+  #         (if selection_mode = "mag_global") are ordered first.
   #
-  #   - If provided:
-  #       → Keep the union of:
-  #           * the minimal subset above;
-  #           * all column names listed here (filtered by availability).
+  #   - If empty list []:
+  #       → Keep only the essential subset (RA, DEC, score deps, mag/flux if mag_global).
+  #
+  #   - If provided (non-empty list):
+  #       → Keep the essential subset plus all columns listed here (filtered by availability).
   #
   # This restriction minimizes I/O and memory footprint while preserving all
   # necessary columns for selection and output.

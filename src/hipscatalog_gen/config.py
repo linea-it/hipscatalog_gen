@@ -179,16 +179,14 @@ dec   [required] str
 keep  [optional, default=None] list[str] or null
     Controls which columns are kept in the HiPS tiles:
       - Not set / null (default):
-          Keep all input columns. RA, DEC, score expression dependencies
-          (sg_score_column / score_column or sdh_score_column)
-          and mg_mag_column (when used) are moved to the beginning of the
-          output column order.
+          Keep all input columns; RA/DEC, score expression deps, and mag/flux
+          (if mag_global) are ordered first.
       - Empty list []:
-          Keep only the minimal set required by the pipeline:
-          RA, DEC, score expression dependencies and mg_mag_column (when used).
+          Keep only the essential set: RA, DEC, score deps, and mag/flux
+          (if mag_global).
       - Non-empty list:
-          Keep the minimal set (RA, DEC, score deps, mg_mag_column if any)
-          plus the explicitly listed columns.
+          Keep the essential set plus all explicitly listed columns (filtered
+          by availability).
 
 algorithm
 ---------
