@@ -18,7 +18,14 @@ __all__ = ["prepare_mag_global", "run_mag_global_selection"]
 MAG_CONV = np.log(10.0) * 0.4
 
 
-def prepare_mag_global(ddf: Any, cfg: Any, diag_ctx, log_fn):
+def prepare_mag_global(
+    ddf: Any,
+    cfg: Any,
+    diag_ctx,
+    log_fn,
+    persist_ddfs: bool = False,
+    avoid_computes: bool = True,
+):
     """Add __mag__ column and restrict to the configured magnitude window."""
     algo = cfg.algorithm
     mag_col_cfg = getattr(algo, "mag_column", None)
@@ -267,6 +274,20 @@ def prepare_mag_global(ddf: Any, cfg: Any, diag_ctx, log_fn):
         mag_max,
         meta=meta_sel,
     )
+
+    should_persist = persist_ddfs or (not avoid_computes)
+    if should_persist and hasattr(ddf_sel, "persist"):
+        reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
+        log_fn(f"[mag_global] Persisting filtered DDF in memory ({reason}).", always=True)
+        with diag_ctx("dask_mag_persist_filtered"):
+            ddf_sel = ddf_sel.persist()
+            try:
+                from dask.distributed import wait
+            except Exception:
+                wait = None  # type: ignore[assignment]
+            if wait is not None:
+                wait(ddf_sel)
+
     return ddf_sel
 
 
@@ -358,6 +379,7 @@ def run_mag_global_selection(
     out_dir,
     diag_ctx,
     log_fn,
+    avoid_computes: bool = True,
 ) -> None:
     """Execute the mag_global selection path and write tiles."""
     algo = cfg.algorithm
@@ -465,6 +487,9 @@ def run_mag_global_selection(
 
             counts = densmaps[depth]
             allsky_needed = depth in (1, 2)
+            order_desc = bool(
+                getattr(cfg.algorithm, "mg_order_desc", getattr(cfg.algorithm, "order_desc", False))
+            )
 
             written_per_ipix, _ = write_tiles_with_allsky(
                 out_dir=out_dir,
@@ -474,7 +499,7 @@ def run_mag_global_selection(
                 dec_col=dec_col,
                 counts=counts,
                 selected=selected_pdf,
-                order_desc=cfg.algorithm.order_desc,
+                order_desc=order_desc,
                 allsky_needed=allsky_needed,
                 log_fn=log_fn,
             )

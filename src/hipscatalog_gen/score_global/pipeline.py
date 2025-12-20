@@ -16,7 +16,14 @@ from .utils import _quantile_from_histogram, compute_score_histogram_ddf
 __all__ = ["prepare_score_global", "run_score_global_selection"]
 
 
-def prepare_score_global(ddf: Any, cfg: Any, diag_ctx, log_fn):
+def prepare_score_global(
+    ddf: Any,
+    cfg: Any,
+    diag_ctx,
+    log_fn,
+    persist_ddfs: bool = False,
+    avoid_computes: bool = True,
+):
     """Add __score__ column (from an expression) and restrict to a score window."""
     algo = cfg.algorithm
     score_expr = getattr(algo, "score_column", None)
@@ -235,6 +242,19 @@ def prepare_score_global(ddf: Any, cfg: Any, diag_ctx, log_fn):
         score_max,
         meta=meta_sel,
     )
+
+    should_persist = persist_ddfs or (not avoid_computes)
+    if should_persist and hasattr(ddf_sel, "persist"):
+        reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
+        log_fn(f"[score_global] Persisting filtered DDF in memory ({reason}).", always=True)
+        with diag_ctx("dask_score_persist_filtered"):
+            ddf_sel = ddf_sel.persist()
+            try:
+                from dask.distributed import wait
+            except Exception:
+                wait = None  # type: ignore[assignment]
+            if wait is not None:
+                wait(ddf_sel)
     return ddf_sel
 
 
@@ -326,6 +346,7 @@ def run_score_global_selection(
     out_dir,
     diag_ctx,
     log_fn,
+    avoid_computes: bool = True,
 ) -> None:
     """Execute the score_global selection path and write tiles."""
     algo = cfg.algorithm
@@ -442,7 +463,7 @@ def run_score_global_selection(
                 dec_col=dec_col,
                 counts=counts,
                 selected=selected_pdf,
-                order_desc=cfg.algorithm.order_desc,
+                order_desc=cfg.algorithm.sg_order_desc,
                 allsky_needed=allsky_needed,
                 log_fn=log_fn,
             )

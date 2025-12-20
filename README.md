@@ -19,10 +19,10 @@ The pipeline supports three selection modes, configured in the YAML file under a
 
 - **mag_global**   — global magnitude-complete selection.
 - **score_global** — global selection driven by an arbitrary score/expression.
-- **coverage**     — coverage-based selection per HEALPix or HATS cell.
+- **score_density_hybrid** — density-driven depths 1–3 with score-based distribution afterwards.
 
 Mode-specific parameters in the YAML use the prefixes:
-`mg_*` (mag_global), `sg_*` (score_global), and `cov_*` (coverage).
+`mg_*` (mag_global), `sg_*` (score_global), and `sdh_*` (score_density_hybrid).
 
 -------------------------------------------------------------------------------
 
@@ -71,6 +71,12 @@ To create your own configuration:
 Then edit config.yaml to match your input catalog and selection preferences.
 Additional examples are available under ./examples/configs/.
 
+Selection modes live under ``algorithm.selection_mode``:
+
+- ``mag_global`` (``mg_*`` params)
+- ``score_global`` (``sg_*`` params)
+- ``score_density_hybrid`` (``sdh_*`` params)
+
 -------------------------------------------------------------------------------
 
 ## Running
@@ -103,16 +109,11 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 
 -------------------------------------------------------------------------------
 
-## Mode Comparison (Summary)
+## Mode Summary
 
-| Feature | Mag Global Mode | Score Global Mode | Coverage Mode |
-|----------|----------------|-------------------|---------------|
-| Partition basis | Global sample | Global sample | HEALPix/HATS cells (__icov__) |
-| Main metric | Magnitude column | Arbitrary score/expression | Score + density profile |
-| Completeness goal | Magnitude completeness | Score window completeness | Spatial balance / density control |
-| Depth behavior | Histogram-based (mag_hist_nbins, n_1/n_2/n_3) | Histogram-based (score_hist_nbins, score_n_1/n_2/n_3) | Profile-driven (k_per_cov_*, targets_total_*) |
-| Bias options | Not applicable | Not applicable | density_bias_mode / exponent |
-| Typical use | Magnitude-complete catalogs | Global ranking/quality score selections | Uniform or density-aware selection |
+- **mag_global**: magnitude-complete slices across all depths (uses ``mg_*``).
+- **score_global**: score-based slices across all depths (uses ``sg_*``).
+- **score_density_hybrid**: density-driven tiles for depths 1–3, then score slices for deeper levels (uses ``sdh_*``).
 
 -------------------------------------------------------------------------------
 

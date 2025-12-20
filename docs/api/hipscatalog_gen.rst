@@ -8,11 +8,11 @@ Subpackages
    :maxdepth: 4
 
    hipscatalog_gen.cluster
-   hipscatalog_gen.coverage
    hipscatalog_gen.healpix
    hipscatalog_gen.io
    hipscatalog_gen.mag_global
    hipscatalog_gen.pipeline
+   hipscatalog_gen.score_density_hybrid
    hipscatalog_gen.score_global
    hipscatalog_gen.utils
 

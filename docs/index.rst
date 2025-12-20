@@ -10,7 +10,7 @@ Overview
 
   - ``mag_global``: magnitude-complete selection (``mg_*`` parameters).
   - ``score_global``: selection driven by an arbitrary score/expression (``sg_*``).
-  - ``coverage``: coverage-based selection per HEALPix/HATS cell (``cov_*``).
+  - ``score_density_hybrid``: density-driven depths 1–3 with score-driven remainder (``sdh_*``).
 
 - Runs locally; outputs full HiPS layouts (tiles, all-sky, MOC, metadata, density maps).
 
@@ -44,7 +44,7 @@ Optional: expose the env as a Jupyter kernel:
 Configuration
 -------------
 
-- Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters (``mg_*``, ``sg_*``, ``cov_*``). More examples live under ``examples/configs/``.
+- Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters (``mg_*``, ``sg_*``, ``sdh_*``). More examples live under ``examples/configs/``.
 
 Run the pipeline
 ----------------
@@ -70,7 +70,7 @@ Outputs (HiPS layout)
 
 - ``Norder*/Dir*/Npix*.tsv``: per-depth tiles; optional ``Norder*/Allsky.tsv``.
 - ``densmap_o<depth>.fits``: density maps up to ``algorithm.level_limit``.
-- ``Moc.fits`` / ``Moc.json``: coverage maps.
+- ``Moc.fits`` / ``Moc.json``: MOC maps.
 - ``properties`` and ``metadata.xml``: HiPS metadata descriptors.
 - ``process.log`` and ``arguments``: logs and config snapshot.
 - Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.

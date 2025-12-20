@@ -8,7 +8,7 @@
 #   - Distributes data with Dask (for Parquet/CSV/TSV) or LSDB (for HATS)
 #   - Validates and normalizes RA/DEC (RA in degrees, DEC in degrees)
 #   - Computes densmaps (per-depth HEALPix counts) and a MOC
-#   - Selects sources per depth (coverage-based or global magnitude-based)
+#   - Selects sources per depth (score- or magnitude-based)
 #   - Writes HiPS-compliant tiles (Norder*/Dir*/Npix*.tsv + Allsky.tsv)
 #   - Produces MOC, density maps, metadata, and a process.log
 #
@@ -16,8 +16,6 @@
 #   - Opened via lsdb.open_catalog()
 #   - Columns restricted to RA/DEC, score expression dependencies, mg_mag_column (if mag_global)
 #     plus any columns listed in columns.keep.
-#   - When algorithm.use_hats_as_coverage=true, HATS partitions are used
-#     as coverage cells (__icov__) instead of HEALPix coverage_order.
 # =============================================================================
 
 
@@ -67,16 +65,15 @@ columns:
   #
   # Behavior is unified across all formats (Parquet, CSV, TSV, HATS):
   #
-  #   - If omitted or empty:
-  #       → Keep only the minimal required subset:
-  #           * RA and DEC columns;
-  #           * any columns referenced in the score expression used by the mode;
-  #           * the magnitude column (if selection_mode = "mag_global").
+  #   - If omitted or null:
+  #       → Keep all input columns. RA/DEC, score expression deps, and mag/flux
+  #         (if selection_mode = "mag_global") are ordered first.
   #
-  #   - If provided:
-  #       → Keep the union of:
-  #           * the minimal subset above;
-  #           * all column names listed here (filtered by availability).
+  #   - If empty list []:
+  #       → Keep only the essential subset (RA, DEC, score deps, mag/flux if mag_global).
+  #
+  #   - If provided (non-empty list):
+  #       → Keep the essential subset plus all columns listed here (filtered by availability).
   #
   # This restriction minimizes I/O and memory footprint while preserving all
   # necessary columns for selection and output.
@@ -110,9 +107,9 @@ algorithm:
   # ==============================
   # Common settings (all modes)
   # ==============================
-  selection_mode: "mag_global"  # "coverage" | "mag_global" | "score_global"
+  selection_mode: "mag_global"  # "mag_global" | "score_global" | "score_density_hybrid"
   level_limit: 11             # HiPS max depth (4..11)
-  level_coverage: 10          # Depth used for coverage densmap and MOC
+  # moc_order: 11             # Optional MOC order (defaults to level_limit)
 
   # ==============================
   # mag_global mode ONLY
@@ -128,6 +125,7 @@ algorithm:
   mg_n_1: null                   # Optional targets for depths 1..3
   mg_n_2: null
   mg_n_3: null
+  mg_order_desc: false           # false → lower magnitudes/scores are better; true → higher are better
 
   # ==============================
   # score_global mode ONLY
@@ -140,37 +138,24 @@ algorithm:
   #sg_n_1: null                    # Optional targets for depths 1..3
   #sg_n_2: null
   #sg_n_3: null
+  #sg_order_desc: false            # false → lower scores are better; true → higher scores are better
 
   # ==============================
-  # coverage mode ONLY
+  # score_density_hybrid mode ONLY
   # ==============================
-  # Score expression used to rank sources within each coverage cell/tile.
-  #
-  #   - Can be a column name ("mag_r") or a Python expression using columns and
-  #     numpy (np / numpy), e.g.: "(flux_g / err_g)**2".
-  #   - Evaluated on pandas partitions; invalid/NaN/±inf values are handled
-  #     and replaced with worst scores.
-  #
-  # order_desc=false → lower score is better (ascending sort).
-  # order_desc=true  → higher score is better (descending sort).
-  #
-  # In coverage mode, this directly controls which rows are kept and how
-  # fractional selection works inside each coverage cell.
-  #cov_coverage_score_column: "i_cModelMag_dered"
-  #cov_use_hats_as_coverage: false     # HATS partitions as coverage cells (__icov__)
-  #cov_order_desc: false               # Score ordering (coverage mode)
-  #cov_coverage_order: 8              # HEALPix order for __icov__ when not using HATS
-  #cov_density_mode: "exp"             # "constant" | "linear" | "exp" | "log"
-  #cov_k_per_cov_initial: 1.0          # Base k per coverage cell at depth 1
-  #cov_targets_total_initial: null     # Mutually exclusive with k_per_cov_initial
-  #cov_density_exp_base: 2.0           # Base for density_mode == "exp"
-  #cov_density_bias_mode: "none"       # "none" | "proportional" | "inverse"
-  #cov_density_bias_exponent: 1.0      # Bias strength
-  #cov_fractional_mode: "score"        # "random" | "score"
-  #cov_fractional_mode_logic: "local"  # "auto" | "local" | "global"
-  #cov_k_per_cov_per_level: {}         # Optional per-depth k overrides
-  #cov_targets_total_per_level: {}     # Optional per-depth total caps
-  #cov_tie_buffer: 10                  # Extra rows kept near cut
+  #sdh_score_column: null         # Column or expression to evaluate globally
+  #sdh_score_min: null            # Optional lower bound (auto if null)
+  #sdh_score_max: null            # Optional upper bound (auto if null)
+  #sdh_score_adaptive_range: "complete"  # "complete" | "hist_peak"
+  #sdh_score_hist_nbins: 512      # Histogram bins for score_density_hybrid
+  #sdh_density_bias_n1: 1.0       # Density bias for Norder 1 (0.0 uniform, 1.0 follows densmap)
+  #sdh_density_bias_n2: 1.0       # Density bias for Norder 2
+  #sdh_density_bias_n3: 1.0       # Density bias for Norder 3
+  #sdh_n_1: null                  # Optional fixed totals for depths 1..3 (must be in order)
+  #sdh_n_2: null
+  #sdh_n_3: null
+  #sdh_order_desc: false          # false → lower scores are better; true → higher scores are better
+
 # -----------------------------------------------------------------------------
 # Cluster settings (Dask or SLURM)
 # -----------------------------------------------------------------------------
@@ -188,21 +173,10 @@ cluster:
   threads_per_worker: 8
   memory_per_worker: "12GB"
 
-  # Memory vs throughput policy:
-  #
-  #   persist_ddfs:
-  #     - true  → keep large intermediates (repartitioned ddf, remainders, etc.)
-  #               in memory when possible (higher throughput, more memory).
-  #     - false → do not persist; recompute from the Dask graph (lower memory).
-  #
-  #   avoid_computes_wherever_possible:
-  #     - true  → prefer Dask-native reductions and avoid large .compute()
-  #               on intermediate collections (more streaming, less peak memory).
-  #     - false → follow the standard behavior with explicit .compute() calls.
-  #
-  # These flags affect all selection modes.
-  persist_ddfs: false
-  avoid_computes_wherever_possible: true
+  # Memory vs throughput policy (applies to all modes):
+  #   low_memory_mode=true  → persist_ddfs=False, avoid_computes_wherever_possible=True
+  #   low_memory_mode=false → persist_ddfs=True, avoid_computes_wherever_possible=False
+  low_memory_mode: true
 
   # SLURM options (only used if mode: slurm)
   slurm:

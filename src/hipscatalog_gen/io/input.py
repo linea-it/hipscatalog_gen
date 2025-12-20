@@ -46,14 +46,15 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     # Single declaration for the whole function (avoid no-redef)
     mag_col_cfg: Optional[str] = None
     flux_col_cfg: Optional[str] = None
-    coverage_score_expr = getattr(cfg.algorithm, "coverage_score_column", None) or ""
     score_global_expr = getattr(cfg.algorithm, "score_column", None) or ""
-    selection_mode = getattr(cfg.algorithm, "selection_mode", "coverage").lower()
-    active_score_expr = (
-        coverage_score_expr
-        if selection_mode == "coverage"
-        else (score_global_expr if selection_mode == "score_global" else "")
-    )
+    sdh_score_expr = getattr(cfg.algorithm, "sdh_score_column", None) or ""
+    selection_mode = getattr(cfg.algorithm, "selection_mode", "mag_global").lower()
+    if selection_mode == "score_global":
+        active_score_expr = score_global_expr
+    elif selection_mode == "score_density_hybrid":
+        active_score_expr = sdh_score_expr
+    else:
+        active_score_expr = ""
     if selection_mode == "mag_global":
         mag_col_cfg = cfg.algorithm.mag_column
         flux_col_cfg = getattr(cfg.algorithm, "flux_column", None)

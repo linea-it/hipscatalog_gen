@@ -303,17 +303,17 @@ def write_metadata_xml(
             vot.to_xml(fh)
 
 
-def write_moc(out_dir: Path, level_coverage: int, dens_counts: np.ndarray) -> None:
+def write_moc(out_dir: Path, moc_order: int, dens_counts: np.ndarray) -> None:
     """Build and write MOC from densmap counts.
 
     Outputs both FITS (Moc.fits) and JSON (Moc.json) representations.
 
     Args:
         out_dir: HiPS root output directory.
-        level_coverage: HEALPix order used for coverage.
-        dens_counts: Densmap counts at the coverage order.
+        moc_order: HEALPix order used for the MOC.
+        dens_counts: Densmap counts at the MOC order.
     """
-    order = int(level_coverage)
+    order = int(moc_order)
     ipix = np.flatnonzero(dens_counts > 0)
 
     if ipix.size == 0:

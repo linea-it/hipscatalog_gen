@@ -26,8 +26,8 @@ from typing import List
 
 from ..cluster.runtime import setup_cluster, shutdown_cluster
 from ..config import Config
-from ..coverage.pipeline import add_coverage_column, run_coverage_selection
 from ..mag_global.pipeline import prepare_mag_global, run_mag_global_selection
+from ..score_density_hybrid.pipeline import prepare_score_density_hybrid, run_score_density_hybrid_selection
 from ..score_global.pipeline import prepare_score_global, run_score_global_selection
 from ..utils import _mkdirs, _ts
 from .common import (
@@ -86,32 +86,6 @@ def run_pipeline(cfg: Config) -> None:
     if not (4 <= int(cfg.algorithm.level_limit) <= 11):
         raise ValueError("level_limit (lM) must be within [4, 11] to mirror the CDS tool.")
 
-    if cfg.algorithm.level_coverage > cfg.algorithm.level_limit:
-        cfg.algorithm.level_coverage = cfg.algorithm.level_limit
-        _log("WARNING: level_coverage was > level_limit; set lC = lM", always=True)
-
-    fmt_lower = str(cfg.input.format).lower()
-    if fmt_lower != "hats" and getattr(cfg.algorithm, "use_hats_as_coverage", False):
-        _log(
-            "[config] algorithm.use_hats_as_coverage=True was requested, but "
-            "input.format is not 'hats'. This option is only meaningful for "
-            "HATS/LSDB catalogs and will be ignored for this run.",
-            always=True,
-        )
-
-    if (
-        fmt_lower == "hats"
-        and getattr(cfg.algorithm, "use_hats_as_coverage", False)
-        and str(getattr(cfg.algorithm, "density_bias_mode", "none")).lower() != "none"
-    ):
-        _log(
-            "[config] density_bias_mode is not supported when using format='hats' "
-            "with algorithm.use_hats_as_coverage=True. "
-            "The density bias will be ignored for this run (forcing density_bias_mode='none').",
-            always=True,
-        )
-        cfg.algorithm.density_bias_mode = "none"
-
     runtime, diag_ctx = setup_cluster(cfg.cluster, report_dir, _log)
     persist_ddfs = runtime.persist_ddfs
     avoid_computes = runtime.avoid_computes
@@ -122,14 +96,40 @@ def run_pipeline(cfg: Config) -> None:
             cfg, diag_ctx, _log, persist_ddfs
         )
 
-        selection_mode = (getattr(cfg.algorithm, "selection_mode", "coverage") or "coverage").lower()
+        selection_mode = (getattr(cfg.algorithm, "selection_mode", "mag_global") or "mag_global").lower()
 
         if selection_mode == "mag_global":
-            remainder_ddf = prepare_mag_global(ddf, cfg, diag_ctx, _log)
+            remainder_ddf = prepare_mag_global(
+                ddf,
+                cfg,
+                diag_ctx,
+                _log,
+                persist_ddfs=persist_ddfs,
+                avoid_computes=avoid_computes,
+            )
         elif selection_mode == "score_global":
-            remainder_ddf = prepare_score_global(ddf, cfg, diag_ctx, _log)
+            remainder_ddf = prepare_score_global(
+                ddf,
+                cfg,
+                diag_ctx,
+                _log,
+                persist_ddfs=persist_ddfs,
+                avoid_computes=avoid_computes,
+            )
+        elif selection_mode == "score_density_hybrid":
+            remainder_ddf = prepare_score_density_hybrid(
+                ddf,
+                cfg,
+                diag_ctx,
+                _log,
+                persist_ddfs=persist_ddfs,
+                avoid_computes=avoid_computes,
+            )
         else:
-            remainder_ddf = add_coverage_column(ddf, cfg, is_hats, RA_NAME, DEC_NAME, _log)
+            raise ValueError(
+                f"Unsupported selection_mode '{selection_mode}'. "
+                "Use one of: mag_global, score_global, score_density_hybrid."
+            )
 
         densmaps = compute_and_write_densmaps(
             ddf_sel=remainder_ddf,
@@ -153,6 +153,7 @@ def run_pipeline(cfg: Config) -> None:
                 out_dir=out_dir,
                 diag_ctx=diag_ctx,
                 log_fn=_log,
+                avoid_computes=avoid_computes,
             )
         elif selection_mode == "score_global":
             run_score_global_selection(
@@ -165,22 +166,23 @@ def run_pipeline(cfg: Config) -> None:
                 out_dir=out_dir,
                 diag_ctx=diag_ctx,
                 log_fn=_log,
+                avoid_computes=avoid_computes,
             )
-        else:
-            run_coverage_selection(
+        elif selection_mode == "score_density_hybrid":
+            run_score_density_hybrid_selection(
                 remainder_ddf=remainder_ddf,
-                cfg=cfg,
                 densmaps=densmaps,
                 keep_cols=keep_cols,
                 ra_col=RA_NAME,
                 dec_col=DEC_NAME,
+                cfg=cfg,
                 out_dir=out_dir,
                 diag_ctx=diag_ctx,
                 log_fn=_log,
-                persist_ddfs=persist_ddfs,
                 avoid_computes=avoid_computes,
-                is_hats=is_hats,
             )
+        else:
+            raise RuntimeError("Unexpected selection_mode dispatch failure.")
 
     try:
         if diagnostics_mode == "global":
