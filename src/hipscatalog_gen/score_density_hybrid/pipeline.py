@@ -327,7 +327,14 @@ def _drop_selected_ids(pdf: pd.DataFrame, ids: Iterable[int]) -> pd.DataFrame:
 # =============================================================================
 
 
-def prepare_score_density_hybrid(ddf: Any, cfg: Any, diag_ctx, log_fn):
+def prepare_score_density_hybrid(
+    ddf: Any,
+    cfg: Any,
+    diag_ctx,
+    log_fn,
+    persist_ddfs: bool = False,
+    avoid_computes: bool = True,
+):
     """Add __score__ column (from an expression) and restrict to a score window."""
     algo = cfg.algorithm
     score_expr = getattr(algo, "sdh_score_column", None)
@@ -526,6 +533,20 @@ def prepare_score_density_hybrid(ddf: Any, cfg: Any, diag_ctx, log_fn):
     meta_with_id = meta_sel.copy()
     meta_with_id["__sdh_id__"] = pd.Series([], dtype="int64")
     ddf_sel = ddf_sel.map_partitions(_attach_unique_id, meta=meta_with_id, partition_info=True)
+
+    should_persist = persist_ddfs or (not avoid_computes)
+    if should_persist and hasattr(ddf_sel, "persist"):
+        reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
+        log_fn(f"[score_density_hybrid] Persisting filtered DDF in memory ({reason}).", always=True)
+        with diag_ctx("dask_sdh_persist_filtered"):
+            ddf_sel = ddf_sel.persist()
+            try:
+                from dask.distributed import wait
+            except Exception:
+                wait = None  # type: ignore[assignment]
+            if wait is not None:
+                wait(ddf_sel)
+
     return ddf_sel
 
 
@@ -539,6 +560,7 @@ def run_score_density_hybrid_selection(
     out_dir,
     diag_ctx,
     log_fn,
+    avoid_computes: bool = True,
 ) -> None:
     """Execute the score_density_hybrid selection."""
     algo = cfg.algorithm
@@ -619,7 +641,7 @@ def run_score_density_hybrid_selection(
     )
 
     available_ddf = remainder_ddf
-    order_desc = True  # stage 1 always takes higher scores first
+    order_desc = bool(getattr(algo, "sdh_order_desc", False))
 
     for depth in [d for d in depths_sel if d <= 3]:
         depth_t0 = time.time()
@@ -804,7 +826,7 @@ def run_score_density_hybrid_selection(
                 dec_col=dec_col,
                 counts=counts,
                 selected=selected_pdf,
-                order_desc=cfg.algorithm.order_desc,
+                order_desc=order_desc,
                 allsky_needed=allsky_needed,
                 log_fn=log_fn,
             )

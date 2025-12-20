@@ -15,15 +15,14 @@ This project was created following the LINCC Frameworks Python Project Template 
 hipscatalog-gen is a Python package for building HiPS-compliant catalog hierarchies from large astronomical tables using Dask and LSDB. It is inspired by and extends the logic of the CDS *Hipsgen-cat.jar* tool, providing a scalable and parallelized Python implementation suitable for large-scale workflows.
 
 
-The pipeline supports four selection modes, configured in the YAML file under algorithm.selection_mode:
+The pipeline supports three selection modes, configured in the YAML file under algorithm.selection_mode:
 
 - **mag_global**   — global magnitude-complete selection.
 - **score_global** — global selection driven by an arbitrary score/expression.
 - **score_density_hybrid** — density-driven depths 1–3 with score-based distribution afterwards.
-- **coverage**     — coverage-based selection per HEALPix or HATS cell.
 
 Mode-specific parameters in the YAML use the prefixes:
-`mg_*` (mag_global), `sg_*` (score_global), `sdh_*` (score_density_hybrid), and `cov_*` (coverage).
+`mg_*` (mag_global), `sg_*` (score_global), and `sdh_*` (score_density_hybrid).
 
 -------------------------------------------------------------------------------
 
@@ -77,7 +76,6 @@ Selection modes live under ``algorithm.selection_mode``:
 - ``mag_global`` (``mg_*`` params)
 - ``score_global`` (``sg_*`` params)
 - ``score_density_hybrid`` (``sdh_*`` params)
-- ``coverage`` (``cov_*`` params)
 
 -------------------------------------------------------------------------------
 
@@ -116,7 +114,6 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - **mag_global**: magnitude-complete slices across all depths (uses ``mg_*``).
 - **score_global**: score-based slices across all depths (uses ``sg_*``).
 - **score_density_hybrid**: density-driven tiles for depths 1–3, then score slices for deeper levels (uses ``sdh_*``).
-- **coverage**: per-coverage-cell selection with density profiles and optional biasing (uses ``cov_*``).
 
 -------------------------------------------------------------------------------
 

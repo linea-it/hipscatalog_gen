@@ -39,13 +39,7 @@ def log_prologue(cfg: Any, out_dir: Path, log_fn) -> None:
         always=True,
     )
     sel_mode = (getattr(cfg.algorithm, "selection_mode", "") or "").lower()
-    base = (
-        f"Config -> lM={cfg.algorithm.level_limit} "
-        f"lC={cfg.algorithm.level_coverage} "
-        f"selection_mode={sel_mode}"
-    )
-    if sel_mode == "coverage":
-        base += f" Oc={cfg.algorithm.coverage_order} order_desc={cfg.algorithm.order_desc}"
+    base = f"Config -> lM={cfg.algorithm.level_limit} selection_mode={sel_mode}"
     log_fn(base, always=True)
 
 
@@ -93,8 +87,7 @@ def _warn_if_hats_mismatch(paths: List[str], cfg: Any, log_fn) -> None:
             f"(found 'collection.properties' or 'hats.properties' under: {hats_root}). "
             f"You requested input.format='{cfg.input.format}'. "
             "The pipeline will proceed, but consider using input.format='hats' to "
-            "enable HATS/LSDB-specific features (e.g. LSDB partitions, "
-            "algorithm.use_hats_as_coverage).",
+            "enable HATS/LSDB-specific features (e.g. LSDB partitions).",
             always=True,
         )
 
@@ -168,8 +161,9 @@ def write_common_static_products(
     ddf: Any,
 ) -> None:
     """Write MOC, metadata.xml, properties, and arguments echo."""
-    dens_lc = densmaps[cfg.algorithm.level_coverage]
-    write_moc(out_dir, cfg.algorithm.level_coverage, dens_lc)
+    moc_order = getattr(cfg.algorithm, "moc_order", cfg.algorithm.level_limit)
+    dens_lc = densmaps[moc_order]
+    write_moc(out_dir, moc_order, dens_lc)
 
     dtypes_map = ddf.dtypes.to_dict()
     cols: List[Tuple[str, str, Optional[str]]] = [
@@ -202,7 +196,10 @@ def write_common_static_products(
         # algorithm.common
         algorithm.selection_mode: {cfg.algorithm.selection_mode}
         algorithm.level_limit: {cfg.algorithm.level_limit}
-        algorithm.level_coverage: {cfg.algorithm.level_coverage}
+        algorithm.moc_order: {moc_order}
+        algorithm.mg_order_desc: {getattr(cfg.algorithm, "mg_order_desc", False)}
+        algorithm.sg_order_desc: {getattr(cfg.algorithm, "sg_order_desc", False)}
+        algorithm.sdh_order_desc: {getattr(cfg.algorithm, "sdh_order_desc", False)}
         # algorithm.mag_global
         mg_mag_column: {cfg.algorithm.mag_column}
         mg_flux_column: {cfg.algorithm.flux_column}
@@ -235,22 +232,6 @@ def write_common_static_products(
         sdh_density_bias_n1: {getattr(cfg.algorithm, "sdh_density_bias_n1", None)}
         sdh_density_bias_n2: {getattr(cfg.algorithm, "sdh_density_bias_n2", None)}
         sdh_density_bias_n3: {getattr(cfg.algorithm, "sdh_density_bias_n3", None)}
-        # algorithm.coverage
-        cov_coverage_score_column: {cfg.algorithm.coverage_score_column}
-        cov_use_hats_as_coverage: {cfg.algorithm.use_hats_as_coverage}
-        cov_order_desc: {cfg.algorithm.order_desc}
-        cov_coverage_order: {cfg.algorithm.coverage_order}
-        cov_density_mode: {cfg.algorithm.density_mode}
-        cov_k_per_cov_initial: {cfg.algorithm.k_per_cov_initial}
-        cov_targets_total_initial: {cfg.algorithm.targets_total_initial}
-        cov_density_exp_base: {cfg.algorithm.density_exp_base}
-        cov_density_bias_mode: {cfg.algorithm.density_bias_mode}
-        cov_density_bias_exponent: {cfg.algorithm.density_bias_exponent}
-        cov_fractional_mode: {cfg.algorithm.fractional_mode}
-        cov_fractional_mode_logic: {cfg.algorithm.fractional_mode_logic}
-        cov_k_per_cov_per_level: {cfg.algorithm.k_per_cov_per_level}
-        cov_targets_total_per_level: {cfg.algorithm.targets_total_per_level}
-        cov_tie_buffer: {cfg.algorithm.tie_buffer}
         # cluster
         cluster.mode: {cfg.cluster.mode}
         cluster.n_workers: {cfg.cluster.n_workers}

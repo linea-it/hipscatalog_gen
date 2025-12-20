@@ -21,7 +21,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     desc = (
         "HiPS Catalog Pipeline "
-        "(Dask, Parquet, coverage/mag_global/score_global/score_density_hybrid selection). "
+        "(Dask, Parquet, mag_global/score_global/score_density_hybrid selection). "
         "Use a YAML config file to control inputs, cluster, and algorithm options."
     )
     parser = argparse.ArgumentParser(description=desc)
