@@ -32,18 +32,18 @@ class AlgoOpts:
 
     mag_global block:
         mag_column or flux_column+mag_offset; mag_min/max; adaptive_range; hist_nbins;
-        optional n_1/n_2/n_3 targets; order_desc/tie_column/keep_invalid_values
-        (fall back to selection_defaults).
+        optional n_1/n_2/n_3 targets (or k_1/k_2/k_3 as “per active tile” aliases);
+        order_desc/tie_column/keep_invalid_values (fall back to selection_defaults).
 
     score_global block:
         score_column; score_min/max; adaptive_range; hist_nbins;
-        optional n_1/n_2/n_3; order_desc/tie_column/keep_invalid_values
+        optional n_1/n_2/n_3 (or k_1/k_2/k_3) targets; order_desc/tie_column/keep_invalid_values
         (fall back to selection_defaults).
 
     score_density_hybrid block:
         score_column; score_min/max; adaptive_range; hist_nbins;
-        optional n_1/n_2/n_3; density_bias_n1/n2/n3; order_desc/tie_column/keep_invalid_values
-        (fall back to selection_defaults).
+        optional n_1/n_2/n_3 (or k_1/k_2/k_3) targets; density_bias_n1/n2/n3;
+        order_desc/tie_column/keep_invalid_values (fall back to selection_defaults).
     """
 
     # Common settings
@@ -67,6 +67,9 @@ class AlgoOpts:
     n_1: Optional[int] = None
     n_2: Optional[int] = None
     n_3: Optional[int] = None
+    k_1: Optional[int] = None  # optional “per active tile” alias for n_1
+    k_2: Optional[int] = None  # optional “per active tile” alias for n_2
+    k_3: Optional[int] = None  # optional “per active tile” alias for n_3
 
     # score_global mode
     score_column: Optional[str] = None
@@ -79,6 +82,9 @@ class AlgoOpts:
     score_n_1: Optional[int] = None
     score_n_2: Optional[int] = None
     score_n_3: Optional[int] = None
+    score_k_1: Optional[int] = None  # optional “per active tile” alias for score_n_1
+    score_k_2: Optional[int] = None  # optional “per active tile” alias for score_n_2
+    score_k_3: Optional[int] = None  # optional “per active tile” alias for score_n_3
     sg_order_desc: bool = False  # per-mode override
 
     # score_density_hybrid mode
@@ -92,6 +98,9 @@ class AlgoOpts:
     sdh_n_1: Optional[int] = None
     sdh_n_2: Optional[int] = None
     sdh_n_3: Optional[int] = None
+    sdh_k_1: Optional[int] = None  # optional “per active tile” alias for sdh_n_1
+    sdh_k_2: Optional[int] = None  # optional “per active tile” alias for sdh_n_2
+    sdh_k_3: Optional[int] = None  # optional “per active tile” alias for sdh_n_3
     sdh_density_bias_n1: float = 1.0
     sdh_density_bias_n2: float = 1.0
     sdh_density_bias_n3: float = 1.0
@@ -219,6 +228,7 @@ mag_global.mag_offset        [required when flux_column is set] float
 mag_global.mag_min/max       [optional] float
 mag_global.adaptive_range    [optional, default=selection_defaults.adaptive_range or \"complete\"]
 mag_global.hist_nbins        [optional, default=selection_defaults.hist_nbins or 512]
+mag_global.k_1/k_2/k_3       [optional] int, \"per active tile\" aliases for n_*
 mag_global.n_1/n_2/n_3       [optional] int (must be provided in order)
 mag_global.order_desc        [optional, default=selection_defaults.order_desc or False]
 
@@ -228,6 +238,7 @@ score_global.score_column    [required] str (column or expression)
 score_global.score_min/max   [optional] float
 score_global.adaptive_range  [optional, default=selection_defaults.adaptive_range or \"complete\"]
 score_global.hist_nbins      [optional, default=selection_defaults.hist_nbins or 512]
+score_global.k_1/k_2/k_3     [optional] int, \"per active tile\" aliases for n_*
 score_global.n_1/n_2/n_3     [optional] int (must be provided in order)
 score_global.order_desc      [optional, default=selection_defaults.order_desc or False]
 
@@ -237,6 +248,7 @@ score_density_hybrid.score_column   [required] str (column or expression)
 score_density_hybrid.score_min/max  [optional] float
 score_density_hybrid.adaptive_range [optional, default=selection_defaults.adaptive_range or \"complete\"]
 score_density_hybrid.hist_nbins     [optional, default=selection_defaults.hist_nbins or 512]
+score_density_hybrid.k_1/k_2/k_3    [optional] int, \"per active tile\" aliases for n_*
 score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)
 score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]
     float in [0,1]
@@ -376,21 +388,40 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         [mag_cfg.get("n_1"), mag_cfg.get("n_2"), mag_cfg.get("n_3")],
         ["mag_global.n_1", "mag_global.n_2", "mag_global.n_3"],
     )
+    k_vals = _require_order(
+        [mag_cfg.get("k_1"), mag_cfg.get("k_2"), mag_cfg.get("k_3")],
+        ["mag_global.k_1", "mag_global.k_2", "mag_global.k_3"],
+    )
     sg_vals = _require_order(
         [score_cfg.get("n_1"), score_cfg.get("n_2"), score_cfg.get("n_3")],
         ["score_global.n_1", "score_global.n_2", "score_global.n_3"],
+    )
+    sg_k_vals = _require_order(
+        [score_cfg.get("k_1"), score_cfg.get("k_2"), score_cfg.get("k_3")],
+        ["score_global.k_1", "score_global.k_2", "score_global.k_3"],
     )
     sdh_vals = _require_order(
         [sdh_cfg.get("n_1"), sdh_cfg.get("n_2"), sdh_cfg.get("n_3")],
         ["score_density_hybrid.n_1", "score_density_hybrid.n_2", "score_density_hybrid.n_3"],
     )
+    sdh_k_vals = _require_order(
+        [sdh_cfg.get("k_1"), sdh_cfg.get("k_2"), sdh_cfg.get("k_3")],
+        ["score_density_hybrid.k_1", "score_density_hybrid.k_2", "score_density_hybrid.k_3"],
+    )
 
     n_1, n_2, n_3 = (_to_int_or_none(v, f"mag_global.n_{i+1}") for i, v in enumerate(n_vals))
+    k_1, k_2, k_3 = (_to_int_or_none(v, f"mag_global.k_{i+1}") for i, v in enumerate(k_vals))
     score_n_1, score_n_2, score_n_3 = (
         _to_int_or_none(v, f"score_global.n_{i+1}") for i, v in enumerate(sg_vals)
     )
+    score_k_1, score_k_2, score_k_3 = (
+        _to_int_or_none(v, f"score_global.k_{i+1}") for i, v in enumerate(sg_k_vals)
+    )
     sdh_n_1, sdh_n_2, sdh_n_3 = (
         _to_int_or_none(v, f"score_density_hybrid.n_{i+1}") for i, v in enumerate(sdh_vals)
+    )
+    sdh_k_1, sdh_k_2, sdh_k_3 = (
+        _to_int_or_none(v, f"score_density_hybrid.k_{i+1}") for i, v in enumerate(sdh_k_vals)
     )
 
     cfg = Config(
@@ -423,6 +454,9 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             mag_adaptive_range=_adaptive(mag_cfg),
             mag_hist_nbins=_hist_nbins(mag_cfg),
             mag_keep_invalid_values=_keep_invalid(mag_cfg),
+            k_1=k_1,
+            k_2=k_2,
+            k_3=k_3,
             n_1=n_1,
             n_2=n_2,
             n_3=n_3,
@@ -434,6 +468,9 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             score_hist_nbins=_hist_nbins(score_cfg),
             score_keep_invalid_values=_keep_invalid(score_cfg),
             score_tie_column=_tie_col(score_cfg),
+            score_k_1=score_k_1,
+            score_k_2=score_k_2,
+            score_k_3=score_k_3,
             score_n_1=score_n_1,
             score_n_2=score_n_2,
             score_n_3=score_n_3,
@@ -446,6 +483,9 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             sdh_score_hist_nbins=_hist_nbins(sdh_cfg),
             sdh_keep_invalid_values=_keep_invalid(sdh_cfg),
             sdh_tie_column=_tie_col(sdh_cfg),
+            sdh_k_1=sdh_k_1,
+            sdh_k_2=sdh_k_2,
+            sdh_k_3=sdh_k_3,
             sdh_n_1=sdh_n_1,
             sdh_n_2=sdh_n_2,
             sdh_n_3=sdh_n_3,

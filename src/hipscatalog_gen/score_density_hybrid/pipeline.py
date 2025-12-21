@@ -298,9 +298,15 @@ def run_score_density_hybrid_selection(
 
     fixed_targets_map: Dict[int, Any] = {}
     for d in (1, 2, 3):
-        val = getattr(algo, f"sdh_n_{d}", None)
-        if val is not None:
-            fixed_targets_map[d] = val
+        n_val = getattr(algo, f"sdh_n_{d}", None)
+        k_val = getattr(algo, f"sdh_k_{d}", None)
+        if (n_val is not None) and (k_val is not None):
+            raise ValueError(f"score_density_hybrid: both n_{d} and k_{d} are set; choose one.")
+        if k_val is not None:
+            active_tiles = int(np.count_nonzero(densmaps.get(d, [])))
+            n_val = int(round(float(k_val) * active_tiles))
+        if n_val is not None:
+            fixed_targets_map[d] = n_val
     fixed_targets_clean: Dict[int, float] = {}
     for k, v in fixed_targets_map.items():
         if v is None:

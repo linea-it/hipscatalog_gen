@@ -362,11 +362,16 @@ def run_mag_global_selection(
         cdf_hist[:] = 0.0
 
     fixed_targets: Dict[int, float] = {}
-    for d, n_val in (
-        (1, getattr(algo, "n_1", None)),
-        (2, getattr(algo, "n_2", None)),
-        (3, getattr(algo, "n_3", None)),
+    for d, n_val, k_val in (
+        (1, getattr(algo, "n_1", None), getattr(algo, "k_1", None)),
+        (2, getattr(algo, "n_2", None), getattr(algo, "k_2", None)),
+        (3, getattr(algo, "n_3", None), getattr(algo, "k_3", None)),
     ):
+        if (n_val is not None) and (k_val is not None):
+            raise ValueError(f"mag_global: both n_{d} and k_{d} are set; choose one.")
+        if k_val is not None:
+            active_tiles = int(np.count_nonzero(densmaps.get(d, [])))
+            n_val = int(round(float(k_val) * active_tiles))
         if (d in depths_sel) and (n_val is not None):
             fixed_targets[d] = float(n_val)
 

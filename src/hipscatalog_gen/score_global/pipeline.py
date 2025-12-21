@@ -154,15 +154,18 @@ def run_score_global_selection(
     tie_col = getattr(cfg.algorithm, "score_tie_column", None) or getattr(cfg.algorithm, "tie_column", None)
 
     fixed_targets: Dict[int, float] = {}
-    for d, n_val in (
-        (1, getattr(algo, "score_n_1", None)),
-        (2, getattr(algo, "score_n_2", None)),
-        (3, getattr(algo, "score_n_3", None)),
+    for d, n_val, k_val in (
+        (1, getattr(algo, "score_n_1", None), getattr(algo, "score_k_1", None)),
+        (2, getattr(algo, "score_n_2", None), getattr(algo, "score_k_2", None)),
+        (3, getattr(algo, "score_n_3", None), getattr(algo, "score_k_3", None)),
     ):
+        if (n_val is not None) and (k_val is not None):
+            raise ValueError(f"score_global: both n_{d} and k_{d} are set; choose one.")
+        if k_val is not None:
+            active_tiles = int(np.count_nonzero(densmaps.get(d, [])))
+            n_val = int(round(float(k_val) * active_tiles))
         if (d in depths_sel) and (n_val is not None):
             fixed_targets[d] = float(n_val)
-
-    order_desc = bool(getattr(cfg.algorithm, "sg_order_desc", getattr(cfg.algorithm, "order_desc", False)))
 
     select_by_score_slices(
         remainder_ddf=remainder_ddf,
