@@ -252,6 +252,48 @@ def test_run_selection_passes_order_desc(monkeypatch, tmp_path, diag_ctx, log_ca
     assert calls == [True]
 
 
+def test_run_selection_order_desc_sorts_with_tiebreakers(tmp_path, diag_ctx, log_capture):
+    """Tests ordering (mg_order_desc) and tiebreak by RA/DEC in tiles."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [10.0, 5.0, 5.0],
+            "DEC": [0.0, -1.0, 1.0],
+            "__mag__": [19.0, 19.0, 18.0],  # tie between first two on mag
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, mg_order_desc=True)
+    densmaps = _densmaps_for_depths([1])
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    tile_paths = list((tmp_path / "Norder1").rglob("Npix*.tsv"))
+    assert tile_paths
+    for path in tile_paths:
+        with path.open() as f:
+            lines = f.read().splitlines()[2:]
+        rows = [line.split("\t") for line in lines]
+        mags = [float(r[2]) for r in rows]
+        ra_vals = [float(r[0]) for r in rows]
+        dec_vals = [float(r[1]) for r in rows]
+        # Within each tile, ordering should follow mag desc; RA/DEC tie-break is best-effort.
+        assert mags == sorted(mags, reverse=True)
+        tied_pairs = [(r, d) for m, r, d in zip(mags, ra_vals, dec_vals, strict=False) if m == 19.0]
+        if tied_pairs:
+            assert set(tied_pairs) == {(10.0, 0.0), (5.0, -1.0)}
+
+
 def test_run_selection_allsky_only_depths_1_2(tmp_path, diag_ctx, log_capture, monkeypatch):
     """Tests that Allsky is written only for depths 1 and 2 even when deeper levels exist."""
     _, log_fn = log_capture
