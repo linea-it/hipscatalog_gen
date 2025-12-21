@@ -23,6 +23,7 @@ __all__ = [
     "_HEALPIX_INDEX_RE",
     "_score_deps",
     "_resolve_col_name",
+    "_get_dask_base",
     "_get_meta_df",
     "_validate_and_normalize_radec",
 ]
@@ -151,6 +152,29 @@ def _log_depth_stats(
 
 
 # =============================================================================
+# Dask/LSDB base resolution
+# =============================================================================
+
+
+def _get_dask_base(ddf_like: Any) -> Any:
+    """Prefer public Dask-like interfaces; fall back to LSDB ._ddf only when needed."""
+    if hasattr(ddf_like, "map_partitions") or hasattr(ddf_like, "to_delayed"):
+        return ddf_like
+
+    try:
+        from lsdb.catalog import Catalog as LsdbCatalog  # type: ignore
+    except Exception:  # pragma: no cover - lsdb optional
+        LsdbCatalog = None  # type: ignore
+
+    if LsdbCatalog is not None and isinstance(ddf_like, LsdbCatalog) and hasattr(ddf_like, "_ddf"):
+        base = ddf_like._ddf  # type: ignore[attr-defined]
+        if hasattr(base, "map_partitions") or hasattr(base, "to_delayed"):
+            return base
+
+    return ddf_like
+
+
+# =============================================================================
 # Score dependency extraction and column resolution
 # =============================================================================
 
@@ -226,24 +250,15 @@ def _get_meta_df(ddf_like: Any) -> pd.DataFrame:
     Returns:
         Empty pandas.DataFrame with the same schema.
     """
-    # Plain Dask DataFrame
-    if hasattr(ddf_like, "_meta"):
-        meta = ddf_like._meta
+    base = _get_dask_base(ddf_like)
+    if hasattr(base, "_meta"):
+        meta = base._meta  # type: ignore[attr-defined]
         if isinstance(meta, pd.DataFrame):
             return meta
 
-    # LSDB Catalog: use underlying Dask DataFrame (_ddf) for meta only
-    if hasattr(ddf_like, "_ddf"):
-        try:
-            meta = ddf_like._ddf._meta  # type: ignore[attr-defined]
-            if isinstance(meta, pd.DataFrame):
-                return meta
-        except Exception:
-            pass
-
     # Fallback: try .head(0)
     try:
-        head0 = ddf_like.head(0)
+        head0 = base.head(0)
         if isinstance(head0, pd.DataFrame):
             return head0
     except Exception:

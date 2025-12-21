@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import nullcontext
 from types import SimpleNamespace
 
+import numpy as np
 import pandas as pd
 import pytest
 from dask import dataframe as dd
@@ -238,6 +239,32 @@ def test_prepare_hist_peak_without_bounds(diag_ctx, log_capture):
     assert cfg.algorithm.mag_min == -2.0  # clipped global minimum
     assert cfg.algorithm.mag_max <= 40.0  # clipped at upper bound
     assert result["__mag__"].between(cfg.algorithm.mag_min, cfg.algorithm.mag_max).all()
+
+
+def test_prepare_keep_invalid_values_maps_and_expands_range(diag_ctx, log_capture):
+    """Tests that keep_invalid_values maps NaN/Inf/|mag|>=99 to sentinel and keeps them."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [20.0, np.nan, np.inf, -np.inf, 120.0]})
+    ddf = dd.from_pandas(pdf, npartitions=2)
+    cfg = _cfg(mag_column="MAG", mag_adaptive_range="complete", mag_keep_invalid_values=True)
+
+    ddf_sel = prepare_mag_global(ddf, cfg, diag_ctx, log_fn)
+    result = ddf_sel.compute()
+
+    assert cfg.algorithm.mag_min == 20.0
+    assert cfg.algorithm.mag_max >= 99.0
+    assert sorted(result["__mag__"].unique().tolist()) == [20.0, 99.0]
+
+
+def test_prepare_keep_invalid_rejected_for_hist_peak(diag_ctx, log_capture):
+    """Tests that keep_invalid_values with hist_peak raises a clear error."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [18.0, 19.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_adaptive_range="hist_peak", mag_keep_invalid_values=True)
+
+    with pytest.raises(ValueError):
+        prepare_mag_global(ddf, cfg, diag_ctx, log_fn)
 
 
 def test_prepare_respects_low_memory_mode_no_persist(diag_ctx, log_capture, monkeypatch):

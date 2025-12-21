@@ -27,25 +27,32 @@ class AlgoOpts:
         "score_density_hybrid").
         level_limit: Maximum HiPS order (NorderL).
         moc_order: HiPS order used for the MOC (defaults to level_limit).
+        order_desc/tie_column/keep_invalid_values: global defaults for ordering, tie-breakers,
+        and handling NaN/Inf (sentinel mapping only for adaptive_range=complete).
 
     mag_global block:
         mag_column or flux_column+mag_offset; mag_min/max; adaptive_range; hist_nbins;
-        optional n_1/n_2/n_3 targets; mg_order_desc.
+        optional n_1/n_2/n_3 targets; order_desc/tie_column/keep_invalid_values
+        (fall back to selection_defaults).
 
     score_global block:
         score_column; score_min/max; adaptive_range; hist_nbins;
-        optional n_1/n_2/n_3; sg_order_desc.
+        optional n_1/n_2/n_3; order_desc/tie_column/keep_invalid_values
+        (fall back to selection_defaults).
 
     score_density_hybrid block:
         score_column; score_min/max; adaptive_range; hist_nbins;
-        optional n_1/n_2/n_3; density_bias_n1/n2/n3; sdh_order_desc.
+        optional n_1/n_2/n_3; density_bias_n1/n2/n3; order_desc/tie_column/keep_invalid_values
+        (fall back to selection_defaults).
     """
 
     # Common settings
     selection_mode: str
     level_limit: int  # maximum HiPS order (NorderL)
     moc_order: int  # HiPS order for the MOC
-    mg_order_desc: bool = False  # False → ascending (lower is better)
+    order_desc: bool = False  # global default for ordering (False → ascending/lower is better)
+    tie_column: Optional[str] = None  # optional tie-breaker (falls back to RA/DEC)
+    mg_order_desc: bool = False  # per-mode override
 
     # mag_global mode (precedence: mag_column or flux_column+offset)
     mag_column: Optional[str] = None
@@ -55,6 +62,8 @@ class AlgoOpts:
     mag_max: Optional[float] = None
     mag_adaptive_range: str = "complete"
     mag_hist_nbins: int = 512
+    mag_keep_invalid_values: bool = False  # map NaN/Inf/|mag|>=99 to sentinel when True (complete mode only)
+    mag_tie_column: Optional[str] = None  # optional tie-breaker for mag_global
     n_1: Optional[int] = None
     n_2: Optional[int] = None
     n_3: Optional[int] = None
@@ -65,10 +74,12 @@ class AlgoOpts:
     score_max: Optional[float] = None
     score_adaptive_range: str = "complete"
     score_hist_nbins: int = 512
+    score_keep_invalid_values: bool = False  # keep NaN/Inf with sentinel (complete mode only)
+    score_tie_column: Optional[str] = None  # optional tie-breaker for score_global
     score_n_1: Optional[int] = None
     score_n_2: Optional[int] = None
     score_n_3: Optional[int] = None
-    sg_order_desc: bool = False
+    sg_order_desc: bool = False  # per-mode override
 
     # score_density_hybrid mode
     sdh_score_column: Optional[str] = None
@@ -76,13 +87,15 @@ class AlgoOpts:
     sdh_score_max: Optional[float] = None
     sdh_score_adaptive_range: str = "complete"
     sdh_score_hist_nbins: int = 512
+    sdh_keep_invalid_values: bool = False  # keep NaN/Inf with sentinel (complete mode only)
+    sdh_tie_column: Optional[str] = None  # optional tie-breaker for score_density_hybrid
     sdh_n_1: Optional[int] = None
     sdh_n_2: Optional[int] = None
     sdh_n_3: Optional[int] = None
     sdh_density_bias_n1: float = 1.0
     sdh_density_bias_n2: float = 1.0
     sdh_density_bias_n3: float = 1.0
-    sdh_order_desc: bool = False
+    sdh_order_desc: bool = False  # per-mode override
 
 
 @dataclass
@@ -341,11 +354,22 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     def _hist_nbins(block: Mapping[str, Any]) -> int:
         return int(block.get("hist_nbins", defaults.get("hist_nbins", 512)))
 
+    def _keep_invalid(block: Mapping[str, Any]) -> bool:
+        return bool(block.get("keep_invalid_values", defaults.get("keep_invalid_values", False)))
+
+    def _tie_col(block: Mapping[str, Any]) -> Optional[str]:
+        return block.get("tie_column", defaults.get("tie_column", None))
+
     def _adaptive(block: Mapping[str, Any]) -> str:
         return str(block.get("adaptive_range", defaults.get("adaptive_range", "complete"))).lower()
 
     def _order_desc(block: Mapping[str, Any]) -> bool:
         return bool(block.get("order_desc", defaults.get("order_desc", False)))
+
+    order_desc_global = _order_desc(defaults)
+
+    def _order_desc_mode(block: Mapping[str, Any]) -> bool:
+        return bool(block.get("order_desc", order_desc_global))
 
     # Target validation
     n_vals = _require_order(
@@ -386,7 +410,10 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             selection_mode=selection_mode,
             level_limit=level_limit,
             moc_order=moc_order,
-            mg_order_desc=_order_desc(mag_cfg),
+            order_desc=order_desc_global,
+            tie_column=_tie_col(defaults),
+            mg_order_desc=_order_desc_mode(mag_cfg),
+            mag_tie_column=_tie_col(mag_cfg),
             # mag_global mode
             mag_column=mag_cfg.get("mag_column"),
             flux_column=mag_cfg.get("flux_column"),
@@ -395,6 +422,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             mag_max=mag_cfg.get("mag_max"),
             mag_adaptive_range=_adaptive(mag_cfg),
             mag_hist_nbins=_hist_nbins(mag_cfg),
+            mag_keep_invalid_values=_keep_invalid(mag_cfg),
             n_1=n_1,
             n_2=n_2,
             n_3=n_3,
@@ -404,23 +432,27 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             score_max=score_cfg.get("score_max"),
             score_adaptive_range=_adaptive(score_cfg),
             score_hist_nbins=_hist_nbins(score_cfg),
+            score_keep_invalid_values=_keep_invalid(score_cfg),
+            score_tie_column=_tie_col(score_cfg),
             score_n_1=score_n_1,
             score_n_2=score_n_2,
             score_n_3=score_n_3,
-            sg_order_desc=_order_desc(score_cfg),
+            sg_order_desc=_order_desc_mode(score_cfg),
             # score_density_hybrid mode
             sdh_score_column=sdh_cfg.get("score_column"),
             sdh_score_min=sdh_cfg.get("score_min"),
             sdh_score_max=sdh_cfg.get("score_max"),
             sdh_score_adaptive_range=_adaptive(sdh_cfg),
             sdh_score_hist_nbins=_hist_nbins(sdh_cfg),
+            sdh_keep_invalid_values=_keep_invalid(sdh_cfg),
+            sdh_tie_column=_tie_col(sdh_cfg),
             sdh_n_1=sdh_n_1,
             sdh_n_2=sdh_n_2,
             sdh_n_3=sdh_n_3,
             sdh_density_bias_n1=float(sdh_cfg.get("density_bias_n1", defaults.get("density_bias_n1", 1.0))),
             sdh_density_bias_n2=float(sdh_cfg.get("density_bias_n2", defaults.get("density_bias_n2", 1.0))),
             sdh_density_bias_n3=float(sdh_cfg.get("density_bias_n3", defaults.get("density_bias_n3", 1.0))),
-            sdh_order_desc=_order_desc(sdh_cfg),
+            sdh_order_desc=_order_desc_mode(sdh_cfg),
         ),
         cluster=ClusterCfg(
             mode=y["cluster"].get("mode", "local"),

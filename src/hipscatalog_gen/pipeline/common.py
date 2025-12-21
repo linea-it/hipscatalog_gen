@@ -21,7 +21,7 @@ from ..io.output import (
     write_moc,
     write_properties,
 )
-from ..utils import _detect_hats_catalog_root, _fmt_dur, _validate_and_normalize_radec
+from ..utils import _detect_hats_catalog_root, _fmt_dur, _get_dask_base, _validate_and_normalize_radec
 
 __all__ = [
     "build_and_prepare_input",
@@ -161,9 +161,7 @@ def compute_input_total(ddf: Any, diag_ctx, log_fn, avoid_computes: bool) -> int
     )
 
     with diag_ctx("dask_input_total"):
-        base_ddf = ddf
-        if isinstance(ddf, LsdbCatalog) and hasattr(ddf, "_ddf"):
-            base_ddf = ddf._ddf  # type: ignore[attr-defined]
+        base_ddf = _get_dask_base(ddf)
 
         if hasattr(base_ddf, "map_partitions"):
             total = dask_compute(base_ddf.map_partitions(len).sum())[0]

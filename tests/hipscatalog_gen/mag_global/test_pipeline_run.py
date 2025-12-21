@@ -11,6 +11,7 @@ import pytest
 from dask import dataframe as dd
 from hipscatalog_gen.mag_global import pipeline
 from hipscatalog_gen.mag_global.pipeline import run_mag_global_selection
+from hipscatalog_gen.selection import slicing as selection_slicing
 
 
 @pytest.fixture
@@ -38,9 +39,11 @@ def _cfg(mag_min: float, mag_max: float, **overrides) -> SimpleNamespace:
         mag_hist_nbins=4,
         level_limit=2,
         mg_order_desc=False,
+        mag_tie_column=None,
         n_1=None,
         n_2=None,
         n_3=None,
+        tie_column=None,
     )
     algo_defaults.update(overrides)
     cluster_defaults = dict(low_memory_mode=True)
@@ -142,7 +145,7 @@ def test_run_selection_writes_tiles_per_depth(monkeypatch, tmp_path, diag_ctx, l
     assert depth1_rows == 1
     assert depth2_rows == 2
 
-    assert any("per-depth magnitude slices" in msg for msg in logs)
+    assert any("per-depth slices" in msg for msg in logs)
 
 
 def test_run_selection_skips_empty_depth(monkeypatch, tmp_path, diag_ctx, log_capture):
@@ -181,7 +184,7 @@ def test_run_selection_skips_empty_depth(monkeypatch, tmp_path, diag_ctx, log_ca
     depth2_tiles = list((tmp_path / "Norder2").rglob("Npix*.tsv"))
     assert not depth1_tiles  # empty slice skipped
     assert depth2_tiles  # populated slice written
-    assert any("no rows in magnitude slice" in msg for msg in logs)
+    assert any("no rows in slice" in msg for msg in logs)
 
 
 def test_run_selection_depth_without_allsky(tmp_path, diag_ctx, log_capture):
@@ -235,7 +238,7 @@ def test_run_selection_passes_order_desc(monkeypatch, tmp_path, diag_ctx, log_ca
         # mimic return signature: (written_per_ipix, allsky_df)
         return {0: len(pdf)}, None
 
-    monkeypatch.setattr(pipeline, "write_tiles_with_allsky", fake_write_tiles_with_allsky)
+    monkeypatch.setattr(selection_slicing, "write_tiles_with_allsky", fake_write_tiles_with_allsky)
 
     run_mag_global_selection(
         remainder_ddf=ddf,
@@ -287,11 +290,131 @@ def test_run_selection_order_desc_sorts_with_tiebreakers(tmp_path, diag_ctx, log
         mags = [float(r[2]) for r in rows]
         ra_vals = [float(r[0]) for r in rows]
         dec_vals = [float(r[1]) for r in rows]
-        # Within each tile, ordering should follow mag desc; RA/DEC tie-break is best-effort.
+        # Expect ordering by mag desc, then RA asc, then DEC asc.
         assert mags == sorted(mags, reverse=True)
-        tied_pairs = [(r, d) for m, r, d in zip(mags, ra_vals, dec_vals, strict=False) if m == 19.0]
-        if tied_pairs:
-            assert set(tied_pairs) == {(10.0, 0.0), (5.0, -1.0)}
+        assert list(zip(ra_vals, dec_vals, strict=False)) == [(5.0, -1.0), (10.0, 0.0), (5.0, 1.0)]
+
+
+def test_run_selection_tie_fallback_ra_dec(tmp_path, diag_ctx, log_capture, monkeypatch):
+    """Tests that when mags tie and no tie_column is set, RA/DEC break ties ascending."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [30.0, 10.0, 20.0],
+            "DEC": [0.0, 1.0, -1.0],
+            "__mag__": [18.0, 18.0, 18.0],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, mg_order_desc=False)
+    densmaps = _densmaps_for_depths([1])
+
+    monkeypatch.setattr(
+        pipeline,
+        "assign_level_edges",
+        lambda **_: (np.array([17.0, 20.0], dtype="float64"), None),
+    )
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    tile_paths = list((tmp_path / "Norder1").rglob("Npix*.tsv"))
+    assert tile_paths
+    rows = []
+    for path in tile_paths:
+        with path.open() as f:
+            lines = f.read().splitlines()[2:]
+        rows.extend([line.split("\t") for line in lines])
+    ra_vals = [float(r[0]) for r in rows]
+    dec_vals = [float(r[1]) for r in rows]
+    assert list(zip(ra_vals, dec_vals, strict=False)) == [(10.0, 1.0), (20.0, -1.0), (30.0, 0.0)]
+
+
+def test_run_selection_tie_column_not_found_raises(tmp_path, diag_ctx, log_capture, monkeypatch):
+    """Tests that a missing mag_tie_column raises KeyError before ordering."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [0.0, 1.0],
+            "DEC": [0.0, 1.0],
+            "__mag__": [18.0, 18.0],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, mag_tie_column="FOO")
+    densmaps = _densmaps_for_depths([1])
+
+    monkeypatch.setattr(
+        pipeline,
+        "assign_level_edges",
+        lambda **_: (np.array([17.0, 20.0], dtype="float64"), None),
+    )
+
+    with pytest.raises(KeyError):
+        run_mag_global_selection(
+            remainder_ddf=ddf,
+            densmaps=densmaps,
+            keep_cols=["RA", "DEC", "__mag__"],
+            ra_col="RA",
+            dec_col="DEC",
+            cfg=cfg,
+            out_dir=tmp_path,
+            diag_ctx=diag_ctx,
+            log_fn=log_fn,
+        )
+
+
+def test_run_selection_tie_column_applied_before_ra_dec(tmp_path, diag_ctx, log_capture, monkeypatch):
+    """Tests that mag_tie_column is used before RA/DEC when provided."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [30.0, 10.0, 20.0],
+            "DEC": [0.0, 1.0, -1.0],
+            "__mag__": [18.0, 18.0, 18.0],
+            "SNR": [3.0, 1.0, 2.0],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, mag_tie_column="SNR")
+    densmaps = _densmaps_for_depths([1])
+
+    monkeypatch.setattr(
+        pipeline,
+        "assign_level_edges",
+        lambda **_: (np.array([17.0, 20.0], dtype="float64"), None),
+    )
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__", "SNR"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    tile_paths = list((tmp_path / "Norder1").rglob("Npix*.tsv"))
+    assert tile_paths
+    rows = []
+    for path in tile_paths:
+        with path.open() as f:
+            lines = f.read().splitlines()[2:]
+        rows.extend([line.split("\t") for line in lines])
+    snr_vals = [float(r[3]) for r in rows]
+    assert snr_vals == sorted(snr_vals)  # tie broken by SNR before RA/DEC
 
 
 def test_run_selection_allsky_only_depths_1_2(tmp_path, diag_ctx, log_capture, monkeypatch):

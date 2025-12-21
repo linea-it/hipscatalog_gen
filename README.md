@@ -111,6 +111,8 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - **mag_global**: magnitude-complete slices across all depths.
 - **score_global**: score-based slices across all depths.
 - **score_density_hybrid**: density-driven tiles for depths 1–3, then score slices for deeper levels.
+- Ordering and ties: `order_desc` controls ascending/descending (default ascending); optional `tie_column` breaks ties before falling back to RA/DEC.
+- Invalids: `keep_invalid_values` (per mode or in `selection_defaults`) can map NaN/Inf to a sentinel when `adaptive_range=complete`, sending them to the last slice; rejected for `hist_peak`.
 
 -------------------------------------------------------------------------------
 

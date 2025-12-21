@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import time
 from typing import Any, Dict, List
 
-import healpy as hp
 import numpy as np
 import pandas as pd
 from dask import compute as dask_compute
 
-from ..io.output import build_header_line_from_keep
-from ..pipeline.common import write_tiles_with_allsky
-from ..selection.common import assign_level_edges
-from ..utils import _fmt_dur, _get_meta_df, _log_depth_stats
-from .utils import compute_mag_histogram_ddf
+from ..selection.levels import assign_level_edges
+from ..selection.score import _finite_min_max, _map_invalid_to_sentinel, compute_histogram_ddf
+from ..selection.slicing import select_by_value_slices
+from ..utils import _get_meta_df
 
 __all__ = ["prepare_mag_global", "run_mag_global_selection"]
 
@@ -107,7 +104,9 @@ def prepare_mag_global(
     mag_min_global_raw = float(mag_min_global_raw)
     mag_max_global_raw = float(mag_max_global_raw)
 
-    if not np.isfinite(mag_min_global_raw) or not np.isfinite(mag_max_global_raw):
+    keep_invalid = bool(getattr(algo, "mag_keep_invalid_values", False))
+    range_mode = str(getattr(algo, "mag_adaptive_range", "complete")).lower()
+    if (not keep_invalid) and (not np.isfinite(mag_min_global_raw) or not np.isfinite(mag_max_global_raw)):
         raise ValueError(
             "mag_global selection: global magnitude min/max are not finite. "
             "Check the magnitude column values."
@@ -118,12 +117,14 @@ def prepare_mag_global(
             f"mag_global selection: invalid global magnitude range "
             f"[{mag_min_global_raw}, {mag_max_global_raw}]."
         )
-
-    range_mode = str(getattr(algo, "mag_adaptive_range", "complete")).lower()
     if range_mode not in {"complete", "hist_peak"}:
         raise ValueError(
             f"mag_global selection: invalid mag_adaptive_range '{range_mode}'. "
             "Allowed values are: 'complete', 'hist_peak'."
+        )
+    if keep_invalid and range_mode != "complete":
+        raise ValueError(
+            "mag_global: keep_invalid_values=True is only supported with mag_adaptive_range=complete."
         )
 
     def _histogram_peak(
@@ -139,11 +140,11 @@ def prepare_mag_global(
             )
 
         with diag_ctx(ctx_name):
-            hist, edges, n_tot = compute_mag_histogram_ddf(
+            hist, edges, n_tot = compute_histogram_ddf(
                 ddf_like=ddf,
-                mag_col=mag_col_internal,
-                mag_min=lower,
-                mag_max=upper,
+                value_col=mag_col_internal,
+                value_min=lower,
+                value_max=upper,
                 nbins=algo.mag_hist_nbins,
             )
 
@@ -159,7 +160,29 @@ def prepare_mag_global(
         peak_center = 0.5 * (bin_left + bin_right)
         return float(np.round(peak_center, 2)), bin_left, bin_right
 
-    if range_mode == "complete":
+    if keep_invalid:
+        # Complete-mode only: map invalids to sentinel 99.0 and expand range to include it.
+        fin_min, fin_max = _finite_min_max(ddf, "__mag__")
+        if fin_min is None or fin_max is None:
+            raise ValueError("mag_global: all magnitude values are NaN/Inf; nothing to select.")
+        sentinel_mag = 99.0
+        mag_min = float(mag_min_cfg) if mag_min_cfg is not None else float(fin_min)
+        mag_max = float(mag_max_cfg) if mag_max_cfg is not None else float(fin_max)
+        mag_max = max(mag_max, sentinel_mag)
+
+        ddf = _map_invalid_to_sentinel(
+            ddf,
+            "__mag__",
+            sentinel=sentinel_mag,
+            extra_mask_fn=lambda arr: (np.abs(arr) >= 99.0),
+            meta=meta_with_mag,
+        )
+        log_fn(
+            f"[mag_global] keep_invalid_values=True → mapping NaN/Inf/|mag|>=99 to {sentinel_mag} "
+            f"and using range [{mag_min}, {mag_max}].",
+            always=True,
+        )
+    elif range_mode == "complete":
         if mag_min_cfg is not None and mag_max_cfg is not None:
             mag_min = float(mag_min_cfg)
             mag_max = float(mag_max_cfg)
@@ -313,13 +336,14 @@ def run_mag_global_selection(
     mag_min = float(algo.mag_min)
     mag_max = float(algo.mag_max)
     depths_sel = list(range(1, cfg.algorithm.level_limit + 1))
+    tie_col = getattr(cfg.algorithm, "mag_tie_column", None) or getattr(cfg.algorithm, "tie_column", None)
 
     with diag_ctx("dask_mag_hist"):
-        hist, mag_edges_hist, n_tot_mag = compute_mag_histogram_ddf(
-            remainder_ddf,
-            mag_col=mag_col_internal,
-            mag_min=mag_min,
-            mag_max=mag_max,
+        hist, mag_edges_hist, n_tot_mag = compute_histogram_ddf(
+            ddf_like=remainder_ddf,
+            value_col=mag_col_internal,
+            value_min=mag_min,
+            value_max=mag_max,
             nbins=algo.mag_hist_nbins,
         )
 
@@ -359,86 +383,22 @@ def run_mag_global_selection(
         label="mag_global",
     )
 
-    log_fn(
-        "[selection] mag_global mode: per-depth magnitude slices:\n"
-        + "\n".join(
-            f"  depth {d}: [{level_edges[i]:.6f}, {level_edges[i+1]:.6f}"
-            f"{')' if d != depths_sel[-1] else ']'}"
-            for i, d in enumerate(depths_sel)
-        ),
-        always=True,
+    order_desc = bool(getattr(cfg.algorithm, "mg_order_desc", getattr(cfg.algorithm, "order_desc", False)))
+
+    select_by_value_slices(
+        remainder_ddf=remainder_ddf,
+        densmaps=densmaps,
+        depths_sel=depths_sel,
+        keep_cols=keep_cols,
+        ra_col=ra_col,
+        dec_col=dec_col,
+        value_col=mag_col_internal,
+        order_desc=order_desc,
+        label="mag_global",
+        out_dir=out_dir,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+        level_edges=level_edges,
+        depth_diag_prefix="dask_depth_mag",
+        tie_col=tie_col,
     )
-
-    header_line = build_header_line_from_keep(keep_cols)
-
-    for i, depth in enumerate(depths_sel):
-        depth_t0 = time.time()
-        m_lo = level_edges[i]
-        m_hi = level_edges[i + 1]
-
-        with diag_ctx(f"dask_depth_mag_{depth:02d}"):
-            if depth != depths_sel[-1]:
-                mag_mask = (remainder_ddf[mag_col_internal] >= m_lo) & (
-                    remainder_ddf[mag_col_internal] < m_hi
-                )
-            else:
-                mag_mask = (remainder_ddf[mag_col_internal] >= m_lo) & (
-                    remainder_ddf[mag_col_internal] <= m_hi
-                )
-
-            depth_ddf = remainder_ddf[mag_mask]
-            selected_pdf = depth_ddf.compute()
-            _log_depth_stats(
-                log_fn,
-                depth,
-                "selected",
-                counts=densmaps[depth],
-                selected_len=len(selected_pdf),
-            )
-
-            if len(selected_pdf) == 0:
-                log_fn(
-                    f"[DEPTH {depth}] mag_global: no rows in "
-                    f"magnitude slice [{m_lo:.6f}, {m_hi:.6f}] → skipping.",
-                    always=True,
-                )
-                log_fn(
-                    f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
-                    always=True,
-                )
-                continue
-
-            ra_vals = pd.to_numeric(selected_pdf[ra_col], errors="coerce").to_numpy()
-            dec_vals = pd.to_numeric(selected_pdf[dec_col], errors="coerce").to_numpy()
-
-            theta = np.deg2rad(90.0 - dec_vals)
-            phi = np.deg2rad(ra_vals % 360.0)
-
-            NSIDE_L = 1 << depth
-            ipixL = hp.ang2pix(NSIDE_L, theta, phi, nest=True).astype(np.int64)
-            selected_pdf["__ipix__"] = ipixL
-
-            counts = densmaps[depth]
-            allsky_needed = depth in (1, 2)
-            order_desc = bool(
-                getattr(cfg.algorithm, "mg_order_desc", getattr(cfg.algorithm, "order_desc", False))
-            )
-
-            written_per_ipix, _ = write_tiles_with_allsky(
-                out_dir=out_dir,
-                depth=depth,
-                header_line=header_line,
-                ra_col=ra_col,
-                dec_col=dec_col,
-                counts=counts,
-                selected=selected_pdf,
-                order_desc=order_desc,
-                allsky_needed=allsky_needed,
-                log_fn=log_fn,
-            )
-            _log_depth_stats(log_fn, depth, "written", counts=densmaps[depth], written=written_per_ipix)
-
-        log_fn(
-            f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
-            always=True,
-        )

@@ -114,6 +114,8 @@ algorithm:
     hist_nbins: 512
     adaptive_range: "complete"
     order_desc: false
+    keep_invalid_values: false     # map NaN/Inf to sentinel only when adaptive_range=complete
+    tie_column: null               # optional tie-breaker; falls back to RA/DEC when null
 
   # ==============================
   # mag_global block
@@ -130,7 +132,9 @@ algorithm:
     n_1: null                     # Optional targets for depths 1..3
     n_2: null
     n_3: null
-    order_desc: false             # false → lower magnitudes/scores are better; true → higher are better
+    order_desc: false             # false → lower magnitudes/scores are better; true → higher are better (inherits algorithm.order_desc if omitted)
+    keep_invalid_values: false    # if true (complete mode only), map NaN/Inf/|mag|>=99 to 99.0 and include them in the last slice
+    tie_column: null              # optional tie-breaker; falls back to RA/DEC when null
 
   # ==============================
   # score_global block
@@ -144,7 +148,9 @@ algorithm:
     #n_1: null                    # Optional targets for depths 1..3
     #n_2: null
     #n_3: null
-    order_desc: false             # false → lower scores are better; true → higher scores are better
+    order_desc: false             # false → lower scores are better; true → higher scores are better (inherits algorithm.order_desc if omitted)
+    keep_invalid_values: false    # if true (complete mode only), map NaN/Inf to sentinel and include in last slice
+    tie_column: null              # optional tie-breaker; falls back to RA/DEC when null
 
   # ==============================
   # score_density_hybrid block
@@ -161,7 +167,9 @@ algorithm:
     #n_1: null                    # Optional fixed totals for depths 1..3 (must be in order)
     #n_2: null
     #n_3: null
-    order_desc: false             # false → lower scores are better; true → higher scores are better
+    order_desc: false             # false → lower scores are better; true → higher scores are better (inherits algorithm.order_desc if omitted)
+    keep_invalid_values: false    # if true (complete mode only), map NaN/Inf to sentinel and include in last slice
+    tie_column: null              # optional tie-breaker; falls back to RA/DEC when null
 
 
 # -----------------------------------------------------------------------------

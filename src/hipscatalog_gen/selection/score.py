@@ -1,15 +1,185 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, List, Tuple
 
 import numpy as np
 import pandas as pd
 from dask import compute as dask_compute
+from dask import delayed as _delayed
 
 from ..utils import _get_meta_df
 
 # Type alias for histogram function used by range resolution.
 HistFn = Callable[[Any, str, float, float, int], Tuple[np.ndarray, np.ndarray, int]]
+
+__all__ = [
+    "add_score_column",
+    "compute_score_histogram_ddf",
+    "compute_histogram_ddf",
+    "_finite_min_max",
+    "_sentinel_for_order",
+    "_map_invalid_to_sentinel",
+    "resolve_value_range",
+    "_quantile_from_histogram",
+]
+
+
+def compute_score_histogram_ddf(
+    ddf_like: Any,
+    score_col: str,
+    score_min: float,
+    score_max: float,
+    nbins: int,
+    *,
+    keep_invalid: bool = False,
+    sentinel: float | None = None,
+) -> tuple[np.ndarray, np.ndarray, int]:
+    """Compute a 1D histogram for score-like columns (Dask/LSDB friendly)."""
+    return compute_histogram_ddf(
+        ddf_like=ddf_like,
+        value_col=score_col,
+        value_min=score_min,
+        value_max=score_max,
+        nbins=nbins,
+        keep_invalid=keep_invalid,
+        sentinel=sentinel,
+    )
+
+
+def compute_histogram_ddf(
+    ddf_like: Any,
+    value_col: str,
+    value_min: float,
+    value_max: float,
+    nbins: int,
+    *,
+    keep_invalid: bool = False,
+    sentinel: float | None = None,
+) -> tuple[np.ndarray, np.ndarray, int]:
+    """Generic 1D histogram computation for Dask DataFrames or LSDB catalogs."""
+    edges = np.linspace(value_min, value_max, nbins + 1, dtype="float64")
+
+    def _part_hist(pdf: pd.DataFrame) -> tuple[np.ndarray, int]:
+        if pdf is None or len(pdf) == 0:
+            return np.zeros(nbins, dtype="int64"), 0
+
+        vals = pd.to_numeric(pdf[value_col], errors="coerce").to_numpy()
+        if vals.size == 0:
+            return np.zeros(nbins, dtype="int64"), 0
+
+        n_total = int(len(vals))
+        finite_mask = np.isfinite(vals)
+        vals_finite = vals[finite_mask]
+
+        if keep_invalid and sentinel is not None:
+            vals = vals.copy()
+            vals[~finite_mask] = sentinel
+        else:
+            vals = vals_finite
+
+        mask = (vals >= value_min) & (vals <= value_max)
+        vals = vals[mask]
+        if vals.size == 0:
+            return np.zeros(nbins, dtype="int64"), n_total
+
+        h, _ = np.histogram(vals, bins=edges)
+        return h.astype("int64"), n_total
+
+    parts = ddf_like[[value_col]].to_delayed()
+    delayed_results = [_delayed(_part_hist)(p) for p in parts]
+
+    def _sum_results(seq: List[tuple[np.ndarray, int]]) -> tuple[np.ndarray, int]:
+        h_total = np.zeros(nbins, dtype="int64")
+        n_total = 0
+        for h, n in seq:
+            h_total += h
+            n_total += int(n)
+        return h_total, n_total
+
+    total = _delayed(_sum_results)(delayed_results)
+    hist, n_total = dask_compute(total)[0]
+    return hist, edges, int(n_total)
+
+
+def _quantile_from_histogram(
+    cdf: np.ndarray,
+    bin_edges: np.ndarray,
+    q: float,
+) -> float:
+    """Invert a 1D histogram CDF into a threshold."""
+    if not len(cdf):
+        return float(bin_edges[0])
+
+    q = float(np.clip(q, 0.0, 1.0))
+
+    if q <= 0.0:
+        return float(bin_edges[0])
+    if q >= 1.0:
+        return float(bin_edges[-1])
+
+    idx = int(np.searchsorted(cdf, q, side="left"))
+    idx = max(0, min(idx, len(cdf) - 1))
+    return float(bin_edges[idx])
+
+
+def _finite_min_max(ddf_like: Any, value_col: str) -> tuple[float | None, float | None]:
+    """Return finite (min, max) ignoring NaN/Inf; (None, None) if no finite values."""
+
+    def _part(pdf: pd.DataFrame) -> tuple[float | None, float | None]:
+        vals = pd.to_numeric(pdf[value_col], errors="coerce")
+        vals = vals[np.isfinite(vals)]
+        if vals.empty:
+            return None, None
+        return float(vals.min()), float(vals.max())
+
+    parts = ddf_like[[value_col]].to_delayed()
+    delayed_results = [_delayed(_part)(p) for p in parts]
+
+    mins: List[float] = []
+    maxs: List[float] = []
+    for mn, mx in dask_compute(*delayed_results):
+        if mn is not None and mx is not None:
+            mins.append(float(mn))
+            maxs.append(float(mx))
+
+    if not mins or not maxs:
+        return None, None
+    return float(np.min(mins)), float(np.max(maxs))
+
+
+def _sentinel_for_order(min_val: float, max_val: float, order_desc: bool) -> float:
+    """Return a sentinel outside [min_val, max_val] to push invalids to the last slice."""
+    span = max(abs(min_val), abs(max_val), 1.0)
+    magnitude = int(np.ceil(np.log10(span + 1.0)))
+    base = 10 ** (magnitude + 1) - 1  # e.g., 999, 9999, ...
+    if order_desc:
+        return -float(base)
+    return float(base)
+
+
+def _map_invalid_to_sentinel(
+    ddf: Any, col: str, sentinel: float, extra_mask_fn=None, meta: pd.DataFrame | None = None
+):
+    """Replace non-finite (and optional extra mask) values with a sentinel."""
+    meta_out = meta if meta is not None else _get_meta_df(ddf).copy()
+    meta_out[col] = pd.Series([], dtype="float64")
+
+    def _map(pdf: pd.DataFrame) -> pd.DataFrame:
+        if pdf.empty:
+            pdf[col] = pd.Series([], dtype="float64")
+            return pdf
+        pdf = pdf.copy()
+        vals = pd.to_numeric(pdf[col], errors="coerce")
+        mask = ~np.isfinite(vals)
+        if extra_mask_fn is not None:
+            mask |= extra_mask_fn(vals)
+        if mask.any():
+            vals = vals.astype("float64")
+            vals[mask.to_numpy()] = float(sentinel)
+        pdf[col] = vals
+        return pdf
+
+    return ddf.map_partitions(_map, meta=meta_out)
 
 
 def add_score_column(ddf: Any, score_expr: str, output_col: str = "__score__") -> Any:

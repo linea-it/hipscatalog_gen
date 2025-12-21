@@ -3,21 +3,22 @@ from __future__ import annotations
 import time
 from typing import Any, Dict, Iterable, List
 
-import healpy as hp
 import numpy as np
 import pandas as pd
-from lsdb.catalog import Catalog as LsdbCatalog
 
 from ..io.output import build_header_line_from_keep
 from ..pipeline.common import write_tiles_with_allsky
-from ..score_global.utils import compute_score_histogram_ddf
-from ..selection.common import (
-    add_ipix_column,
-    assign_level_edges,
-    reduce_topk_by_group_dask,
-    targets_per_tile,
+from ..selection.common import add_ipix_column, reduce_topk_by_group_dask, targets_per_tile
+from ..selection.levels import assign_level_edges
+from ..selection.score import (
+    _finite_min_max,
+    _map_invalid_to_sentinel,
+    _sentinel_for_order,
+    add_score_column,
+    compute_score_histogram_ddf,
+    resolve_value_range,
 )
-from ..selection.score import add_score_column, resolve_value_range
+from ..selection.slicing import select_by_score_slices
 from ..utils import _fmt_dur, _get_meta_df, _log_depth_stats
 
 __all__ = ["prepare_score_density_hybrid", "run_score_density_hybrid_selection"]
@@ -125,55 +126,6 @@ def _targets_stage1_by_depth(
     return totals
 
 
-def _reduce_topk_by_group_dask(
-    ddf_like: Any,
-    group_col: str,
-    score_col: str,
-    order_desc: bool,
-    k_per_group: Dict[int, int],
-    ra_col: str,
-    dec_col: str,
-):
-    """Keep up to k_per_group rows per group, sorted by score then RA/DEC."""
-    if not k_per_group:
-        empty_meta = _get_meta_df(ddf_like)
-        return ddf_like.map_partitions(lambda pdf: pdf.iloc[0:0], meta=empty_meta)
-
-    asc = not order_desc
-    k_map = {int(k): int(v) for k, v in k_per_group.items()}
-
-    def _take_topk(group: pd.DataFrame) -> pd.DataFrame:
-        if group.empty:
-            return group
-        g_id = int(group[group_col].iloc[0])
-        k = int(k_map.get(g_id, 0))
-        if k <= 0:
-            return group.iloc[0:0]
-        sort_cols = [score_col]
-        ascending = [asc]
-        if ra_col in group.columns:
-            sort_cols.append(ra_col)
-            ascending.append(True)
-        if dec_col in group.columns:
-            sort_cols.append(dec_col)
-            ascending.append(True)
-        group_sorted = group.sort_values(sort_cols, ascending=ascending, kind="mergesort")
-        return group_sorted.head(k)
-
-    meta = _get_meta_df(ddf_like)
-    cols_all = list(meta.columns)
-    # LSDB Catalog: fall back to underlying Dask DataFrame when groupby is absent.
-    if isinstance(ddf_like, LsdbCatalog) and hasattr(ddf_like, "_ddf"):
-        base_ddf = ddf_like._ddf  # type: ignore[attr-defined]
-        cols_all = list(base_ddf.columns)
-        return base_ddf.groupby(group_col, group_keys=False)[cols_all].apply(_take_topk, meta=meta)
-
-    if hasattr(ddf_like, "groupby"):
-        return ddf_like.groupby(group_col, group_keys=False)[cols_all].apply(_take_topk, meta=meta)
-
-    return ddf_like
-
-
 def _drop_selected_ids(pdf: pd.DataFrame, ids: Iterable[int]) -> pd.DataFrame:
     if pdf.empty:
         return pdf
@@ -216,18 +168,49 @@ def prepare_score_density_hybrid(
     score_col_internal = "__score__"
     score_min_cfg = getattr(algo, "sdh_score_min", None)
     score_max_cfg = getattr(algo, "sdh_score_max", None)
-    score_min, score_max = resolve_value_range(
-        ddf=ddf,
-        value_col=score_col_internal,
-        range_mode=score_range_mode,
-        min_cfg=score_min_cfg,
-        max_cfg=score_max_cfg,
-        hist_nbins=score_hist_nbins,
-        compute_hist_fn=compute_score_histogram_ddf,
-        diag_ctx=diag_ctx,
-        log_fn=log_fn,
-        label="score_density_hybrid",
-    )
+    keep_invalid = bool(getattr(algo, "sdh_keep_invalid_values", False))
+    if keep_invalid and score_range_mode != "complete":
+        raise ValueError(
+            "score_density_hybrid: keep_invalid_values=True is only supported with "
+            "sdh_score_adaptive_range=complete."
+        )
+    order_desc = bool(getattr(algo, "sdh_order_desc", getattr(algo, "order_desc", False)))
+
+    if keep_invalid:
+        fin_min, fin_max = _finite_min_max(ddf, score_col_internal)
+        if fin_min is None or fin_max is None:
+            raise ValueError("score_density_hybrid: all score values are NaN/Inf; nothing to select.")
+        sentinel = _sentinel_for_order(fin_min, fin_max, order_desc)
+        ddf = _map_invalid_to_sentinel(
+            ddf,
+            score_col_internal,
+            sentinel=sentinel,
+            meta=_get_meta_df(ddf),
+        )
+        score_min = float(score_min_cfg) if score_min_cfg is not None else float(fin_min)
+        score_max = float(score_max_cfg) if score_max_cfg is not None else float(fin_max)
+        if not order_desc:
+            score_max = max(score_max, sentinel)
+        else:
+            score_min = min(score_min, sentinel)
+        log_fn(
+            f"[score_density_hybrid] keep_invalid_values=True → mapping NaN/Inf to sentinel {sentinel} "
+            f"and using range [{score_min}, {score_max}] (order_desc={order_desc}).",
+            always=True,
+        )
+    else:
+        score_min, score_max = resolve_value_range(
+            ddf=ddf,
+            value_col=score_col_internal,
+            range_mode=score_range_mode,
+            min_cfg=score_min_cfg,
+            max_cfg=score_max_cfg,
+            hist_nbins=score_hist_nbins,
+            compute_hist_fn=compute_score_histogram_ddf,
+            diag_ctx=diag_ctx,
+            log_fn=log_fn,
+            label="score_density_hybrid",
+        )
 
     algo.sdh_score_min = score_min
     algo.sdh_score_max = score_max
@@ -352,7 +335,8 @@ def run_score_density_hybrid_selection(
     )
 
     available_ddf = remainder_ddf
-    order_desc = bool(getattr(algo, "sdh_order_desc", False))
+    order_desc = bool(getattr(algo, "sdh_order_desc", getattr(algo, "order_desc", False)))
+    tie_col = getattr(algo, "sdh_tie_column", None) or getattr(algo, "tie_column", None)
 
     for depth in [d for d in depths_sel if d <= 3]:
         depth_t0 = time.time()
@@ -392,6 +376,7 @@ def run_score_density_hybrid_selection(
                 k_per_group=targets_per_tile_map,
                 ra_col=ra_col,
                 dec_col=dec_col,
+                tie_col=tie_col,
             )
             selected_pdf = selected_ddf.compute()
 
@@ -433,117 +418,24 @@ def run_score_density_hybrid_selection(
     if not remaining_depths:
         return
 
-    with diag_ctx("dask_sdh_score_hist_remaining"):
-        hist_rem, edges_rem, n_tot_rem = compute_score_histogram_ddf(
-            available_ddf,
-            score_col=score_col_internal,
-            score_min=score_min,
-            score_max=score_max,
-            nbins=algo.sdh_score_hist_nbins,
-        )
-
-    if n_tot_rem == 0:
-        log_fn(
-            "[selection] score_density_hybrid: no remaining objects after depths 1–3 "
-            "→ nothing else to select.",
-            always=True,
-        )
-        return
-
-    cdf_rem = hist_rem.cumsum().astype("float64")
-    if cdf_rem[-1] > 0:
-        cdf_rem /= float(cdf_rem[-1])
-    else:
-        cdf_rem[:] = 0.0
-
-    level_edges_rem, _ = assign_level_edges(
+    select_by_score_slices(
+        remainder_ddf=available_ddf,
         densmaps=densmaps,
         depths_sel=remaining_depths,
-        fixed_targets={},
-        cdf_hist=cdf_rem,
-        score_edges_hist=edges_rem,
+        keep_cols=keep_cols,
+        ra_col=ra_col,
+        dec_col=dec_col,
+        score_col=score_col_internal,
         score_min=score_min,
         score_max=score_max,
-        n_tot_score=float(n_tot_rem),
+        hist_nbins=algo.sdh_score_hist_nbins,
+        out_dir=out_dir,
+        diag_ctx=diag_ctx,
         log_fn=log_fn,
         label="score_density_hybrid",
+        order_desc=order_desc,
+        fixed_targets={},
+        hist_diag_ctx_name="dask_sdh_score_hist_remaining",
+        depth_diag_prefix="dask_sdh_depth_score",
+        tie_col=tie_col,
     )
-
-    log_fn(
-        "[selection] score_density_hybrid stage 2 (score slices):\n"
-        + "\n".join(
-            f"  depth {d}: [{level_edges_rem[i]:.6f}, {level_edges_rem[i+1]:.6f}"
-            f"{')' if d != remaining_depths[-1] else ']'}"
-            for i, d in enumerate(remaining_depths)
-        ),
-        always=True,
-    )
-
-    for i, depth in enumerate(remaining_depths):
-        depth_t0 = time.time()
-        s_lo = level_edges_rem[i]
-        s_hi = level_edges_rem[i + 1]
-
-        with diag_ctx(f"dask_sdh_depth_score_{depth:02d}"):
-            if depth != remaining_depths[-1]:
-                score_mask = (available_ddf[score_col_internal] >= s_lo) & (
-                    available_ddf[score_col_internal] < s_hi
-                )
-            else:
-                score_mask = (available_ddf[score_col_internal] >= s_lo) & (
-                    available_ddf[score_col_internal] <= s_hi
-                )
-
-            depth_ddf = available_ddf[score_mask]
-            selected_pdf = depth_ddf.compute()
-            _log_depth_stats(
-                log_fn,
-                depth,
-                "selected",
-                counts=densmaps[depth],
-                selected_len=len(selected_pdf),
-            )
-
-            if len(selected_pdf) == 0:
-                log_fn(
-                    f"[DEPTH {depth}] score_density_hybrid: no rows in "
-                    f"score slice [{s_lo:.6f}, {s_hi:.6f}] → skipping.",
-                    always=True,
-                )
-                log_fn(
-                    f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
-                    always=True,
-                )
-                continue
-
-            ra_vals = pd.to_numeric(selected_pdf[ra_col], errors="coerce").to_numpy()
-            dec_vals = pd.to_numeric(selected_pdf[dec_col], errors="coerce").to_numpy()
-
-            theta = np.deg2rad(90.0 - dec_vals)
-            phi = np.deg2rad(ra_vals % 360.0)
-
-            NSIDE_L = 1 << depth
-            ipixL = hp.ang2pix(NSIDE_L, theta, phi, nest=True).astype(np.int64)
-            selected_pdf["__ipix__"] = ipixL
-
-            counts = densmaps[depth]
-            allsky_needed = depth in (1, 2)
-
-            written_per_ipix, _ = write_tiles_with_allsky(
-                out_dir=out_dir,
-                depth=depth,
-                header_line=header_line,
-                ra_col=ra_col,
-                dec_col=dec_col,
-                counts=counts,
-                selected=selected_pdf,
-                order_desc=order_desc,
-                allsky_needed=allsky_needed,
-                log_fn=log_fn,
-            )
-            _log_depth_stats(log_fn, depth, "written", counts=densmaps[depth], written=written_per_ipix)
-
-        log_fn(
-            f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
-            always=True,
-        )
