@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import glob
+import json
 import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -25,6 +26,8 @@ from ..utils import _detect_hats_catalog_root, _fmt_dur, _validate_and_normalize
 __all__ = [
     "build_and_prepare_input",
     "compute_and_write_densmaps",
+    "compute_input_total",
+    "write_counts_summaries",
     "write_common_static_products",
     "log_epilogue",
     "log_prologue",
@@ -150,6 +153,30 @@ def compute_and_write_densmaps(
     return densmaps
 
 
+def compute_input_total(ddf: Any, diag_ctx, log_fn, avoid_computes: bool) -> int:
+    """Compute total number of input rows (post RA/DEC validation)."""
+    log_fn(
+        f"[input] Counting total number of rows (avoid_computes={avoid_computes}).",
+        always=True,
+    )
+
+    with diag_ctx("dask_input_total"):
+        base_ddf = ddf
+        if isinstance(ddf, LsdbCatalog) and hasattr(ddf, "_ddf"):
+            base_ddf = ddf._ddf  # type: ignore[attr-defined]
+
+        if hasattr(base_ddf, "map_partitions"):
+            total = dask_compute(base_ddf.map_partitions(len).sum())[0]
+        elif hasattr(base_ddf, "__len__"):
+            total = len(base_ddf)
+        else:
+            raise TypeError("Unable to determine input length for counting.")
+
+    total_int = int(total)
+    log_fn(f"[input] Total rows: {total_int}", always=True)
+    return total_int
+
+
 def write_common_static_products(
     out_dir: Path,
     cfg: Any,
@@ -197,41 +224,41 @@ def write_common_static_products(
         algorithm.selection_mode: {cfg.algorithm.selection_mode}
         algorithm.level_limit: {cfg.algorithm.level_limit}
         algorithm.moc_order: {moc_order}
-        algorithm.mg_order_desc: {getattr(cfg.algorithm, "mg_order_desc", False)}
-        algorithm.sg_order_desc: {getattr(cfg.algorithm, "sg_order_desc", False)}
-        algorithm.sdh_order_desc: {getattr(cfg.algorithm, "sdh_order_desc", False)}
+        algorithm.mag_global.order_desc: {getattr(cfg.algorithm, "mg_order_desc", False)}
+        algorithm.score_global.order_desc: {getattr(cfg.algorithm, "sg_order_desc", False)}
+        algorithm.score_density_hybrid.order_desc: {getattr(cfg.algorithm, "sdh_order_desc", False)}
         # algorithm.mag_global
-        mg_mag_column: {cfg.algorithm.mag_column}
-        mg_flux_column: {cfg.algorithm.flux_column}
-        mg_mag_offset: {cfg.algorithm.mag_offset}
-        mg_mag_min: {cfg.algorithm.mag_min}
-        mg_mag_max: {cfg.algorithm.mag_max}
-        mg_mag_adaptive_range: {cfg.algorithm.mag_adaptive_range}
-        mg_mag_hist_nbins: {cfg.algorithm.mag_hist_nbins}
-        mg_n_1: {cfg.algorithm.n_1}
-        mg_n_2: {cfg.algorithm.n_2}
-        mg_n_3: {cfg.algorithm.n_3}
+        mag_global.mag_column: {cfg.algorithm.mag_column}
+        mag_global.flux_column: {cfg.algorithm.flux_column}
+        mag_global.mag_offset: {cfg.algorithm.mag_offset}
+        mag_global.mag_min: {cfg.algorithm.mag_min}
+        mag_global.mag_max: {cfg.algorithm.mag_max}
+        mag_global.adaptive_range: {cfg.algorithm.mag_adaptive_range}
+        mag_global.hist_nbins: {cfg.algorithm.mag_hist_nbins}
+        mag_global.n_1: {cfg.algorithm.n_1}
+        mag_global.n_2: {cfg.algorithm.n_2}
+        mag_global.n_3: {cfg.algorithm.n_3}
         # algorithm.score_global
-        sg_score_column: {cfg.algorithm.score_column}
-        sg_score_min: {cfg.algorithm.score_min}
-        sg_score_max: {cfg.algorithm.score_max}
-        sg_score_adaptive_range: {cfg.algorithm.score_adaptive_range}
-        sg_score_hist_nbins: {cfg.algorithm.score_hist_nbins}
-        sg_n_1: {cfg.algorithm.score_n_1}
-        sg_n_2: {cfg.algorithm.score_n_2}
-        sg_n_3: {cfg.algorithm.score_n_3}
+        score_global.score_column: {cfg.algorithm.score_column}
+        score_global.score_min: {cfg.algorithm.score_min}
+        score_global.score_max: {cfg.algorithm.score_max}
+        score_global.adaptive_range: {cfg.algorithm.score_adaptive_range}
+        score_global.hist_nbins: {cfg.algorithm.score_hist_nbins}
+        score_global.n_1: {cfg.algorithm.score_n_1}
+        score_global.n_2: {cfg.algorithm.score_n_2}
+        score_global.n_3: {cfg.algorithm.score_n_3}
         # algorithm.score_density_hybrid
-        sdh_score_column: {getattr(cfg.algorithm, "sdh_score_column", None)}
-        sdh_score_min: {getattr(cfg.algorithm, "sdh_score_min", None)}
-        sdh_score_max: {getattr(cfg.algorithm, "sdh_score_max", None)}
-        sdh_score_adaptive_range: {getattr(cfg.algorithm, "sdh_score_adaptive_range", None)}
-        sdh_score_hist_nbins: {getattr(cfg.algorithm, "sdh_score_hist_nbins", None)}
-        sdh_n_1: {getattr(cfg.algorithm, "sdh_n_1", None)}
-        sdh_n_2: {getattr(cfg.algorithm, "sdh_n_2", None)}
-        sdh_n_3: {getattr(cfg.algorithm, "sdh_n_3", None)}
-        sdh_density_bias_n1: {getattr(cfg.algorithm, "sdh_density_bias_n1", None)}
-        sdh_density_bias_n2: {getattr(cfg.algorithm, "sdh_density_bias_n2", None)}
-        sdh_density_bias_n3: {getattr(cfg.algorithm, "sdh_density_bias_n3", None)}
+        score_density_hybrid.score_column: {getattr(cfg.algorithm, "sdh_score_column", None)}
+        score_density_hybrid.score_min: {getattr(cfg.algorithm, "sdh_score_min", None)}
+        score_density_hybrid.score_max: {getattr(cfg.algorithm, "sdh_score_max", None)}
+        score_density_hybrid.adaptive_range: {getattr(cfg.algorithm, "sdh_score_adaptive_range", None)}
+        score_density_hybrid.hist_nbins: {getattr(cfg.algorithm, "sdh_score_hist_nbins", None)}
+        score_density_hybrid.n_1: {getattr(cfg.algorithm, "sdh_n_1", None)}
+        score_density_hybrid.n_2: {getattr(cfg.algorithm, "sdh_n_2", None)}
+        score_density_hybrid.n_3: {getattr(cfg.algorithm, "sdh_n_3", None)}
+        score_density_hybrid.density_bias_n1: {getattr(cfg.algorithm, "sdh_density_bias_n1", None)}
+        score_density_hybrid.density_bias_n2: {getattr(cfg.algorithm, "sdh_density_bias_n2", None)}
+        score_density_hybrid.density_bias_n3: {getattr(cfg.algorithm, "sdh_density_bias_n3", None)}
         # cluster
         cluster.mode: {cfg.cluster.mode}
         cluster.n_workers: {cfg.cluster.n_workers}
@@ -329,3 +356,58 @@ def write_tiles_with_allsky(
         write_allsky(out_dir, depth, header_line, counts, allsky_df, nwritten_tot)
 
     return written_per_ipix, allsky_df
+
+
+def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, log_fn) -> None:
+    """Persist input/output counts for later cross-checks."""
+
+    def _count_rows(tile_path: Path) -> int:
+        with tile_path.open("r", encoding="utf-8") as f:
+            # Skip completeness + header lines.
+            next(f, None)
+            next(f, None)
+            return sum(1 for _ in f)
+
+    depth_totals: Dict[str, int] = {}
+    depth_counts: Dict[str, Dict[str, int]] = {}
+    total_all_depths = 0
+
+    for depth in range(0, level_limit + 1):
+        norder_dir = out_dir / f"Norder{depth}"
+        if not norder_dir.exists():
+            continue
+
+        counts_depth: Dict[str, int] = {}
+        for tile_path in norder_dir.rglob("Npix*.tsv"):
+            name = tile_path.name
+            if not name.startswith("Npix") or not name.endswith(".tsv"):
+                continue
+            try:
+                ipix = int(name[len("Npix") : -len(".tsv")])
+            except ValueError:
+                continue
+            counts_depth[str(ipix)] = _count_rows(tile_path)
+
+        if counts_depth:
+            depth_total = int(sum(counts_depth.values()))
+            depth_totals[str(depth)] = depth_total
+            depth_counts[str(depth)] = counts_depth
+            total_all_depths += depth_total
+
+    output_counts = {
+        "total": int(total_all_depths),
+        "depth_totals": depth_totals,
+        "depths": depth_counts,
+    }
+    input_counts = {"total": int(input_total)}
+
+    output_path = out_dir / "output_counts.json"
+    input_path = out_dir / "input_counts.json"
+
+    output_path.write_text(json.dumps(output_counts, indent=2), encoding="utf-8")
+    input_path.write_text(json.dumps(input_counts, indent=2), encoding="utf-8")
+
+    log_fn(
+        f"[counts] Wrote output counts to {output_path} and input counts to {input_path}.",
+        always=True,
+    )

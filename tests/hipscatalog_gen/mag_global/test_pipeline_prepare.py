@@ -36,9 +36,16 @@ def _cfg(**algo_kwargs) -> SimpleNamespace:
         n_1=None,
         n_2=None,
         n_3=None,
+        low_memory_mode=True,
+        persist_ddfs=False,
+        avoid_computes=True,
     )
     algo_defaults.update(algo_kwargs)
-    return SimpleNamespace(algorithm=SimpleNamespace(**algo_defaults))
+    cluster_defaults = dict(low_memory_mode=algo_defaults.pop("low_memory_mode", True))
+    return SimpleNamespace(
+        algorithm=SimpleNamespace(**algo_defaults),
+        cluster=SimpleNamespace(**cluster_defaults),
+    )
 
 
 def test_prepare_with_mag_column_sets_bounds_and_filters(diag_ctx, log_capture):
@@ -231,3 +238,46 @@ def test_prepare_hist_peak_without_bounds(diag_ctx, log_capture):
     assert cfg.algorithm.mag_min == -2.0  # clipped global minimum
     assert cfg.algorithm.mag_max <= 40.0  # clipped at upper bound
     assert result["__mag__"].between(cfg.algorithm.mag_min, cfg.algorithm.mag_max).all()
+
+
+def test_prepare_respects_low_memory_mode_no_persist(diag_ctx, log_capture, monkeypatch):
+    """Tests that low_memory_mode avoids persist."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [1.0, 2.0, 3.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", low_memory_mode=True)
+
+    persisted = {"called": False}
+
+    def fake_persist(self):
+        persisted["called"] = True
+        return self
+
+    monkeypatch.setattr(type(ddf), "persist", fake_persist, raising=False)
+
+    prepare_mag_global(ddf, cfg, diag_ctx, log_fn, avoid_computes=True)
+    assert not persisted["called"]
+
+
+def test_prepare_persists_when_low_memory_mode_false(diag_ctx, log_capture, monkeypatch):
+    """Tests that low_memory_mode=False allows persist."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [1.0, 2.0, 3.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", low_memory_mode=False)
+    cfg.cluster.low_memory_mode = False
+
+    persisted = {"called": False}
+
+    def fake_persist(self):
+        persisted["called"] = True
+        return self
+
+    monkeypatch.setattr(type(ddf), "persist", fake_persist, raising=False)
+    import dask.distributed as ddist
+
+    monkeypatch.setattr(ddist, "wait", lambda *_args, **_kwargs: None, raising=False)
+
+    prepare_mag_global(ddf, cfg, diag_ctx, log_fn, avoid_computes=False, persist_ddfs=True)
+    assert persisted["called"]
+    assert any("Persisting filtered DDF" in msg for msg in logs)

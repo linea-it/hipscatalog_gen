@@ -1,17 +1,23 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List
 
 import healpy as hp
 import numpy as np
 import pandas as pd
-from dask import compute as dask_compute
 from lsdb.catalog import Catalog as LsdbCatalog
 
 from ..io.output import build_header_line_from_keep
 from ..pipeline.common import write_tiles_with_allsky
-from ..score_global.utils import _quantile_from_histogram, compute_score_histogram_ddf
+from ..score_global.utils import compute_score_histogram_ddf
+from ..selection.common import (
+    add_ipix_column,
+    assign_level_edges,
+    reduce_topk_by_group_dask,
+    targets_per_tile,
+)
+from ..selection.score import add_score_column, resolve_value_range
 from ..utils import _fmt_dur, _get_meta_df, _log_depth_stats
 
 __all__ = ["prepare_score_density_hybrid", "run_score_density_hybrid_selection"]
@@ -20,25 +26,6 @@ __all__ = ["prepare_score_density_hybrid", "run_score_density_hybrid_selection"]
 # =============================================================================
 # Helpers
 # =============================================================================
-
-
-def _add_score_column(pdf: pd.DataFrame, score_col_expr: str, compiled_expr) -> pd.DataFrame:
-    if pdf.empty:
-        pdf["__score__"] = pd.Series([], dtype="float64")
-        return pdf
-
-    pdf = pdf.copy()
-    if score_col_expr in pdf.columns:
-        sc = pd.to_numeric(pdf[score_col_expr], errors="coerce")
-    else:
-        env = {"__builtins__": {}, "np": np, "numpy": np}
-        env.update({col: pdf[col] for col in pdf.columns})
-        out = eval(compiled_expr, env, {})
-        sc = pd.to_numeric(out, errors="coerce")
-
-    sc = sc.replace([np.inf, -np.inf], np.nan)
-    pdf["__score__"] = sc
-    return pdf
 
 
 def _filter_score_window(pdf: pd.DataFrame, score_min_val: float, score_max_val: float) -> pd.DataFrame:
@@ -60,84 +47,6 @@ def _attach_unique_id(pdf: pd.DataFrame, partition_info=None) -> pd.DataFrame:
     local = np.arange(len(pdf), dtype="int64")
     pdf["__sdh_id__"] = local + (np.int64(part_no) << 32)
     return pdf
-
-
-def _assign_targets_and_edges(
-    densmaps: Dict[int, np.ndarray],
-    depths_sel: List[int],
-    algo: Any,
-    cdf_hist: np.ndarray,
-    score_edges_hist: np.ndarray,
-    score_min: float,
-    score_max: float,
-    n_tot_score: float,
-    log_fn,
-    fixed_targets: Dict[int, float] | None = None,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Compute cumulative targets per depth and corresponding score edges."""
-    weights_list: List[float] = []
-    for d in depths_sel:
-        counts_d = densmaps[d]
-        tiles_active = int((counts_d > 0).sum())
-        weights_list.append(max(1, tiles_active))
-
-    weights = np.asarray(weights_list, dtype="float64")
-    T = np.zeros_like(weights, dtype="float64")
-
-    fixed_targets = fixed_targets or {}
-    fixed_norm: Dict[int, float] = {}
-    for d, val in fixed_targets.items():
-        if d not in depths_sel:
-            continue
-        if int(val) < 0:
-            raise ValueError(f"algorithm.sdh_n_{d} must be non-negative if provided (got {val}).")
-        fixed_norm[int(d)] = float(int(val))
-
-    sum_fixed = float(sum(fixed_norm.values()))
-    if sum_fixed > n_tot_score and sum_fixed > 0.0:
-        scale = float(n_tot_score) / sum_fixed if sum_fixed > 0 else 0.0
-        log_fn(
-            "[score_density_hybrid] Sum of fixed targets sdh_n_1/sdh_n_2/sdh_n_3 "
-            f"({int(sum_fixed)}) exceeds the total number of objects "
-            f"in the score range ({int(n_tot_score)}). "
-            f"Rescaling by a factor {scale:.3f}.",
-            always=True,
-        )
-        for d in list(fixed_norm.keys()):
-            fixed_norm[d] *= scale
-        sum_fixed = float(n_tot_score)
-
-    for d, val in fixed_norm.items():
-        idx = depths_sel.index(d)
-        T[idx] = val
-
-    N_rem = max(0.0, float(n_tot_score) - sum_fixed)
-    if N_rem > 0.0:
-        free_mask = np.ones_like(weights, dtype=bool)
-        for d in fixed_norm:
-            idx = depths_sel.index(d)
-            free_mask[idx] = False
-
-        W_free = float(weights[free_mask].sum())
-        if W_free <= 0.0:
-            n_free = int(free_mask.sum())
-            if n_free > 0:
-                T[free_mask] += N_rem / float(n_free)
-        else:
-            T[free_mask] += weights[free_mask] / W_free * N_rem
-
-    T_cum = np.cumsum(T)
-    Q = T_cum / float(n_tot_score) if n_tot_score > 0.0 else np.zeros_like(T_cum, dtype="float64")
-
-    level_edges: np.ndarray = np.empty(len(depths_sel) + 1, dtype="float64")
-    level_edges[0] = score_min
-    for i, q in enumerate(Q, start=1):
-        level_edges[i] = _quantile_from_histogram(cdf_hist, score_edges_hist, q)
-
-    level_edges = np.maximum.accumulate(level_edges)
-    level_edges[0] = score_min
-    level_edges[-1] = score_max
-    return level_edges, T
 
 
 def _distribute_by_weights(total: int, weights: Dict[int, int]) -> Dict[int, int]:
@@ -214,54 +123,6 @@ def _targets_stage1_by_depth(
             idx += 1
 
     return totals
-
-
-def _targets_per_tile(counts_depth: np.ndarray, depth_total: int, bias: float) -> Dict[int, int]:
-    """Distribute depth_total across active tiles with optional density bias."""
-    if depth_total <= 0:
-        return {}
-
-    active_idx = np.nonzero(counts_depth > 0)[0]
-    if len(active_idx) == 0:
-        return {}
-
-    weights_uniform = np.ones(len(active_idx), dtype="float64")
-    weights_uniform /= float(weights_uniform.sum())
-
-    dens_vals = counts_depth[active_idx].astype("float64")
-    dens_weights = dens_vals / float(dens_vals.sum()) if dens_vals.sum() > 0 else weights_uniform.copy()
-
-    bias = max(0.0, min(1.0, float(bias)))
-    weights = (1.0 - bias) * weights_uniform + bias * dens_weights
-    weights = weights / float(weights.sum()) if weights.sum() > 0 else weights_uniform
-
-    raw = weights * float(depth_total)
-    base = np.floor(raw).astype(int)
-    remainder = int(depth_total - base.sum())
-    if remainder > 0:
-        frac = raw - base
-        order = np.argsort(-frac, kind="mergesort")
-        for idx in order[:remainder]:
-            base[idx] += 1
-
-    return {int(ipix): int(val) for ipix, val in zip(active_idx, base, strict=False) if val > 0}
-
-
-def _add_ipix_column(pdf: pd.DataFrame, depth: int, ra_col: str, dec_col: str) -> pd.DataFrame:
-    if pdf.empty:
-        pdf["__ipix__"] = pd.Series([], dtype="int64")
-        return pdf
-
-    ra_vals = pd.to_numeric(pdf[ra_col], errors="coerce").to_numpy()
-    dec_vals = pd.to_numeric(pdf[dec_col], errors="coerce").to_numpy()
-    theta = np.deg2rad(90.0 - dec_vals)
-    phi = np.deg2rad(ra_vals % 360.0)
-    nside = 1 << depth
-    ipix = hp.ang2pix(nside, theta, phi, nest=True).astype(np.int64)
-
-    pdf = pdf.copy()
-    pdf["__ipix__"] = ipix
-    return pdf
 
 
 def _reduce_topk_by_group_dask(
@@ -350,179 +211,29 @@ def prepare_score_density_hybrid(
     if score_hist_nbins <= 0:
         raise ValueError("algorithm.sdh_score_hist_nbins must be a positive integer.")
 
-    base_meta_score = _get_meta_df(ddf)
-    meta_with_score = base_meta_score.copy()
-    meta_with_score["__score__"] = pd.Series([], dtype="float64")
-
-    score_code = compile(score_expr, "<score_density_hybrid>", "eval")
-
-    ddf = ddf.map_partitions(
-        _add_score_column,
-        score_expr,
-        score_code,
-        meta=meta_with_score,
-    )
+    ddf = add_score_column(ddf, score_expr, output_col="__score__")
 
     score_col_internal = "__score__"
     score_min_cfg = getattr(algo, "sdh_score_min", None)
     score_max_cfg = getattr(algo, "sdh_score_max", None)
-
-    with diag_ctx("dask_sdh_score_minmax"):
-        score_min_global_raw, score_max_global_raw = dask_compute(
-            ddf[score_col_internal].min(),
-            ddf[score_col_internal].max(),
-        )
-
-    if score_min_global_raw is None or score_max_global_raw is None:
-        raise ValueError(
-            "score_density_hybrid selection: unable to determine global score range "
-            "(min/max returned None). Check the score expression/column."
-        )
-
-    score_min_global_raw = float(score_min_global_raw)
-    score_max_global_raw = float(score_max_global_raw)
-
-    if not np.isfinite(score_min_global_raw) or not np.isfinite(score_max_global_raw):
-        raise ValueError(
-            "score_density_hybrid selection: global score min/max are not finite. "
-            "Check the score expression/column values."
-        )
-
-    if score_min_global_raw >= score_max_global_raw:
-        raise ValueError(
-            f"score_density_hybrid selection: invalid global score range "
-            f"[{score_min_global_raw}, {score_max_global_raw}]."
-        )
-
-    def _compute_hist_peak() -> Tuple[float, float, float]:
-        with diag_ctx("dask_sdh_score_hist_peak"):
-            hist_auto, edges_auto, n_tot_auto = compute_score_histogram_ddf(
-                ddf_like=ddf,
-                score_col=score_col_internal,
-                score_min=score_min_global_raw,
-                score_max=score_max_global_raw,
-                nbins=score_hist_nbins,
-            )
-
-        if n_tot_auto == 0:
-            raise ValueError(
-                "score_density_hybrid selection: no objects found when estimating the "
-                "histogram peak. Check the score expression/column."
-            )
-
-        peak_idx = int(np.argmax(hist_auto))
-        bin_left = float(edges_auto[peak_idx])
-        bin_right = float(edges_auto[peak_idx + 1])
-        peak_center = float(np.round(0.5 * (bin_left + bin_right), 6))
-        return peak_center, bin_left, bin_right
-
-    peak_info: Tuple[float, float, float] | None = None
-
-    def _get_peak_info() -> Tuple[float, float, float]:
-        nonlocal peak_info
-        if peak_info is None:
-            peak_info = _compute_hist_peak()
-        return peak_info
-
-    score_min: float | None = float(score_min_cfg) if score_min_cfg is not None else None
-    score_max: float | None = float(score_max_cfg) if score_max_cfg is not None else None
-
-    if score_min is None and score_max is None:
-        if score_range_mode == "complete":
-            score_min = score_min_global_raw
-            score_max = score_max_global_raw
-            log_fn(
-                "[score_density_hybrid] sdh_score_min/sdh_score_max not provided; using global "
-                f"range [{score_min:.6f}, {score_max:.6f}].",
-                always=True,
-            )
-        else:
-            peak_center, bin_left, bin_right = _get_peak_info()
-            score_min = score_min_global_raw
-            score_max = peak_center
-            log_fn(
-                "[score_density_hybrid] sdh_score_min/sdh_score_max not provided; "
-                f"using global minimum {score_min:.6f} and histogram peak at {score_max:.6f} "
-                f"(bin center from [{bin_left:.6f}, {bin_right:.6f}]).",
-                always=True,
-            )
-    elif score_min is None:
-        if score_range_mode == "complete":
-            score_min = score_min_global_raw
-            log_fn(
-                "[score_density_hybrid] sdh_score_min not provided; using global minimum "
-                f"{score_min:.6f} (sdh_score_max={score_max}).",
-                always=True,
-            )
-        else:
-            peak_center, bin_left, bin_right = _get_peak_info()
-            score_min = peak_center
-            if score_max is None:
-                raise RuntimeError(
-                    "score_density_hybrid: sdh_score_max must be provided when using "
-                    "hist_peak for sdh_score_min."
-                )
-            if score_min > float(score_max):
-                raise ValueError(
-                    "score_density_hybrid selection: histogram peak used as sdh_score_min "
-                    f"({score_min:.6f}) is greater than the provided sdh_score_max "
-                    f"({score_max})."
-                )
-            log_fn(
-                "[score_density_hybrid] sdh_score_min not provided; using histogram peak at "
-                f"{score_min:.6f} as minimum (bin center from "
-                f"[{bin_left:.6f}, {bin_right:.6f}]).",
-                always=True,
-            )
-    elif score_max is None:
-        if score_range_mode == "complete":
-            score_max = score_max_global_raw
-            log_fn(
-                "[score_density_hybrid] sdh_score_max not provided; using global maximum "
-                f"{score_max:.6f} (sdh_score_min={score_min}).",
-                always=True,
-            )
-        else:
-            peak_center, bin_left, bin_right = _get_peak_info()
-            score_max = peak_center
-            if score_min is None:
-                raise RuntimeError(
-                    "score_density_hybrid: sdh_score_min must be provided when using "
-                    "hist_peak for sdh_score_max."
-                )
-            if float(score_min) > score_max:
-                raise ValueError(
-                    "score_density_hybrid selection: histogram peak used as sdh_score_max "
-                    f"({score_max:.6f}) is smaller than the provided sdh_score_min "
-                    f"({score_min})."
-                )
-            log_fn(
-                "[score_density_hybrid] sdh_score_max not provided; using histogram peak at "
-                f"{score_max:.6f} as maximum (bin center from "
-                f"[{bin_left:.6f}, {bin_right:.6f}]).",
-                always=True,
-            )
-
-    if score_min is None or score_max is None:
-        raise RuntimeError(
-            "score_density_hybrid: internal error — sdh_score_min/sdh_score_max resolution failed."
-        )
-
-    if not (np.isfinite(score_min) and np.isfinite(score_max)):
-        raise ValueError(
-            "score_density_hybrid selection: resolved sdh_score_min/sdh_score_max are not finite."
-        )
-
-    if score_min >= score_max:
-        raise ValueError(
-            f"algorithm.sdh_score_min ({score_min}) must be strictly smaller than "
-            f"algorithm.sdh_score_max ({score_max}) for score_density_hybrid selection."
-        )
+    score_min, score_max = resolve_value_range(
+        ddf=ddf,
+        value_col=score_col_internal,
+        range_mode=score_range_mode,
+        min_cfg=score_min_cfg,
+        max_cfg=score_max_cfg,
+        hist_nbins=score_hist_nbins,
+        compute_hist_fn=compute_score_histogram_ddf,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+        label="score_density_hybrid",
+    )
 
     algo.sdh_score_min = score_min
     algo.sdh_score_max = score_max
 
-    meta_sel = meta_with_score.copy()
+    meta_sel = _get_meta_df(ddf).copy()
+    meta_sel["__score__"] = pd.Series([], dtype="float64")
     ddf_sel = ddf.map_partitions(
         _filter_score_window,
         score_min,
@@ -613,17 +324,17 @@ def run_score_density_hybrid_selection(
             continue
         fixed_targets_clean[int(k)] = float(v)
 
-    level_edges_initial, targets_per_depth_raw = _assign_targets_and_edges(
+    level_edges_initial, targets_per_depth_raw = assign_level_edges(
         densmaps=densmaps,
         depths_sel=depths_sel,
-        algo=algo,
+        fixed_targets=fixed_targets_clean,
         cdf_hist=cdf_hist,
         score_edges_hist=score_edges_hist,
         score_min=score_min,
         score_max=score_max,
         n_tot_score=float(n_tot_score),
         log_fn=log_fn,
-        fixed_targets=fixed_targets_clean,
+        label="score_density_hybrid",
     )
 
     base_targets = {depths_sel[i]: float(targets_per_depth_raw[i]) for i in range(len(depths_sel))}
@@ -652,8 +363,8 @@ def run_score_density_hybrid_selection(
 
         counts = densmaps[depth]
         bias = float(getattr(algo, f"sdh_density_bias_n{depth}", 0.0))
-        targets_per_tile = _targets_per_tile(counts, depth_total, bias)
-        if not targets_per_tile:
+        targets_per_tile_map = targets_per_tile(counts, depth_total, bias)
+        if not targets_per_tile_map:
             log_fn(
                 f"[DEPTH {depth}] score_density_hybrid: no active tiles or zero targets → skipping.",
                 always=True,
@@ -664,21 +375,21 @@ def run_score_density_hybrid_selection(
             meta_ipix = _get_meta_df(available_ddf).copy()
             meta_ipix["__ipix__"] = pd.Series([], dtype="int64")
             ddf_with_ipix = available_ddf.map_partitions(
-                _add_ipix_column,
+                add_ipix_column,
                 depth,
                 ra_col,
                 dec_col,
                 meta=meta_ipix,
             )
 
-            target_tiles = list(targets_per_tile.keys())
+            target_tiles = list(targets_per_tile_map.keys())
             cand_ddf = ddf_with_ipix[ddf_with_ipix["__ipix__"].isin(target_tiles)]
-            selected_ddf = _reduce_topk_by_group_dask(
+            selected_ddf = reduce_topk_by_group_dask(
                 cand_ddf,
                 group_col="__ipix__",
                 score_col=score_col_internal,
                 order_desc=order_desc,
-                k_per_group=targets_per_tile,
+                k_per_group=targets_per_tile_map,
                 ra_col=ra_col,
                 dec_col=dec_col,
             )
@@ -745,17 +456,17 @@ def run_score_density_hybrid_selection(
     else:
         cdf_rem[:] = 0.0
 
-    level_edges_rem, _ = _assign_targets_and_edges(
+    level_edges_rem, _ = assign_level_edges(
         densmaps=densmaps,
         depths_sel=remaining_depths,
-        algo=algo,
+        fixed_targets={},
         cdf_hist=cdf_rem,
         score_edges_hist=edges_rem,
         score_min=score_min,
         score_max=score_max,
         n_tot_score=float(n_tot_rem),
         log_fn=log_fn,
-        fixed_targets={},
+        label="score_density_hybrid",
     )
 
     log_fn(

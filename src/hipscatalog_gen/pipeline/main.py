@@ -33,9 +33,11 @@ from ..utils import _mkdirs, _ts
 from .common import (
     build_and_prepare_input,
     compute_and_write_densmaps,
+    compute_input_total,
     log_epilogue,
     log_prologue,
     write_common_static_products,
+    write_counts_summaries,
 )
 
 __all__ = ["run_pipeline"]
@@ -95,6 +97,8 @@ def run_pipeline(cfg: Config) -> None:
         ddf, RA_NAME, DEC_NAME, keep_cols, is_hats, paths = build_and_prepare_input(
             cfg, diag_ctx, _log, persist_ddfs
         )
+
+        input_total = compute_input_total(ddf, diag_ctx, _log, avoid_computes)
 
         selection_mode = (getattr(cfg.algorithm, "selection_mode", "mag_global") or "mag_global").lower()
 
@@ -183,6 +187,8 @@ def run_pipeline(cfg: Config) -> None:
             )
         else:
             raise RuntimeError("Unexpected selection_mode dispatch failure.")
+
+        write_counts_summaries(out_dir, cfg.algorithm.level_limit, input_total, _log)
 
     try:
         if diagnostics_mode == "global":

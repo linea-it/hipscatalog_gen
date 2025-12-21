@@ -10,8 +10,9 @@ from dask import compute as dask_compute
 
 from ..io.output import build_header_line_from_keep
 from ..pipeline.common import write_tiles_with_allsky
+from ..selection.common import assign_level_edges
 from ..utils import _fmt_dur, _get_meta_df, _log_depth_stats
-from .utils import _quantile_from_histogram, compute_mag_histogram_ddf
+from .utils import compute_mag_histogram_ddf
 
 __all__ = ["prepare_mag_global", "run_mag_global_selection"]
 
@@ -291,84 +292,6 @@ def prepare_mag_global(
     return ddf_sel
 
 
-def _assign_targets_per_depth(
-    densmaps: Dict[int, np.ndarray],
-    depths_sel: List[int],
-    algo: Any,
-    cdf_hist: np.ndarray,
-    mag_edges_hist: np.ndarray,
-    mag_min: float,
-    mag_max: float,
-    n_tot_mag: float,
-    log_fn,
-) -> np.ndarray:
-    weights_list: List[float] = []
-    for d in depths_sel:
-        counts_d = densmaps[d]
-        tiles_active = int((counts_d > 0).sum())
-        weights_list.append(max(1, tiles_active))
-
-    weights = np.asarray(weights_list, dtype="float64")
-    T = np.zeros_like(weights, dtype="float64")
-
-    fixed_targets: Dict[int, float] = {}
-    for d, n_val in (
-        (1, getattr(algo, "n_1", None)),
-        (2, getattr(algo, "n_2", None)),
-        (3, getattr(algo, "n_3", None)),
-    ):
-        if (d in depths_sel) and (n_val is not None):
-            if int(n_val) < 0:
-                raise ValueError(f"algorithm.n_{d} must be non-negative if provided (got {n_val}).")
-            fixed_targets[d] = float(int(n_val))
-
-    sum_fixed = float(sum(fixed_targets.values()))
-    if sum_fixed > n_tot_mag and sum_fixed > 0.0:
-        scale = float(n_tot_mag) / sum_fixed if sum_fixed > 0 else 0.0
-        log_fn(
-            "[mag_global] Sum of fixed targets n_1/n_2/n_3 "
-            f"({int(sum_fixed)}) exceeds the total number of objects "
-            f"in the magnitude range ({int(n_tot_mag)}). "
-            f"Rescaling n_1/n_2/n_3 by a factor {scale:.3f}.",
-            always=True,
-        )
-        for d in list(fixed_targets.keys()):
-            fixed_targets[d] *= scale
-        sum_fixed = float(n_tot_mag)
-
-    for d, val in fixed_targets.items():
-        idx = depths_sel.index(d)
-        T[idx] = val
-
-    N_rem = max(0.0, float(n_tot_mag) - sum_fixed)
-    if N_rem > 0.0:
-        free_mask = np.ones_like(weights, dtype=bool)
-        for d in fixed_targets:
-            idx = depths_sel.index(d)
-            free_mask[idx] = False
-
-        W_free = float(weights[free_mask].sum())
-        if W_free <= 0.0:
-            n_free = int(free_mask.sum())
-            if n_free > 0:
-                T[free_mask] += N_rem / float(n_free)
-        else:
-            T[free_mask] += weights[free_mask] / W_free * N_rem
-
-    T_cum = np.cumsum(T)
-    Q = T_cum / float(n_tot_mag) if n_tot_mag > 0.0 else np.zeros_like(T_cum, dtype="float64")
-
-    level_edges: np.ndarray = np.empty(len(depths_sel) + 1, dtype="float64")
-    level_edges[0] = mag_min
-    for i, q in enumerate(Q, start=1):
-        level_edges[i] = _quantile_from_histogram(cdf_hist, mag_edges_hist, q)
-
-    level_edges = np.maximum.accumulate(level_edges)
-    level_edges[0] = mag_min
-    level_edges[-1] = mag_max
-    return level_edges
-
-
 def run_mag_global_selection(
     remainder_ddf: Any,
     densmaps: Dict[int, np.ndarray],
@@ -414,16 +337,26 @@ def run_mag_global_selection(
     else:
         cdf_hist[:] = 0.0
 
-    level_edges = _assign_targets_per_depth(
+    fixed_targets: Dict[int, float] = {}
+    for d, n_val in (
+        (1, getattr(algo, "n_1", None)),
+        (2, getattr(algo, "n_2", None)),
+        (3, getattr(algo, "n_3", None)),
+    ):
+        if (d in depths_sel) and (n_val is not None):
+            fixed_targets[d] = float(n_val)
+
+    level_edges, _ = assign_level_edges(
         densmaps=densmaps,
         depths_sel=depths_sel,
-        algo=algo,
+        fixed_targets=fixed_targets,
         cdf_hist=cdf_hist,
-        mag_edges_hist=mag_edges_hist,
-        mag_min=mag_min,
-        mag_max=mag_max,
-        n_tot_mag=float(n_tot_mag),
+        score_edges_hist=mag_edges_hist,
+        score_min=mag_min,
+        score_max=mag_max,
+        n_tot_score=float(n_tot_mag),
         log_fn=log_fn,
+        label="mag_global",
     )
 
     log_fn(

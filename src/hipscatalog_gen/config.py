@@ -28,22 +28,17 @@ class AlgoOpts:
         level_limit: Maximum HiPS order (NorderL).
         moc_order: HiPS order used for the MOC (defaults to level_limit).
 
-    mag_global mode:
-        mag_column / flux_column + mag_offset: Magnitude source (column or flux+offset).
-        mag_min / mag_max / mag_adaptive_range / mag_hist_nbins: Magnitude bounds logic.
-        n_1 / n_2 / n_3: Optional approximate targets for depths 1–3.
-        mg_order_desc: Set True to prefer higher magnitudes/scores (default False → lower is better).
+    mag_global block:
+        mag_column or flux_column+mag_offset; mag_min/max; adaptive_range; hist_nbins;
+        optional n_1/n_2/n_3 targets; mg_order_desc.
 
-    score_global mode:
-        score_column / score_min / score_max / score_adaptive_range / score_hist_nbins.
-        score_n_1 / score_n_2 / score_n_3: Optional approximate targets for depths 1–3.
-        sg_order_desc: Set True to prefer higher scores (default False → lower is better).
+    score_global block:
+        score_column; score_min/max; adaptive_range; hist_nbins;
+        optional n_1/n_2/n_3; sg_order_desc.
 
-    score_density_hybrid mode:
-        sdh_score_column / sdh_score_min / sdh_score_max / sdh_score_adaptive_range / sdh_score_hist_nbins.
-        sdh_n_1 / sdh_n_2 / sdh_n_3: optional fixed totals for depths 1–3.
-        sdh_density_bias_n1 / sdh_density_bias_n2 / sdh_density_bias_n3: density bias per depth (0.0–1.0).
-        sdh_order_desc: Set True to prefer higher scores (default False → lower is better).
+    score_density_hybrid block:
+        score_column; score_min/max; adaptive_range; hist_nbins;
+        optional n_1/n_2/n_3; density_bias_n1/n2/n3; sdh_order_desc.
     """
 
     # Common settings
@@ -188,165 +183,92 @@ keep  [optional, default=None] list[str] or null
           Keep the essential set plus all explicitly listed columns (filtered
           by availability).
 
-algorithm
----------
+algorithm (block-based)
+-----------------------
 selection_mode         [required]
-    High-level selection strategy. Must be one of:
-      - "mag_global" → global magnitude-complete selection.
-      - "score_global" → global selection using an arbitrary score/column.
-      - "score_density_hybrid" → hybrid score selection with density-driven depths 1–3.
+    "mag_global" | "score_global" | "score_density_hybrid".
 level_limit            [required] int
     Maximum HiPS order (NorderL). Must be in [4, 11].
 moc_order              [optional, default=level_limit] int
     HiPS order used for the MOC.
+selection_defaults     [optional] dict
+    Shared defaults for all modes. Recognized keys:
+      - hist_nbins        (int, default 512)
+      - adaptive_range    (\"complete\" | \"hist_peak\", default \"complete\")
+      - order_desc        (bool, default False)
+      - density_bias_n1/n2/n3 (float, default 1.0 for SDH)
 
-mag_global mode (prefix mg_)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-mg_mag_column          [required in mag_global mode] str
-    Magnitude column used when selection_mode == "mag_global".
-mg_flux_column         [required if mg_mag_column is absent in mag_global mode] str
-    Flux column used to derive magnitudes when mg_mag_column is not provided.
-mg_mag_offset          [required when using mg_flux_column] float
-    Offset applied to the flux→magnitude conversion:
-        mag = -2.5 * log10(flux) + mg_mag_offset
-mg_mag_min             [optional, default=None] float
-    Lower bound of the magnitude range. If omitted, global minimum clipped to >= -2.
-mg_mag_max             [optional, default=None] float
-    Upper bound of the magnitude range. If omitted, estimated from the histogram peak.
-mg_mag_adaptive_range  [optional, default="complete"] str
-    How to fill missing mag_min/mag_max:
-      - "complete"  → use global min/max when a bound is missing.
-      - "hist_peak" → use the histogram peak (bin center) for the missing bound.
-mg_mag_hist_nbins      [optional, default=512] int
-    Number of bins in the global magnitude histogram.
-mg_n_1, mg_n_2, mg_n_3 [optional, default=None] int
-    Approximate global target counts for depths 1–3. Must be provided in order.
-mg_order_desc          [optional, default=False] bool
-    If False, lower magnitudes/scores are better; if True, higher are better.
+mag_global block
+^^^^^^^^^^^^^^^^
+mag_global.mag_column        [required if flux_column absent] str
+mag_global.flux_column       [required if mag_column absent] str
+mag_global.mag_offset        [required when flux_column is set] float
+mag_global.mag_min/max       [optional] float
+mag_global.adaptive_range    [optional, default=selection_defaults.adaptive_range or \"complete\"]
+mag_global.hist_nbins        [optional, default=selection_defaults.hist_nbins or 512]
+mag_global.n_1/n_2/n_3       [optional] int (must be provided in order)
+mag_global.order_desc        [optional, default=selection_defaults.order_desc or False]
 
-score_global mode (prefix sg_)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sg_score_column        [required in score_global mode] str
-    Column or expression evaluated globally.
-sg_score_min           [optional, default=None] float
-    Lower bound of the score range. If omitted:
-      * sg_score_adaptive_range = "complete" → global minimum.
-      * sg_score_adaptive_range = "hist_peak" → histogram peak (bin center).
-sg_score_max           [optional, default=None] float
-    Upper bound of the score range. If omitted:
-      * sg_score_adaptive_range = "complete" → global maximum.
-      * sg_score_adaptive_range = "hist_peak" → histogram peak (bin center).
-sg_score_adaptive_range [optional, default="complete"] str
-    When a bound is missing, how to auto-complete it: "complete" or "hist_peak".
-sg_score_hist_nbins    [optional, default=512] int
-    Number of bins in the global score histogram.
-sg_n_1, sg_n_2, sg_n_3 [optional, default=None] int
-    Approximate global target counts for depths 1–3. Must be provided in order.
-sg_order_desc          [optional, default=False] bool
-    If False, lower scores are better; if True, higher are better.
+score_global block
+^^^^^^^^^^^^^^^^^^
+score_global.score_column    [required] str (column or expression)
+score_global.score_min/max   [optional] float
+score_global.adaptive_range  [optional, default=selection_defaults.adaptive_range or \"complete\"]
+score_global.hist_nbins      [optional, default=selection_defaults.hist_nbins or 512]
+score_global.n_1/n_2/n_3     [optional] int (must be provided in order)
+score_global.order_desc      [optional, default=selection_defaults.order_desc or False]
 
-score_density_hybrid mode (prefix sdh_)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sdh_score_column        [required in score_density_hybrid mode] str
-    Column or expression evaluated globally.
-sdh_score_min / sdh_score_max [optional, default=None] float
-    Optional bounds for the score range. When missing, filled according to
-    sdh_score_adaptive_range ("complete" or "hist_peak"), analogously to sg_*.
-sdh_score_adaptive_range [optional, default="complete"] str
-    How to complete missing score_min/score_max: "complete" or "hist_peak".
-sdh_score_hist_nbins    [optional, default=512] int
-    Number of bins in the global score histogram.
-sdh_n_1 / sdh_n_2 / sdh_n_3 [optional, default=None] int
-    Optional fixed totals for depths 1–3 (must be provided in order).
-sdh_density_bias_n1 / sdh_density_bias_n2 / sdh_density_bias_n3
-    [optional, defaults: 0.1, 0.3, 0.5] float in [0, 1]
-    Density bias per depth when distributing targets across tiles.
-sdh_order_desc         [optional, default=False] bool
-    If False, lower scores are better; if True, higher are better.
+score_density_hybrid block
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+score_density_hybrid.score_column   [required] str (column or expression)
+score_density_hybrid.score_min/max  [optional] float
+score_density_hybrid.adaptive_range [optional, default=selection_defaults.adaptive_range or \"complete\"]
+score_density_hybrid.hist_nbins     [optional, default=selection_defaults.hist_nbins or 512]
+score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)
+score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]
+    float in [0,1]
+score_density_hybrid.order_desc     [optional, default=selection_defaults.order_desc or False]
 
 cluster
 -------
 mode                     [optional, default="local"]
     Cluster mode: "local" or "slurm".
 n_workers                [optional, default=3] int
-    Number of Dask workers.
 threads_per_worker       [optional, default=1] int
-    Threads per worker.
 memory_per_worker        [optional, default="2GB"] str
-    Memory per worker (e.g. "8GB").
 slurm                    [optional, default=None] dict
-    Additional SLURM options when mode == "slurm".
 low_memory_mode          [optional, default=True] bool
-    Convenience toggle for memory/throughput:
-      * True  → persist_ddfs=False, avoid_computes_wherever_possible=True
-      * False → persist_ddfs=True, avoid_computes_wherever_possible=False
+    True  → persist_ddfs=False, avoid_computes_wherever_possible=True
+    False → persist_ddfs=True, avoid_computes_wherever_possible=False
 diagnostics_mode         [optional, default="global"]
-    Dask diagnostics mode: "per_step", "global" or "off".
+    "per_step" | "global" | "off".
 
 output
 ------
 out_dir      [required] str
-    Output directory where the HiPS hierarchy will be written.
 cat_name     [required] str
-    Catalog name used in metadata and directory naming.
 target       [optional, default="0 0"] str
-    Target coordinates (RA DEC) for metadata.
 creator_did  [optional, default=None] str
-    Dataset identifier for the creator, used in metadata.
 obs_title    [optional, default=None] str
-    Human-readable title for the observation/catalog, used in metadata.
 overwrite    [optional, default=False] bool
-    If True and output.out_dir already exists, delete its contents before writing.
-
 
 Examples
 ========
 
-Example: minimal configuration (dict)
--------------------------------------
-This is the smallest valid configuration you can pass to
-``load_config_from_dict()``::
-
-    cfg = {
-        "input": {
-            "paths": ["/path/to/catalog/*.parquet"],
-        },
-        "columns": {
-            "ra": "ra",
-            "dec": "dec",
-        },
-        "algorithm": {
-            "selection_mode": "mag_global",
-            "level_limit": 10,
-            "mg_mag_column": "mag_r",
-        },
-        "cluster": {},
-        "output": {
-            "out_dir": "/path/to/output",
-            "cat_name": "MyCatalog"
-        }
-    }
-
-
-Example: minimal configuration (YAML)
--------------------------------------
-This is the smallest valid YAML file you can pass to ``load_config()``::
+Minimal configuration (YAML)
+----------------------------
 
     input:
-      paths:
-        - "/path/to/catalog/*.parquet"
-
+      paths: ["/path/to/catalog/*.parquet"]
     columns:
       ra: "ra"
       dec: "dec"
-
     algorithm:
       selection_mode: "mag_global"
       level_limit: 10
-      mg_mag_column: "mag_r"
-
+      mag_global:
+        mag_column: "mag_r"
     cluster: {}
-
     output:
       out_dir: "/path/to/output"
       cat_name: "MyCatalog"
@@ -373,12 +295,6 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     """Internal helper to build a Config from a raw mapping."""
     algo = y["algorithm"]
 
-    def _get_mode_value(mapping: Mapping[str, Any], key: str, default=None):
-        return mapping.get(key, default)
-
-    # ------------------------------------------------------------------
-    # Common settings (all modes)
-    # ------------------------------------------------------------------
     raw_selection_mode = algo.get("selection_mode")
     if raw_selection_mode is None:
         raise ValueError(
@@ -399,58 +315,10 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     if moc_order > level_limit:
         moc_order = level_limit
 
-    # ------------------------------------------------------------------
-    # mag_global mode
-    # ------------------------------------------------------------------
-    n_1_raw = _get_mode_value(algo, "mg_n_1")
-    n_2_raw = _get_mode_value(algo, "mg_n_2")
-    n_3_raw = _get_mode_value(algo, "mg_n_3")
-
-    # ------------------------------------------------------------------
-    # score_global mode
-    # ------------------------------------------------------------------
-    score_n_1_raw = _get_mode_value(algo, "sg_n_1")
-    score_n_2_raw = _get_mode_value(algo, "sg_n_2")
-    score_n_3_raw = _get_mode_value(algo, "sg_n_3")
-
-    # ------------------------------------------------------------------
-    # score_density_hybrid mode
-    # ------------------------------------------------------------------
-    sdh_n_1_raw = _get_mode_value(algo, "sdh_n_1")
-    sdh_n_2_raw = _get_mode_value(algo, "sdh_n_2")
-    sdh_n_3_raw = _get_mode_value(algo, "sdh_n_3")
-
-    # Enforce prefix rule: n_2 requires n_1, n_3 requires n_1 and n_2.
-    if n_2_raw is not None and n_1_raw is None:
-        raise ValueError(
-            "algorithm.mg_n_2 is set but algorithm.mg_n_1 is missing. "
-            "These controls must be provided in order: mg_n_1, then mg_n_2, then mg_n_3."
-        )
-    if n_3_raw is not None and (n_1_raw is None or n_2_raw is None):
-        raise ValueError(
-            "algorithm.mg_n_3 is set but algorithm.mg_n_1 and algorithm.mg_n_2 are not "
-            "both defined. These controls must be provided in order: mg_n_1, mg_n_2, mg_n_3."
-        )
-    if score_n_2_raw is not None and score_n_1_raw is None:
-        raise ValueError(
-            "algorithm.sg_n_2 is set but algorithm.sg_n_1 is missing. "
-            "These controls must be provided in order: sg_n_1, then sg_n_2, then sg_n_3."
-        )
-    if score_n_3_raw is not None and (score_n_1_raw is None or score_n_2_raw is None):
-        raise ValueError(
-            "algorithm.sg_n_3 is set but algorithm.sg_n_1 and algorithm.sg_n_2 are not "
-            "both defined. These controls must be provided in order: sg_n_1, sg_n_2, sg_n_3."
-        )
-    if sdh_n_2_raw is not None and sdh_n_1_raw is None:
-        raise ValueError(
-            "algorithm.sdh_n_2 is set but algorithm.sdh_n_1 is missing. "
-            "These controls must be provided in order: sdh_n_1, then sdh_n_2, then sdh_n_3."
-        )
-    if sdh_n_3_raw is not None and (sdh_n_1_raw is None or sdh_n_2_raw is None):
-        raise ValueError(
-            "algorithm.sdh_n_3 is set but algorithm.sdh_n_1 and algorithm.sdh_n_2 are not "
-            "both defined. These controls must be provided in order: sdh_n_1, sdh_n_2, sdh_n_3."
-        )
+    defaults = algo.get("selection_defaults", {}) or {}
+    mag_cfg = algo.get("mag_global", {}) or {}
+    score_cfg = algo.get("score_global", {}) or {}
+    sdh_cfg = algo.get("score_density_hybrid", {}) or {}
 
     def _to_int_or_none(x, name: str) -> Optional[int]:
         if x is None:
@@ -463,15 +331,43 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             raise ValueError(f"algorithm.{name} must be non-negative, got {v}.")
         return v
 
-    n_1 = _to_int_or_none(n_1_raw, "mg_n_1")
-    n_2 = _to_int_or_none(n_2_raw, "mg_n_2")
-    n_3 = _to_int_or_none(n_3_raw, "mg_n_3")
-    score_n_1 = _to_int_or_none(score_n_1_raw, "sg_n_1")
-    score_n_2 = _to_int_or_none(score_n_2_raw, "sg_n_2")
-    score_n_3 = _to_int_or_none(score_n_3_raw, "sg_n_3")
-    sdh_n_1 = _to_int_or_none(sdh_n_1_raw, "sdh_n_1")
-    sdh_n_2 = _to_int_or_none(sdh_n_2_raw, "sdh_n_2")
-    sdh_n_3 = _to_int_or_none(sdh_n_3_raw, "sdh_n_3")
+    def _require_order(vals: List[Optional[int]], names: List[str]) -> List[Optional[int]]:
+        for idx, val in enumerate(vals):
+            if val is not None and any(v is None for v in vals[:idx]):
+                prev = names[idx - 1]
+                raise ValueError(f"algorithm.{names[idx]} is set but algorithm.{prev} is missing.")
+        return vals
+
+    def _hist_nbins(block: Mapping[str, Any]) -> int:
+        return int(block.get("hist_nbins", defaults.get("hist_nbins", 512)))
+
+    def _adaptive(block: Mapping[str, Any]) -> str:
+        return str(block.get("adaptive_range", defaults.get("adaptive_range", "complete"))).lower()
+
+    def _order_desc(block: Mapping[str, Any]) -> bool:
+        return bool(block.get("order_desc", defaults.get("order_desc", False)))
+
+    # Target validation
+    n_vals = _require_order(
+        [mag_cfg.get("n_1"), mag_cfg.get("n_2"), mag_cfg.get("n_3")],
+        ["mag_global.n_1", "mag_global.n_2", "mag_global.n_3"],
+    )
+    sg_vals = _require_order(
+        [score_cfg.get("n_1"), score_cfg.get("n_2"), score_cfg.get("n_3")],
+        ["score_global.n_1", "score_global.n_2", "score_global.n_3"],
+    )
+    sdh_vals = _require_order(
+        [sdh_cfg.get("n_1"), sdh_cfg.get("n_2"), sdh_cfg.get("n_3")],
+        ["score_density_hybrid.n_1", "score_density_hybrid.n_2", "score_density_hybrid.n_3"],
+    )
+
+    n_1, n_2, n_3 = (_to_int_or_none(v, f"mag_global.n_{i+1}") for i, v in enumerate(n_vals))
+    score_n_1, score_n_2, score_n_3 = (
+        _to_int_or_none(v, f"score_global.n_{i+1}") for i, v in enumerate(sg_vals)
+    )
+    sdh_n_1, sdh_n_2, sdh_n_3 = (
+        _to_int_or_none(v, f"score_density_hybrid.n_{i+1}") for i, v in enumerate(sdh_vals)
+    )
 
     cfg = Config(
         input=InputCfg(
@@ -490,41 +386,41 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             selection_mode=selection_mode,
             level_limit=level_limit,
             moc_order=moc_order,
-            mg_order_desc=bool(_get_mode_value(algo, "mg_order_desc", False)),
+            mg_order_desc=_order_desc(mag_cfg),
             # mag_global mode
-            mag_column=_get_mode_value(algo, "mg_mag_column"),
-            flux_column=_get_mode_value(algo, "mg_flux_column"),
-            mag_offset=_get_mode_value(algo, "mg_mag_offset"),
-            mag_min=_get_mode_value(algo, "mg_mag_min"),
-            mag_max=_get_mode_value(algo, "mg_mag_max"),
-            mag_adaptive_range=_get_mode_value(algo, "mg_mag_adaptive_range", "complete"),
-            mag_hist_nbins=int(_get_mode_value(algo, "mg_mag_hist_nbins", 512)),
+            mag_column=mag_cfg.get("mag_column"),
+            flux_column=mag_cfg.get("flux_column"),
+            mag_offset=mag_cfg.get("mag_offset"),
+            mag_min=mag_cfg.get("mag_min"),
+            mag_max=mag_cfg.get("mag_max"),
+            mag_adaptive_range=_adaptive(mag_cfg),
+            mag_hist_nbins=_hist_nbins(mag_cfg),
             n_1=n_1,
             n_2=n_2,
             n_3=n_3,
             # score_global mode
-            score_column=_get_mode_value(algo, "sg_score_column"),
-            score_min=_get_mode_value(algo, "sg_score_min"),
-            score_max=_get_mode_value(algo, "sg_score_max"),
-            score_adaptive_range=_get_mode_value(algo, "sg_score_adaptive_range", "complete"),
-            score_hist_nbins=int(_get_mode_value(algo, "sg_score_hist_nbins", 512)),
+            score_column=score_cfg.get("score_column"),
+            score_min=score_cfg.get("score_min"),
+            score_max=score_cfg.get("score_max"),
+            score_adaptive_range=_adaptive(score_cfg),
+            score_hist_nbins=_hist_nbins(score_cfg),
             score_n_1=score_n_1,
             score_n_2=score_n_2,
             score_n_3=score_n_3,
-            sg_order_desc=bool(_get_mode_value(algo, "sg_order_desc", False)),
+            sg_order_desc=_order_desc(score_cfg),
             # score_density_hybrid mode
-            sdh_score_column=_get_mode_value(algo, "sdh_score_column"),
-            sdh_score_min=_get_mode_value(algo, "sdh_score_min"),
-            sdh_score_max=_get_mode_value(algo, "sdh_score_max"),
-            sdh_score_adaptive_range=_get_mode_value(algo, "sdh_score_adaptive_range", "complete"),
-            sdh_score_hist_nbins=int(_get_mode_value(algo, "sdh_score_hist_nbins", 512)),
+            sdh_score_column=sdh_cfg.get("score_column"),
+            sdh_score_min=sdh_cfg.get("score_min"),
+            sdh_score_max=sdh_cfg.get("score_max"),
+            sdh_score_adaptive_range=_adaptive(sdh_cfg),
+            sdh_score_hist_nbins=_hist_nbins(sdh_cfg),
             sdh_n_1=sdh_n_1,
             sdh_n_2=sdh_n_2,
             sdh_n_3=sdh_n_3,
-            sdh_density_bias_n1=float(_get_mode_value(algo, "sdh_density_bias_n1", 1.0)),
-            sdh_density_bias_n2=float(_get_mode_value(algo, "sdh_density_bias_n2", 1.0)),
-            sdh_density_bias_n3=float(_get_mode_value(algo, "sdh_density_bias_n3", 1.0)),
-            sdh_order_desc=bool(_get_mode_value(algo, "sdh_order_desc", False)),
+            sdh_density_bias_n1=float(sdh_cfg.get("density_bias_n1", defaults.get("density_bias_n1", 1.0))),
+            sdh_density_bias_n2=float(sdh_cfg.get("density_bias_n2", defaults.get("density_bias_n2", 1.0))),
+            sdh_density_bias_n3=float(sdh_cfg.get("density_bias_n3", defaults.get("density_bias_n3", 1.0))),
+            sdh_order_desc=_order_desc(sdh_cfg),
         ),
         cluster=ClusterCfg(
             mode=y["cluster"].get("mode", "local"),
@@ -564,24 +460,25 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     flux_col = getattr(algo, "flux_column", None)
     if mag_col and flux_col:
         raise ValueError(
-            "mag_global configuration: mg_mag_column and mg_flux_column are mutually exclusive. "
-            "Please set only one of them."
+            "mag_global configuration: mag_global.mag_column and mag_global.flux_column are mutually "
+            "exclusive. Please set only one of them."
         )
     if str(algo.selection_mode).lower() == "mag_global":
         if not mag_col and not flux_col:
             raise ValueError(
-                "selection_mode='mag_global' requires either mg_mag_column " "or mg_flux_column to be set."
+                "selection_mode='mag_global' requires either mag_global.mag_column "
+                "or mag_global.flux_column to be set."
             )
         if flux_col and algo.mag_offset is None:
             raise ValueError(
-                "selection_mode='mag_global' with mg_flux_column requires "
-                "mg_mag_offset to be defined for the flux→magnitude conversion."
+                "selection_mode='mag_global' with mag_global.flux_column requires "
+                "mag_global.mag_offset to be defined for the flux→magnitude conversion."
             )
 
         mag_range_mode = str(getattr(algo, "mag_adaptive_range", "complete")).lower()
         if mag_range_mode not in {"complete", "hist_peak"}:
             raise ValueError(
-                "selection_mode='mag_global' requires mg_mag_adaptive_range to be "
+                "selection_mode='mag_global' requires mag_global.adaptive_range to be "
                 "either 'complete' or 'hist_peak'."
             )
         # Normalize to lowercase for downstream consumers.

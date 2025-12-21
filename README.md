@@ -21,9 +21,6 @@ The pipeline supports three selection modes, configured in the YAML file under a
 - **score_global** — global selection driven by an arbitrary score/expression.
 - **score_density_hybrid** — density-driven depths 1–3 with score-based distribution afterwards.
 
-Mode-specific parameters in the YAML use the prefixes:
-`mg_*` (mag_global), `sg_*` (score_global), and `sdh_*` (score_density_hybrid).
-
 -------------------------------------------------------------------------------
 
 ## Quick Start
@@ -73,9 +70,9 @@ Additional examples are available under ./examples/configs/.
 
 Selection modes live under ``algorithm.selection_mode``:
 
-- ``mag_global`` (``mg_*`` params)
-- ``score_global`` (``sg_*`` params)
-- ``score_density_hybrid`` (``sdh_*`` params)
+- ``mag_global``, ``score_global``, ``score_density_hybrid``.
+Mode-specific parameters live inside blocks ``algorithm.mag_global``, ``algorithm.score_global``, and
+``algorithm.score_density_hybrid`` (with optional shared defaults in ``algorithm.selection_defaults``).
 
 -------------------------------------------------------------------------------
 
@@ -111,9 +108,9 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 
 ## Mode Summary
 
-- **mag_global**: magnitude-complete slices across all depths (uses ``mg_*``).
-- **score_global**: score-based slices across all depths (uses ``sg_*``).
-- **score_density_hybrid**: density-driven tiles for depths 1–3, then score slices for deeper levels (uses ``sdh_*``).
+- **mag_global**: magnitude-complete slices across all depths.
+- **score_global**: score-based slices across all depths.
+- **score_density_hybrid**: density-driven tiles for depths 1–3, then score slices for deeper levels.
 
 -------------------------------------------------------------------------------
 
