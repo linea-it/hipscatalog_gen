@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Overview: module code &mdash; hipscatalog-gen 0.1.0 documentation</title>
+  <title>hipscatalog_gen &mdash; hipscatalog-gen 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -63,7 +63,8 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Overview: module code</li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hipscatalog_gen</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -72,29 +73,39 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>All modules for which code is available</h1>
-<ul><li><a href="hipscatalog_gen.html">hipscatalog_gen</a></li>
-<ul><li><a href="hipscatalog_gen/cli.html">hipscatalog_gen.cli</a></li>
-<li><a href="hipscatalog_gen/cluster/runtime.html">hipscatalog_gen.cluster.runtime</a></li>
-<li><a href="hipscatalog_gen/config.html">hipscatalog_gen.config</a></li>
-<li><a href="hipscatalog_gen/healpix/densmap.html">hipscatalog_gen.healpix.densmap</a></li>
-<li><a href="hipscatalog_gen/io/input.html">hipscatalog_gen.io.input</a></li>
-<li><a href="hipscatalog_gen/io/output.html">hipscatalog_gen.io.output</a></li>
-<li><a href="hipscatalog_gen/mag_global/pipeline.html">hipscatalog_gen.mag_global.pipeline</a></li>
-<li><a href="hipscatalog_gen/pipeline/common.html">hipscatalog_gen.pipeline.common</a></li>
-<li><a href="hipscatalog_gen/pipeline/logging_utils.html">hipscatalog_gen.pipeline.logging_utils</a></li>
-<li><a href="hipscatalog_gen/pipeline/main.html">hipscatalog_gen.pipeline.main</a></li>
-<li><a href="hipscatalog_gen/pipeline/modes.html">hipscatalog_gen.pipeline.modes</a></li>
-<li><a href="hipscatalog_gen/pipeline/params.html">hipscatalog_gen.pipeline.params</a></li>
-<li><a href="hipscatalog_gen/pipeline/structure.html">hipscatalog_gen.pipeline.structure</a></li>
-<li><a href="hipscatalog_gen/pipeline/validation.html">hipscatalog_gen.pipeline.validation</a></li>
-<li><a href="hipscatalog_gen/score_density_hybrid/pipeline.html">hipscatalog_gen.score_density_hybrid.pipeline</a></li>
-<li><a href="hipscatalog_gen/score_global/pipeline.html">hipscatalog_gen.score_global.pipeline</a></li>
-<li><a href="hipscatalog_gen/selection/common.html">hipscatalog_gen.selection.common</a></li>
-<li><a href="hipscatalog_gen/selection/levels.html">hipscatalog_gen.selection.levels</a></li>
-<li><a href="hipscatalog_gen/selection/score.html">hipscatalog_gen.selection.score</a></li>
-<li><a href="hipscatalog_gen/selection/slicing.html">hipscatalog_gen.selection.slicing</a></li>
-</ul></ul>
+  <h1>Source code for hipscatalog_gen</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">PackageNotFoundError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span> <span class="k">as</span> <span class="n">_pkg_version</span>
+
+<span class="c1"># Expose package version for tests and users.</span>
+<span class="c1"># When the package is not installed (editable/dev mode), fall back gracefully.</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">__version__</span> <span class="o">=</span> <span class="n">_pkg_version</span><span class="p">(</span><span class="s2">&quot;hipscatalog_gen&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">PackageNotFoundError</span><span class="p">:</span>
+    <span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.0.0&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">load_config</span>  <span class="c1"># noqa: E402</span>
+
+
+<div class="viewcode-block" id="run_pipeline">
+<a class="viewcode-back" href="../api/hipscatalog_gen.html#hipscatalog_gen.run_pipeline">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_pipeline</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lazily import and invoke the pipeline entrypoint.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline.main</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_pipeline</span> <span class="k">as</span> <span class="n">_run_pipeline</span>
+
+    <span class="k">return</span> <span class="n">_run_pipeline</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Config&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;load_config&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;run_pipeline&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;__version__&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
 
            </div>
           </div>
