@@ -12,7 +12,7 @@ This project was created following the LINCC Frameworks Python Project Template 
 
 ## Overview
 
-hipscatalog-gen is a Python package for building HiPS-compliant catalog hierarchies from large astronomical tables using Dask and LSDB. It is inspired by and extends the logic of the CDS *Hipsgen-cat.jar* tool, providing a scalable and parallelized Python implementation suitable for large-scale workflows.
+hipscatalog-gen is a Python package for building HiPS-compliant catalog hierarchies from large astronomical tables using Dask and LSDB. It is inspired by and extends the logic of the CDS *Hipsgen-cat.jar* tool, providing a scalable and parallelized Python implementation suitable for large-scale workflows. Documentation: https://linea-it.github.io/hipscatalog_gen/
 
 
 The pipeline supports three selection modes, configured in the YAML file under algorithm.selection_mode:
@@ -120,7 +120,7 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - Moc.fits / Moc.json     → Multi-Order Coverage maps.
 - properties / metadata.xml → HiPS metadata descriptors.
 - process.log / arguments  → Run logs and configuration snapshot (optional process.jsonl when `--json-logs`).
-- telemetry.json          → Run summary with per-stage durations and input/output counts (replaces legacy input/output count files).
+- telemetry.json          → Run summary with per-stage durations and input/output counts.
 - Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.
 
 -------------------------------------------------------------------------------
