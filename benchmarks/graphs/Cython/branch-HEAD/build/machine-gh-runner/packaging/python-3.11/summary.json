@@ -1,1 +1,1 @@
-[{"name": "benchmark_config.ConfigBenchmark.time_load_and_validate_config", "idx": null, "pretty_name": "benchmark_config.ConfigBenchmark.time_load_and_validate_config", "last_rev": 91, "last_value": 0.0015085473750033884, "last_err": 0.0, "prev_value": null, "change_rev": null}]
+[{"name": "benchmark_config.ConfigBenchmark.time_load_and_validate_config", "idx": null, "pretty_name": "benchmark_config.ConfigBenchmark.time_load_and_validate_config", "last_rev": 95, "last_value": 0.001456557687500748, "last_err": 0.0, "prev_value": 0.0015085473750033884, "change_rev": [90, 95]}]
