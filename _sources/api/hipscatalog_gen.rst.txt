@@ -36,22 +36,6 @@ hipscatalog\_gen.config module
    :undoc-members:
    :show-inheritance:
 
-hipscatalog\_gen.example\_benchmarks module
--------------------------------------------
-
-.. automodule:: hipscatalog_gen.example_benchmarks
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-hipscatalog\_gen.example\_module module
----------------------------------------
-
-.. automodule:: hipscatalog_gen.example_module
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
