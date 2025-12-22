@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hipscatalog_gen.pipeline.main &mdash; hipscatalog-gen 0.1.dev1+g1d516bd8f documentation</title>
+  <title>hipscatalog_gen.pipeline.main &mdash; hipscatalog-gen 0.1.dev1+g61e7a2d46 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -13,7 +13,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=e55ff990"></script>
+      <script src="../../../_static/documentation_options.js?v=d4d67fd1"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -102,6 +102,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..cluster.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_cluster</span><span class="p">,</span> <span class="n">shutdown_cluster</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..io.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_properties</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..mag_global.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_mag_global</span><span class="p">,</span> <span class="n">run_mag_global_selection</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..score_density_hybrid.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_score_density_hybrid</span><span class="p">,</span> <span class="n">run_score_density_hybrid_selection</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..score_global.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_score_global</span><span class="p">,</span> <span class="n">run_score_global_selection</span>
@@ -109,9 +110,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.common</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">build_and_prepare_input</span><span class="p">,</span>
     <span class="n">compute_and_write_densmaps</span><span class="p">,</span>
+    <span class="n">compute_input_total</span><span class="p">,</span>
     <span class="n">log_epilogue</span><span class="p">,</span>
     <span class="n">log_prologue</span><span class="p">,</span>
     <span class="n">write_common_static_products</span><span class="p">,</span>
+    <span class="n">write_counts_summaries</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;run_pipeline&quot;</span><span class="p">]</span>
@@ -173,6 +176,8 @@
         <span class="n">ddf</span><span class="p">,</span> <span class="n">RA_NAME</span><span class="p">,</span> <span class="n">DEC_NAME</span><span class="p">,</span> <span class="n">keep_cols</span><span class="p">,</span> <span class="n">is_hats</span><span class="p">,</span> <span class="n">paths</span> <span class="o">=</span> <span class="n">build_and_prepare_input</span><span class="p">(</span>
             <span class="n">cfg</span><span class="p">,</span> <span class="n">diag_ctx</span><span class="p">,</span> <span class="n">_log</span><span class="p">,</span> <span class="n">persist_ddfs</span>
         <span class="p">)</span>
+
+        <span class="n">input_total</span> <span class="o">=</span> <span class="n">compute_input_total</span><span class="p">(</span><span class="n">ddf</span><span class="p">,</span> <span class="n">diag_ctx</span><span class="p">,</span> <span class="n">_log</span><span class="p">,</span> <span class="n">avoid_computes</span><span class="p">)</span>
 
         <span class="n">selection_mode</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;selection_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
@@ -261,6 +266,15 @@
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unexpected selection_mode dispatch failure.&quot;</span><span class="p">)</span>
+
+        <span class="n">total_written</span> <span class="o">=</span> <span class="n">write_counts_summaries</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">,</span> <span class="n">input_total</span><span class="p">,</span> <span class="n">_log</span><span class="p">)</span>
+        <span class="n">write_properties</span><span class="p">(</span>
+            <span class="n">out_dir</span><span class="p">,</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
+            <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">,</span>
+            <span class="n">total_written</span><span class="p">,</span>
+            <span class="n">tile_format</span><span class="o">=</span><span class="s2">&quot;tsv&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">diagnostics_mode</span> <span class="o">==</span> <span class="s2">&quot;global&quot;</span><span class="p">:</span>

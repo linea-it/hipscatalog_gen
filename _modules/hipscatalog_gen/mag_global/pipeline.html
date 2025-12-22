@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hipscatalog_gen.mag_global.pipeline &mdash; hipscatalog-gen 0.1.dev1+g1d516bd8f documentation</title>
+  <title>hipscatalog_gen.mag_global.pipeline &mdash; hipscatalog-gen 0.1.dev1+g61e7a2d46 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -13,7 +13,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=e55ff990"></script>
+      <script src="../../../_static/documentation_options.js?v=d4d67fd1"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -76,18 +76,21 @@
   <h1>Source code for hipscatalog_gen.mag_global.pipeline</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">healpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dask</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute</span> <span class="k">as</span> <span class="n">dask_compute</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">..io.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_header_line_from_keep</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..pipeline.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_tiles_with_allsky</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_fmt_dur</span><span class="p">,</span> <span class="n">_get_meta_df</span><span class="p">,</span> <span class="n">_log_depth_stats</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_quantile_from_histogram</span><span class="p">,</span> <span class="n">compute_mag_histogram_ddf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..selection.levels</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_level_edges</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..selection.score</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_finite_min_max</span><span class="p">,</span>
+    <span class="n">_map_invalid_to_sentinel</span><span class="p">,</span>
+    <span class="n">_sentinel_for_order</span><span class="p">,</span>
+    <span class="n">compute_histogram_ddf</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..selection.slicing</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_by_value_slices</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_get_meta_df</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;prepare_mag_global&quot;</span><span class="p">,</span> <span class="s2">&quot;run_mag_global_selection&quot;</span><span class="p">]</span>
 
@@ -184,7 +187,10 @@
     <span class="n">mag_min_global_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mag_min_global_raw</span><span class="p">)</span>
     <span class="n">mag_max_global_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mag_max_global_raw</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">mag_min_global_raw</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">mag_max_global_raw</span><span class="p">):</span>
+    <span class="n">keep_invalid</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;mag_keep_invalid_values&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;mag_adaptive_range&quot;</span><span class="p">,</span> <span class="s2">&quot;complete&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">order_desc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;mg_order_desc&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;order_desc&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">keep_invalid</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">mag_min_global_raw</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">mag_max_global_raw</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;mag_global selection: global magnitude min/max are not finite. &quot;</span>
             <span class="s2">&quot;Check the magnitude column values.&quot;</span>
@@ -195,12 +201,14 @@
             <span class="sa">f</span><span class="s2">&quot;mag_global selection: invalid global magnitude range &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">mag_min_global_raw</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">mag_max_global_raw</span><span class="si">}</span><span class="s2">].&quot;</span>
         <span class="p">)</span>
-
-    <span class="n">range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;mag_adaptive_range&quot;</span><span class="p">,</span> <span class="s2">&quot;complete&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">range_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;complete&quot;</span><span class="p">,</span> <span class="s2">&quot;hist_peak&quot;</span><span class="p">}:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;mag_global selection: invalid mag_adaptive_range &#39;</span><span class="si">{</span><span class="n">range_mode</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
             <span class="s2">&quot;Allowed values are: &#39;complete&#39;, &#39;hist_peak&#39;.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">keep_invalid</span> <span class="ow">and</span> <span class="n">range_mode</span> <span class="o">!=</span> <span class="s2">&quot;complete&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;mag_global: keep_invalid_values=True is only supported with mag_adaptive_range=complete.&quot;</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_histogram_peak</span><span class="p">(</span>
@@ -216,11 +224,11 @@
             <span class="p">)</span>
 
         <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="n">ctx_name</span><span class="p">):</span>
-            <span class="n">hist</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">n_tot</span> <span class="o">=</span> <span class="n">compute_mag_histogram_ddf</span><span class="p">(</span>
+            <span class="n">hist</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">n_tot</span> <span class="o">=</span> <span class="n">compute_histogram_ddf</span><span class="p">(</span>
                 <span class="n">ddf_like</span><span class="o">=</span><span class="n">ddf</span><span class="p">,</span>
-                <span class="n">mag_col</span><span class="o">=</span><span class="n">mag_col_internal</span><span class="p">,</span>
-                <span class="n">mag_min</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span>
-                <span class="n">mag_max</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span>
+                <span class="n">value_col</span><span class="o">=</span><span class="n">mag_col_internal</span><span class="p">,</span>
+                <span class="n">value_min</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span>
+                <span class="n">value_max</span><span class="o">=</span><span class="n">upper</span><span class="p">,</span>
                 <span class="n">nbins</span><span class="o">=</span><span class="n">algo</span><span class="o">.</span><span class="n">mag_hist_nbins</span><span class="p">,</span>
             <span class="p">)</span>
 
@@ -236,7 +244,31 @@
         <span class="n">peak_center</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">bin_left</span> <span class="o">+</span> <span class="n">bin_right</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">peak_center</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="n">bin_left</span><span class="p">,</span> <span class="n">bin_right</span>
 
-    <span class="k">if</span> <span class="n">range_mode</span> <span class="o">==</span> <span class="s2">&quot;complete&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">keep_invalid</span><span class="p">:</span>
+        <span class="c1"># Complete-mode only: map NaN/Inf to an integer sentinel just outside the finite range.</span>
+        <span class="n">fin_min</span><span class="p">,</span> <span class="n">fin_max</span> <span class="o">=</span> <span class="n">_finite_min_max</span><span class="p">(</span><span class="n">ddf</span><span class="p">,</span> <span class="s2">&quot;__mag__&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fin_min</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">fin_max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;mag_global: all magnitude values are NaN/Inf; nothing to select.&quot;</span><span class="p">)</span>
+        <span class="n">sentinel_mag</span> <span class="o">=</span> <span class="n">_sentinel_for_order</span><span class="p">(</span><span class="n">fin_min</span><span class="p">,</span> <span class="n">fin_max</span><span class="p">,</span> <span class="n">order_desc</span><span class="p">)</span>
+        <span class="n">mag_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mag_min_cfg</span><span class="p">)</span> <span class="k">if</span> <span class="n">mag_min_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">fin_min</span><span class="p">)</span>
+        <span class="n">mag_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mag_max_cfg</span><span class="p">)</span> <span class="k">if</span> <span class="n">mag_max_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">fin_max</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">order_desc</span><span class="p">:</span>
+            <span class="n">mag_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">mag_max</span><span class="p">,</span> <span class="n">sentinel_mag</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mag_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">mag_min</span><span class="p">,</span> <span class="n">sentinel_mag</span><span class="p">)</span>
+
+        <span class="n">ddf</span> <span class="o">=</span> <span class="n">_map_invalid_to_sentinel</span><span class="p">(</span>
+            <span class="n">ddf</span><span class="p">,</span>
+            <span class="s2">&quot;__mag__&quot;</span><span class="p">,</span>
+            <span class="n">sentinel</span><span class="o">=</span><span class="n">sentinel_mag</span><span class="p">,</span>
+            <span class="n">meta</span><span class="o">=</span><span class="n">meta_with_mag</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">log_fn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;[mag_global] keep_invalid_values=True → mapping NaN/Inf to sentinel </span><span class="si">{</span><span class="n">sentinel_mag</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;and using range [</span><span class="si">{</span><span class="n">mag_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">mag_max</span><span class="si">}</span><span class="s2">].&quot;</span><span class="p">,</span>
+            <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">range_mode</span> <span class="o">==</span> <span class="s2">&quot;complete&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">mag_min_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mag_max_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">mag_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mag_min_cfg</span><span class="p">)</span>
             <span class="n">mag_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mag_max_cfg</span><span class="p">)</span>
@@ -370,84 +402,6 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_assign_targets_per_depth</span><span class="p">(</span>
-    <span class="n">densmaps</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
-    <span class="n">depths_sel</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-    <span class="n">algo</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">cdf_hist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">mag_edges_hist</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
-    <span class="n">mag_min</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">mag_max</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">n_tot_mag</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">log_fn</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-    <span class="n">weights_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">depths_sel</span><span class="p">:</span>
-        <span class="n">counts_d</span> <span class="o">=</span> <span class="n">densmaps</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
-        <span class="n">tiles_active</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">counts_d</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="n">weights_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">tiles_active</span><span class="p">))</span>
-
-    <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">weights_list</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
-    <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
-
-    <span class="n">fixed_targets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">n_val</span> <span class="ow">in</span> <span class="p">(</span>
-        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;n_1&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
-        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;n_2&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
-        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;n_3&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
-    <span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="ow">in</span> <span class="n">depths_sel</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">n_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_val</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;algorithm.n_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> must be non-negative if provided (got </span><span class="si">{</span><span class="n">n_val</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
-            <span class="n">fixed_targets</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_val</span><span class="p">))</span>
-
-    <span class="n">sum_fixed</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">fixed_targets</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">if</span> <span class="n">sum_fixed</span> <span class="o">&gt;</span> <span class="n">n_tot_mag</span> <span class="ow">and</span> <span class="n">sum_fixed</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
-        <span class="n">scale</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_tot_mag</span><span class="p">)</span> <span class="o">/</span> <span class="n">sum_fixed</span> <span class="k">if</span> <span class="n">sum_fixed</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
-        <span class="n">log_fn</span><span class="p">(</span>
-            <span class="s2">&quot;[mag_global] Sum of fixed targets n_1/n_2/n_3 &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">sum_fixed</span><span class="p">)</span><span class="si">}</span><span class="s2">) exceeds the total number of objects &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;in the magnitude range (</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">n_tot_mag</span><span class="p">)</span><span class="si">}</span><span class="s2">). &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Rescaling n_1/n_2/n_3 by a factor </span><span class="si">{</span><span class="n">scale</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
-            <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">fixed_targets</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-            <span class="n">fixed_targets</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">*=</span> <span class="n">scale</span>
-        <span class="n">sum_fixed</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_tot_mag</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">fixed_targets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="n">depths_sel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-        <span class="n">T</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
-
-    <span class="n">N_rem</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_tot_mag</span><span class="p">)</span> <span class="o">-</span> <span class="n">sum_fixed</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">N_rem</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
-        <span class="n">free_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">fixed_targets</span><span class="p">:</span>
-            <span class="n">idx</span> <span class="o">=</span> <span class="n">depths_sel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-            <span class="n">free_mask</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-
-        <span class="n">W_free</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">free_mask</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">W_free</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="n">n_free</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">free_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-            <span class="k">if</span> <span class="n">n_free</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">T</span><span class="p">[</span><span class="n">free_mask</span><span class="p">]</span> <span class="o">+=</span> <span class="n">N_rem</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_free</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">T</span><span class="p">[</span><span class="n">free_mask</span><span class="p">]</span> <span class="o">+=</span> <span class="n">weights</span><span class="p">[</span><span class="n">free_mask</span><span class="p">]</span> <span class="o">/</span> <span class="n">W_free</span> <span class="o">*</span> <span class="n">N_rem</span>
-
-    <span class="n">T_cum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
-    <span class="n">Q</span> <span class="o">=</span> <span class="n">T_cum</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_tot_mag</span><span class="p">)</span> <span class="k">if</span> <span class="n">n_tot_mag</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">T_cum</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
-
-    <span class="n">level_edges</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">depths_sel</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
-    <span class="n">level_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mag_min</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="n">level_edges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_quantile_from_histogram</span><span class="p">(</span><span class="n">cdf_hist</span><span class="p">,</span> <span class="n">mag_edges_hist</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
-
-    <span class="n">level_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">level_edges</span><span class="p">)</span>
-    <span class="n">level_edges</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mag_min</span>
-    <span class="n">level_edges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">mag_max</span>
-    <span class="k">return</span> <span class="n">level_edges</span>
-
-
 <div class="viewcode-block" id="run_mag_global_selection">
 <a class="viewcode-back" href="../../../api/hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.pipeline.run_mag_global_selection">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_mag_global_selection</span><span class="p">(</span>
@@ -471,13 +425,14 @@
     <span class="n">mag_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">mag_min</span><span class="p">)</span>
     <span class="n">mag_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">mag_max</span><span class="p">)</span>
     <span class="n">depths_sel</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">tie_col</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;mag_tie_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;tie_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="s2">&quot;dask_mag_hist&quot;</span><span class="p">):</span>
-        <span class="n">hist</span><span class="p">,</span> <span class="n">mag_edges_hist</span><span class="p">,</span> <span class="n">n_tot_mag</span> <span class="o">=</span> <span class="n">compute_mag_histogram_ddf</span><span class="p">(</span>
-            <span class="n">remainder_ddf</span><span class="p">,</span>
-            <span class="n">mag_col</span><span class="o">=</span><span class="n">mag_col_internal</span><span class="p">,</span>
-            <span class="n">mag_min</span><span class="o">=</span><span class="n">mag_min</span><span class="p">,</span>
-            <span class="n">mag_max</span><span class="o">=</span><span class="n">mag_max</span><span class="p">,</span>
+        <span class="n">hist</span><span class="p">,</span> <span class="n">mag_edges_hist</span><span class="p">,</span> <span class="n">n_tot_mag</span> <span class="o">=</span> <span class="n">compute_histogram_ddf</span><span class="p">(</span>
+            <span class="n">ddf_like</span><span class="o">=</span><span class="n">remainder_ddf</span><span class="p">,</span>
+            <span class="n">value_col</span><span class="o">=</span><span class="n">mag_col_internal</span><span class="p">,</span>
+            <span class="n">value_min</span><span class="o">=</span><span class="n">mag_min</span><span class="p">,</span>
+            <span class="n">value_max</span><span class="o">=</span><span class="n">mag_max</span><span class="p">,</span>
             <span class="n">nbins</span><span class="o">=</span><span class="n">algo</span><span class="o">.</span><span class="n">mag_hist_nbins</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -495,101 +450,52 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">cdf_hist</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
 
-    <span class="n">level_edges</span> <span class="o">=</span> <span class="n">_assign_targets_per_depth</span><span class="p">(</span>
+    <span class="n">fixed_targets</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">n_val</span><span class="p">,</span> <span class="n">k_val</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;n_1&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;k_1&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;n_2&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;k_2&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;n_3&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;k_3&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">n_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">k_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;mag_global: both n_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> and k_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> are set; choose one.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">k_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">active_tiles</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">densmaps</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">[])))</span>
+            <span class="n">n_val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">k_val</span><span class="p">)</span> <span class="o">*</span> <span class="n">active_tiles</span><span class="p">))</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="ow">in</span> <span class="n">depths_sel</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">n_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">fixed_targets</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_val</span><span class="p">)</span>
+
+    <span class="n">level_edges</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">assign_level_edges</span><span class="p">(</span>
         <span class="n">densmaps</span><span class="o">=</span><span class="n">densmaps</span><span class="p">,</span>
         <span class="n">depths_sel</span><span class="o">=</span><span class="n">depths_sel</span><span class="p">,</span>
-        <span class="n">algo</span><span class="o">=</span><span class="n">algo</span><span class="p">,</span>
+        <span class="n">fixed_targets</span><span class="o">=</span><span class="n">fixed_targets</span><span class="p">,</span>
         <span class="n">cdf_hist</span><span class="o">=</span><span class="n">cdf_hist</span><span class="p">,</span>
-        <span class="n">mag_edges_hist</span><span class="o">=</span><span class="n">mag_edges_hist</span><span class="p">,</span>
-        <span class="n">mag_min</span><span class="o">=</span><span class="n">mag_min</span><span class="p">,</span>
-        <span class="n">mag_max</span><span class="o">=</span><span class="n">mag_max</span><span class="p">,</span>
-        <span class="n">n_tot_mag</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">n_tot_mag</span><span class="p">),</span>
+        <span class="n">score_edges_hist</span><span class="o">=</span><span class="n">mag_edges_hist</span><span class="p">,</span>
+        <span class="n">score_min</span><span class="o">=</span><span class="n">mag_min</span><span class="p">,</span>
+        <span class="n">score_max</span><span class="o">=</span><span class="n">mag_max</span><span class="p">,</span>
+        <span class="n">n_tot_score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">n_tot_mag</span><span class="p">),</span>
         <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;mag_global&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">log_fn</span><span class="p">(</span>
-        <span class="s2">&quot;[selection] mag_global mode: per-depth magnitude slices:</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;  depth </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">: [</span><span class="si">{</span><span class="n">level_edges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">level_edges</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;)&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">depths_sel</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;]&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">depths_sel</span><span class="p">)</span>
-        <span class="p">),</span>
-        <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">order_desc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;mg_order_desc&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;order_desc&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
 
-    <span class="n">header_line</span> <span class="o">=</span> <span class="n">build_header_line_from_keep</span><span class="p">(</span><span class="n">keep_cols</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">depth</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">depths_sel</span><span class="p">):</span>
-        <span class="n">depth_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">m_lo</span> <span class="o">=</span> <span class="n">level_edges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        <span class="n">m_hi</span> <span class="o">=</span> <span class="n">level_edges</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-
-        <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dask_depth_mag_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">depth</span> <span class="o">!=</span> <span class="n">depths_sel</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-                <span class="n">mag_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">remainder_ddf</span><span class="p">[</span><span class="n">mag_col_internal</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">m_lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
-                    <span class="n">remainder_ddf</span><span class="p">[</span><span class="n">mag_col_internal</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">m_hi</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">mag_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">remainder_ddf</span><span class="p">[</span><span class="n">mag_col_internal</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">m_lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
-                    <span class="n">remainder_ddf</span><span class="p">[</span><span class="n">mag_col_internal</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">m_hi</span>
-                <span class="p">)</span>
-
-            <span class="n">depth_ddf</span> <span class="o">=</span> <span class="n">remainder_ddf</span><span class="p">[</span><span class="n">mag_mask</span><span class="p">]</span>
-            <span class="n">selected_pdf</span> <span class="o">=</span> <span class="n">depth_ddf</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
-            <span class="n">_log_depth_stats</span><span class="p">(</span>
-                <span class="n">log_fn</span><span class="p">,</span>
-                <span class="n">depth</span><span class="p">,</span>
-                <span class="s2">&quot;selected&quot;</span><span class="p">,</span>
-                <span class="n">counts</span><span class="o">=</span><span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">],</span>
-                <span class="n">selected_len</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">),</span>
-            <span class="p">)</span>
-
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">log_fn</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] mag_global: no rows in &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;magnitude slice [</span><span class="si">{</span><span class="n">m_lo</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">m_hi</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">] → skipping.&quot;</span><span class="p">,</span>
-                    <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">log_fn</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                    <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="k">continue</span>
-
-            <span class="n">ra_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">[</span><span class="n">ra_col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
-            <span class="n">dec_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">[</span><span class="n">dec_col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
-
-            <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mf">90.0</span> <span class="o">-</span> <span class="n">dec_vals</span><span class="p">)</span>
-            <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">ra_vals</span> <span class="o">%</span> <span class="mf">360.0</span><span class="p">)</span>
-
-            <span class="n">NSIDE_L</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">depth</span>
-            <span class="n">ipixL</span> <span class="o">=</span> <span class="n">hp</span><span class="o">.</span><span class="n">ang2pix</span><span class="p">(</span><span class="n">NSIDE_L</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">nest</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-            <span class="n">selected_pdf</span><span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ipixL</span>
-
-            <span class="n">counts</span> <span class="o">=</span> <span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">]</span>
-            <span class="n">allsky_needed</span> <span class="o">=</span> <span class="n">depth</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="n">order_desc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span>
-                <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;mg_order_desc&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;order_desc&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
-            <span class="p">)</span>
-
-            <span class="n">written_per_ipix</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">write_tiles_with_allsky</span><span class="p">(</span>
-                <span class="n">out_dir</span><span class="o">=</span><span class="n">out_dir</span><span class="p">,</span>
-                <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
-                <span class="n">header_line</span><span class="o">=</span><span class="n">header_line</span><span class="p">,</span>
-                <span class="n">ra_col</span><span class="o">=</span><span class="n">ra_col</span><span class="p">,</span>
-                <span class="n">dec_col</span><span class="o">=</span><span class="n">dec_col</span><span class="p">,</span>
-                <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span>
-                <span class="n">selected</span><span class="o">=</span><span class="n">selected_pdf</span><span class="p">,</span>
-                <span class="n">order_desc</span><span class="o">=</span><span class="n">order_desc</span><span class="p">,</span>
-                <span class="n">allsky_needed</span><span class="o">=</span><span class="n">allsky_needed</span><span class="p">,</span>
-                <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">_log_depth_stats</span><span class="p">(</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="s2">&quot;written&quot;</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">],</span> <span class="n">written</span><span class="o">=</span><span class="n">written_per_ipix</span><span class="p">)</span>
-
-        <span class="n">log_fn</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span></div>
+    <span class="n">select_by_value_slices</span><span class="p">(</span>
+        <span class="n">remainder_ddf</span><span class="o">=</span><span class="n">remainder_ddf</span><span class="p">,</span>
+        <span class="n">densmaps</span><span class="o">=</span><span class="n">densmaps</span><span class="p">,</span>
+        <span class="n">depths_sel</span><span class="o">=</span><span class="n">depths_sel</span><span class="p">,</span>
+        <span class="n">keep_cols</span><span class="o">=</span><span class="n">keep_cols</span><span class="p">,</span>
+        <span class="n">ra_col</span><span class="o">=</span><span class="n">ra_col</span><span class="p">,</span>
+        <span class="n">dec_col</span><span class="o">=</span><span class="n">dec_col</span><span class="p">,</span>
+        <span class="n">value_col</span><span class="o">=</span><span class="n">mag_col_internal</span><span class="p">,</span>
+        <span class="n">order_desc</span><span class="o">=</span><span class="n">order_desc</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;mag_global&quot;</span><span class="p">,</span>
+        <span class="n">out_dir</span><span class="o">=</span><span class="n">out_dir</span><span class="p">,</span>
+        <span class="n">diag_ctx</span><span class="o">=</span><span class="n">diag_ctx</span><span class="p">,</span>
+        <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
+        <span class="n">level_edges</span><span class="o">=</span><span class="n">level_edges</span><span class="p">,</span>
+        <span class="n">depth_diag_prefix</span><span class="o">=</span><span class="s2">&quot;dask_depth_mag&quot;</span><span class="p">,</span>
+        <span class="n">tie_col</span><span class="o">=</span><span class="n">tie_col</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 </pre></div>
 

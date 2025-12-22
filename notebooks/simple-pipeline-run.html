@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Running the HIPS Catalog pipeline step by step &mdash; hipscatalog-gen 0.1.dev1+g1d516bd8f documentation</title>
+  <title>Running the HIPS Catalog pipeline step by step &mdash; hipscatalog-gen 0.1.dev1+g61e7a2d46 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=e55ff990"></script>
+      <script src="../_static/documentation_options.js?v=d4d67fd1"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -52,7 +52,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../notebooks.html">Notebooks</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#"> Simple Pipeline Run</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Simple Pipeline Run</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#1.-Import-the-pipeline-helpers">1. Import the pipeline helpers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#2.-Inspect-shipped-configuration-templates">2. Inspect shipped configuration templates</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#3.-Build-a-configuration-inline">3. Build a configuration inline</a></li>
@@ -160,165 +160,95 @@ keep  [optional, default=None] list[str] or null
           Keep the essential set plus all explicitly listed columns (filtered
           by availability).
 
-algorithm
----------
+algorithm (block-based)
+-----------------------
 selection_mode         [required]
-    High-level selection strategy. Must be one of:
-      - &#34;mag_global&#34; → global magnitude-complete selection.
-      - &#34;score_global&#34; → global selection using an arbitrary score/column.
-      - &#34;score_density_hybrid&#34; → hybrid score selection with density-driven depths 1–3.
+    &#34;mag_global&#34; | &#34;score_global&#34; | &#34;score_density_hybrid&#34;.
 level_limit            [required] int
     Maximum HiPS order (NorderL). Must be in [4, 11].
 moc_order              [optional, default=level_limit] int
     HiPS order used for the MOC.
+selection_defaults     [optional] dict
+    Shared defaults for all modes. Recognized keys:
+      - hist_nbins        (int, default 2048)
+      - adaptive_range    (&#34;complete&#34; | &#34;hist_peak&#34;, default &#34;complete&#34;)
+      - order_desc        (bool, default False)
+      - density_bias_n1/n2/n3 (float, default 1.0 for SDH)
 
-mag_global mode (prefix mg_)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-mg_mag_column          [required in mag_global mode] str
-    Magnitude column used when selection_mode == &#34;mag_global&#34;.
-mg_flux_column         [required if mg_mag_column is absent in mag_global mode] str
-    Flux column used to derive magnitudes when mg_mag_column is not provided.
-mg_mag_offset          [required when using mg_flux_column] float
-    Offset applied to the flux→magnitude conversion:
-        mag = -2.5 * log10(flux) + mg_mag_offset
-mg_mag_min             [optional, default=None] float
-    Lower bound of the magnitude range. If omitted, global minimum clipped to &gt;= -2.
-mg_mag_max             [optional, default=None] float
-    Upper bound of the magnitude range. If omitted, estimated from the histogram peak.
-mg_mag_adaptive_range  [optional, default=&#34;complete&#34;] str
-    How to fill missing mag_min/mag_max:
-      - &#34;complete&#34;  → use global min/max when a bound is missing.
-      - &#34;hist_peak&#34; → use the histogram peak (bin center) for the missing bound.
-mg_mag_hist_nbins      [optional, default=512] int
-    Number of bins in the global magnitude histogram.
-mg_n_1, mg_n_2, mg_n_3 [optional, default=None] int
-    Approximate global target counts for depths 1–3. Must be provided in order.
-mg_order_desc          [optional, default=False] bool
-    If False, lower magnitudes/scores are better; if True, higher are better.
+mag_global block
+^^^^^^^^^^^^^^^^
+mag_global.mag_column        [required if flux_column absent] str
+mag_global.flux_column       [required if mag_column absent] str
+mag_global.mag_offset        [required when flux_column is set] float
+mag_global.mag_min/max       [optional] float
+mag_global.adaptive_range    [optional, default=selection_defaults.adaptive_range or &#34;complete&#34;]
+mag_global.hist_nbins        [optional, default=selection_defaults.hist_nbins or 2048]
+mag_global.k_1/k_2/k_3       [optional] int, &#34;per active tile&#34; aliases for n_*
+mag_global.n_1/n_2/n_3       [optional] int (must be provided in order)
+mag_global.order_desc        [optional, default=selection_defaults.order_desc or False]
 
-score_global mode (prefix sg_)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sg_score_column        [required in score_global mode] str
-    Column or expression evaluated globally.
-sg_score_min           [optional, default=None] float
-    Lower bound of the score range. If omitted:
-      * sg_score_adaptive_range = &#34;complete&#34; → global minimum.
-      * sg_score_adaptive_range = &#34;hist_peak&#34; → histogram peak (bin center).
-sg_score_max           [optional, default=None] float
-    Upper bound of the score range. If omitted:
-      * sg_score_adaptive_range = &#34;complete&#34; → global maximum.
-      * sg_score_adaptive_range = &#34;hist_peak&#34; → histogram peak (bin center).
-sg_score_adaptive_range [optional, default=&#34;complete&#34;] str
-    When a bound is missing, how to auto-complete it: &#34;complete&#34; or &#34;hist_peak&#34;.
-sg_score_hist_nbins    [optional, default=512] int
-    Number of bins in the global score histogram.
-sg_n_1, sg_n_2, sg_n_3 [optional, default=None] int
-    Approximate global target counts for depths 1–3. Must be provided in order.
-sg_order_desc          [optional, default=False] bool
-    If False, lower scores are better; if True, higher are better.
+score_global block
+^^^^^^^^^^^^^^^^^^
+score_global.score_column    [required] str (column or expression)
+score_global.score_min/max   [optional] float
+score_global.adaptive_range  [optional, default=selection_defaults.adaptive_range or &#34;complete&#34;]
+score_global.hist_nbins      [optional, default=selection_defaults.hist_nbins or 2048]
+score_global.k_1/k_2/k_3     [optional] int, &#34;per active tile&#34; aliases for n_*
+score_global.n_1/n_2/n_3     [optional] int (must be provided in order)
+score_global.order_desc      [optional, default=selection_defaults.order_desc or False]
 
-score_density_hybrid mode (prefix sdh_)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sdh_score_column        [required in score_density_hybrid mode] str
-    Column or expression evaluated globally.
-sdh_score_min / sdh_score_max [optional, default=None] float
-    Optional bounds for the score range. When missing, filled according to
-    sdh_score_adaptive_range (&#34;complete&#34; or &#34;hist_peak&#34;), analogously to sg_*.
-sdh_score_adaptive_range [optional, default=&#34;complete&#34;] str
-    How to complete missing score_min/score_max: &#34;complete&#34; or &#34;hist_peak&#34;.
-sdh_score_hist_nbins    [optional, default=512] int
-    Number of bins in the global score histogram.
-sdh_n_1 / sdh_n_2 / sdh_n_3 [optional, default=None] int
-    Optional fixed totals for depths 1–3 (must be provided in order).
-sdh_density_bias_n1 / sdh_density_bias_n2 / sdh_density_bias_n3
-    [optional, defaults: 0.1, 0.3, 0.5] float in [0, 1]
-    Density bias per depth when distributing targets across tiles.
-sdh_order_desc         [optional, default=False] bool
-    If False, lower scores are better; if True, higher are better.
+score_density_hybrid block
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+score_density_hybrid.score_column   [required] str (column or expression)
+score_density_hybrid.score_min/max  [optional] float
+score_density_hybrid.adaptive_range [optional, default=selection_defaults.adaptive_range or &#34;complete&#34;]
+score_density_hybrid.hist_nbins     [optional, default=selection_defaults.hist_nbins or 2048]
+score_density_hybrid.k_1/k_2/k_3    [optional] int, &#34;per active tile&#34; aliases for n_*
+score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)
+score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]
+    float in [0,1]
+score_density_hybrid.order_desc     [optional, default=selection_defaults.order_desc or False]
 
 cluster
 -------
 mode                     [optional, default=&#34;local&#34;]
     Cluster mode: &#34;local&#34; or &#34;slurm&#34;.
 n_workers                [optional, default=3] int
-    Number of Dask workers.
 threads_per_worker       [optional, default=1] int
-    Threads per worker.
 memory_per_worker        [optional, default=&#34;2GB&#34;] str
-    Memory per worker (e.g. &#34;8GB&#34;).
 slurm                    [optional, default=None] dict
-    Additional SLURM options when mode == &#34;slurm&#34;.
 low_memory_mode          [optional, default=True] bool
-    Convenience toggle for memory/throughput:
-      * True  → persist_ddfs=False, avoid_computes_wherever_possible=True
-      * False → persist_ddfs=True, avoid_computes_wherever_possible=False
+    True  → persist_ddfs=False, avoid_computes_wherever_possible=True
+    False → persist_ddfs=True, avoid_computes_wherever_possible=False
 diagnostics_mode         [optional, default=&#34;global&#34;]
-    Dask diagnostics mode: &#34;per_step&#34;, &#34;global&#34; or &#34;off&#34;.
+    &#34;per_step&#34; | &#34;global&#34; | &#34;off&#34;.
 
 output
 ------
 out_dir      [required] str
-    Output directory where the HiPS hierarchy will be written.
 cat_name     [required] str
-    Catalog name used in metadata and directory naming.
 target       [optional, default=&#34;0 0&#34;] str
-    Target coordinates (RA DEC) for metadata.
 creator_did  [optional, default=None] str
-    Dataset identifier for the creator, used in metadata.
 obs_title    [optional, default=None] str
-    Human-readable title for the observation/catalog, used in metadata.
 overwrite    [optional, default=False] bool
-    If True and output.out_dir already exists, delete its contents before writing.
-
 
 Examples
 ========
 
-Example: minimal configuration (dict)
--------------------------------------
-This is the smallest valid configuration you can pass to
-``load_config_from_dict()``::
-
-    cfg = {
-        &#34;input&#34;: {
-            &#34;paths&#34;: [&#34;/path/to/catalog/*.parquet&#34;],
-        },
-        &#34;columns&#34;: {
-            &#34;ra&#34;: &#34;ra&#34;,
-            &#34;dec&#34;: &#34;dec&#34;,
-        },
-        &#34;algorithm&#34;: {
-            &#34;selection_mode&#34;: &#34;mag_global&#34;,
-            &#34;level_limit&#34;: 10,
-            &#34;mg_mag_column&#34;: &#34;mag_r&#34;,
-        },
-        &#34;cluster&#34;: {},
-        &#34;output&#34;: {
-            &#34;out_dir&#34;: &#34;/path/to/output&#34;,
-            &#34;cat_name&#34;: &#34;MyCatalog&#34;
-        }
-    }
-
-
-Example: minimal configuration (YAML)
--------------------------------------
-This is the smallest valid YAML file you can pass to ``load_config()``::
+Minimal configuration (YAML)
+----------------------------
 
     input:
-      paths:
-        - &#34;/path/to/catalog/*.parquet&#34;
-
+      paths: [&#34;/path/to/catalog/*.parquet&#34;]
     columns:
       ra: &#34;ra&#34;
       dec: &#34;dec&#34;
-
     algorithm:
       selection_mode: &#34;mag_global&#34;
       level_limit: 10
-      mg_mag_column: &#34;mag_r&#34;
-
+      mag_global:
+        mag_column: &#34;mag_r&#34;
     cluster: {}
-
     output:
       out_dir: &#34;/path/to/output&#34;
       cat_name: &#34;MyCatalog&#34;
@@ -342,9 +272,10 @@ This is the smallest valid YAML file you can pass to ``load_config()``::
     <span class="p">},</span>
     <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># HEALPix and selection parameters</span>
         <span class="s2">&quot;level_limit&quot;</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
-        <span class="s2">&quot;moc_order&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
         <span class="s2">&quot;selection_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;mg_mag_column&quot;</span><span class="p">:</span> <span class="s2">&quot;MAG_AUTO_I_DERED&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;mag_global&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;mag_column&quot;</span><span class="p">:</span> <span class="s2">&quot;MAG_AUTO_I_DERED&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
     <span class="p">},</span>
     <span class="s2">&quot;cluster&quot;</span><span class="p">:</span> <span class="p">{},</span>  <span class="c1"># use defaults for clustering</span>
     <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># where outputs and catalog names are stored</span>

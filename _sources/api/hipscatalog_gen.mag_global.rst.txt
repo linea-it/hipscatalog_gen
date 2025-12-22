@@ -12,14 +12,6 @@ hipscatalog\_gen.mag\_global.pipeline module
    :undoc-members:
    :show-inheritance:
 
-hipscatalog\_gen.mag\_global.utils module
------------------------------------------
-
-.. automodule:: hipscatalog_gen.mag_global.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
