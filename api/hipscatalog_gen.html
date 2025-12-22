@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hipscatalog_gen package &mdash; hipscatalog-gen 0.1.dev1+g61e7a2d46 documentation</title>
+  <title>hipscatalog_gen package &mdash; hipscatalog-gen 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=d4d67fd1"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -157,6 +157,7 @@
 <li class="toctree-l1"><a class="reference internal" href="hipscatalog_gen.mag_global.html">hipscatalog_gen.mag_global package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.mag_global.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.mag_global.html#module-hipscatalog_gen.mag_global.pipeline">hipscatalog_gen.mag_global.pipeline module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.pipeline.normalize_mag_global"><code class="docutils literal notranslate"><span class="pre">normalize_mag_global()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.pipeline.prepare_mag_global"><code class="docutils literal notranslate"><span class="pre">prepare_mag_global()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.pipeline.run_mag_global_selection"><code class="docutils literal notranslate"><span class="pre">run_mag_global_selection()</span></code></a></li>
 </ul>
@@ -172,13 +173,99 @@
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.compute_input_total"><code class="docutils literal notranslate"><span class="pre">compute_input_total()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.log_epilogue"><code class="docutils literal notranslate"><span class="pre">log_epilogue()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.log_prologue"><code class="docutils literal notranslate"><span class="pre">log_prologue()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.maybe_persist_ddf"><code class="docutils literal notranslate"><span class="pre">maybe_persist_ddf()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.write_common_static_products"><code class="docutils literal notranslate"><span class="pre">write_common_static_products()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.write_counts_summaries"><code class="docutils literal notranslate"><span class="pre">write_counts_summaries()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.write_tiles_with_allsky"><code class="docutils literal notranslate"><span class="pre">write_tiles_with_allsky()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.logging_utils">hipscatalog_gen.pipeline.logging_utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.LogContext"><code class="docutils literal notranslate"><span class="pre">LogContext</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.LogContext.depth"><code class="docutils literal notranslate"><span class="pre">LogContext.depth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.LogContext.stage"><code class="docutils literal notranslate"><span class="pre">LogContext.stage</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.setup_structured_logger"><code class="docutils literal notranslate"><span class="pre">setup_structured_logger()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.main">hipscatalog_gen.pipeline.main module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.main.run_pipeline"><code class="docutils literal notranslate"><span class="pre">run_pipeline()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.modes">hipscatalog_gen.pipeline.modes module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode"><code class="docutils literal notranslate"><span class="pre">SelectionMode</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.description"><code class="docutils literal notranslate"><span class="pre">SelectionMode.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.name"><code class="docutils literal notranslate"><span class="pre">SelectionMode.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.normalize_fn"><code class="docutils literal notranslate"><span class="pre">SelectionMode.normalize_fn</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.prepare_fn"><code class="docutils literal notranslate"><span class="pre">SelectionMode.prepare_fn</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.run_fn"><code class="docutils literal notranslate"><span class="pre">SelectionMode.run_fn</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.validate_fn"><code class="docutils literal notranslate"><span class="pre">SelectionMode.validate_fn</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.get_selection_mode"><code class="docutils literal notranslate"><span class="pre">get_selection_mode()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.params">hipscatalog_gen.pipeline.params module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.MagGlobalParams"><code class="docutils literal notranslate"><span class="pre">MagGlobalParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.MagGlobalParams.mag_max"><code class="docutils literal notranslate"><span class="pre">MagGlobalParams.mag_max</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.MagGlobalParams.mag_min"><code class="docutils literal notranslate"><span class="pre">MagGlobalParams.mag_min</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.MagGlobalParams.sentinel"><code class="docutils literal notranslate"><span class="pre">MagGlobalParams.sentinel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><code class="docutils literal notranslate"><span class="pre">ScoreDensityHybridParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_max"><code class="docutils literal notranslate"><span class="pre">ScoreDensityHybridParams.score_max</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_min"><code class="docutils literal notranslate"><span class="pre">ScoreDensityHybridParams.score_min</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.sentinel"><code class="docutils literal notranslate"><span class="pre">ScoreDensityHybridParams.sentinel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreGlobalParams"><code class="docutils literal notranslate"><span class="pre">ScoreGlobalParams</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_max"><code class="docutils literal notranslate"><span class="pre">ScoreGlobalParams.score_max</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_min"><code class="docutils literal notranslate"><span class="pre">ScoreGlobalParams.score_min</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreGlobalParams.sentinel"><code class="docutils literal notranslate"><span class="pre">ScoreGlobalParams.sentinel</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.structure">hipscatalog_gen.pipeline.structure module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext"><code class="docutils literal notranslate"><span class="pre">PipelineContext</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.DEC_NAME"><code class="docutils literal notranslate"><span class="pre">PipelineContext.DEC_NAME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.RA_NAME"><code class="docutils literal notranslate"><span class="pre">PipelineContext.RA_NAME</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.avoid_computes"><code class="docutils literal notranslate"><span class="pre">PipelineContext.avoid_computes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.cfg"><code class="docutils literal notranslate"><span class="pre">PipelineContext.cfg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.ddf"><code class="docutils literal notranslate"><span class="pre">PipelineContext.ddf</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.densmaps"><code class="docutils literal notranslate"><span class="pre">PipelineContext.densmaps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.diag_ctx"><code class="docutils literal notranslate"><span class="pre">PipelineContext.diag_ctx</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.input_total"><code class="docutils literal notranslate"><span class="pre">PipelineContext.input_total</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.is_hats"><code class="docutils literal notranslate"><span class="pre">PipelineContext.is_hats</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.keep_cols"><code class="docutils literal notranslate"><span class="pre">PipelineContext.keep_cols</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.log_ctx"><code class="docutils literal notranslate"><span class="pre">PipelineContext.log_ctx</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.log_fn"><code class="docutils literal notranslate"><span class="pre">PipelineContext.log_fn</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.out_dir"><code class="docutils literal notranslate"><span class="pre">PipelineContext.out_dir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.paths"><code class="docutils literal notranslate"><span class="pre">PipelineContext.paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.persist_ddfs"><code class="docutils literal notranslate"><span class="pre">PipelineContext.persist_ddfs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.remainder_ddf"><code class="docutils literal notranslate"><span class="pre">PipelineContext.remainder_ddf</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.report_dir"><code class="docutils literal notranslate"><span class="pre">PipelineContext.report_dir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.selection_mode"><code class="docutils literal notranslate"><span class="pre">PipelineContext.selection_mode</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.selection_params"><code class="docutils literal notranslate"><span class="pre">PipelineContext.selection_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.telemetry"><code class="docutils literal notranslate"><span class="pre">PipelineContext.telemetry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.total_written"><code class="docutils literal notranslate"><span class="pre">PipelineContext.total_written</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.with_updates"><code class="docutils literal notranslate"><span class="pre">PipelineContext.with_updates()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage"><code class="docutils literal notranslate"><span class="pre">PipelineStage</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage.diag_label"><code class="docutils literal notranslate"><span class="pre">PipelineStage.diag_label</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage.fn"><code class="docutils literal notranslate"><span class="pre">PipelineStage.fn</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage.name"><code class="docutils literal notranslate"><span class="pre">PipelineStage.name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.run_stages"><code class="docutils literal notranslate"><span class="pre">run_stages()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.validation">hipscatalog_gen.pipeline.validation module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_common_cfg"><code class="docutils literal notranslate"><span class="pre">validate_common_cfg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_mag_global_cfg"><code class="docutils literal notranslate"><span class="pre">validate_mag_global_cfg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg"><code class="docutils literal notranslate"><span class="pre">validate_score_density_hybrid_cfg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_score_global_cfg"><code class="docutils literal notranslate"><span class="pre">validate_score_global_cfg()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline">Module contents</a></li>
@@ -225,6 +312,7 @@
 <li class="toctree-l1"><a class="reference internal" href="hipscatalog_gen.score_density_hybrid.html">hipscatalog_gen.score_density_hybrid package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.score_density_hybrid.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.score_density_hybrid.html#module-hipscatalog_gen.score_density_hybrid.pipeline">hipscatalog_gen.score_density_hybrid.pipeline module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.score_density_hybrid.html#hipscatalog_gen.score_density_hybrid.pipeline.normalize_score_density_hybrid"><code class="docutils literal notranslate"><span class="pre">normalize_score_density_hybrid()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.score_density_hybrid.html#hipscatalog_gen.score_density_hybrid.pipeline.prepare_score_density_hybrid"><code class="docutils literal notranslate"><span class="pre">prepare_score_density_hybrid()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.score_density_hybrid.html#hipscatalog_gen.score_density_hybrid.pipeline.run_score_density_hybrid_selection"><code class="docutils literal notranslate"><span class="pre">run_score_density_hybrid_selection()</span></code></a></li>
 </ul>
@@ -239,6 +327,7 @@
 <li class="toctree-l1"><a class="reference internal" href="hipscatalog_gen.score_global.html">hipscatalog_gen.score_global package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.score_global.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hipscatalog_gen.score_global.html#module-hipscatalog_gen.score_global.pipeline">hipscatalog_gen.score_global.pipeline module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.score_global.html#hipscatalog_gen.score_global.pipeline.normalize_score_global"><code class="docutils literal notranslate"><span class="pre">normalize_score_global()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.score_global.html#hipscatalog_gen.score_global.pipeline.prepare_score_global"><code class="docutils literal notranslate"><span class="pre">prepare_score_global()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.score_global.html#hipscatalog_gen.score_global.pipeline.run_score_global_selection"><code class="docutils literal notranslate"><span class="pre">run_score_global_selection()</span></code></a></li>
 </ul>
@@ -912,12 +1001,15 @@ display_available_configs()</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.run_pipeline">
-<span class="sig-name descname"><span class="pre">run_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#hipscatalog_gen.config.Config" title="hipscatalog_gen.config.Config"><span class="pre">Config</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/main.html#run_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.run_pipeline" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">run_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#hipscatalog_gen.config.Config" title="hipscatalog_gen.config.Config"><span class="pre">Config</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_logs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/main.html#run_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.run_pipeline" title="Link to this definition"></a></dt>
 <dd><p>Run the full HiPS catalog generation pipeline.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>cfg</strong> – Parsed configuration object with input, algorithm, cluster,
-and output options.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cfg</strong> – Parsed configuration object with input, algorithm, cluster,
+and output options.</p></li>
+<li><p><strong>json_logs</strong> – When True, also emit JSONL logs to process.jsonl.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

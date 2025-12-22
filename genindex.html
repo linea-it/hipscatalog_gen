@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; hipscatalog-gen 0.1.dev1+g61e7a2d46 documentation</title>
+  <title>Index &mdash; hipscatalog-gen 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -13,7 +13,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=d4d67fd1"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -93,6 +93,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
@@ -115,10 +116,10 @@
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.Config.algorithm">algorithm (Config attribute)</a>, <a href="api/hipscatalog_gen.html#hipscatalog_gen.config.Config.algorithm">[1]</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter.allsky_path">allsky_path() (TSVTileWriter method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter.allsky_tmp">allsky_tmp() (TSVTileWriter method)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.InputCfg.ascii_format">ascii_format (InputCfg attribute)</a>
@@ -130,7 +131,11 @@
 </li>
       </ul></li>
       <li><a href="api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime.avoid_computes">avoid_computes (ClusterRuntime attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.avoid_computes">(PipelineContext attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg.avoid_computes_wherever_possible">avoid_computes_wherever_possible (ClusterCfg attribute)</a>
 </li>
   </ul></td>
@@ -157,6 +162,8 @@
 </li>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter.cell_tmp">cell_tmp() (TSVTileWriter method)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.cfg">cfg (PipelineContext attribute)</a>
+</li>
       <li><a href="api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime.client">client (ClusterRuntime attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime.cluster">cluster (ClusterRuntime attribute)</a>
@@ -171,10 +178,10 @@
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.Config.columns">columns (Config attribute)</a>, <a href="api/hipscatalog_gen.html#hipscatalog_gen.config.Config.columns">[1]</a>
 </li>
-      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ColumnsCfg">ColumnsCfg (class in hipscatalog_gen.config)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ColumnsCfg">ColumnsCfg (class in hipscatalog_gen.config)</a>
+</li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.compute_and_write_densmaps">compute_and_write_densmaps() (in module hipscatalog_gen.pipeline.common)</a>
 </li>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.input.compute_column_report_global">compute_column_report_global() (in module hipscatalog_gen.io.input)</a>
@@ -205,14 +212,28 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.ddf">ddf (PipelineContext attribute)</a>
+</li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ColumnsCfg.dec">dec (ColumnsCfg attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.DEC_NAME">DEC_NAME (PipelineContext attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.healpix.html#hipscatalog_gen.healpix.densmap.densmap_for_depth">densmap_for_depth() (in module hipscatalog_gen.healpix.densmap)</a>
 </li>
       <li><a href="api/hipscatalog_gen.healpix.html#hipscatalog_gen.healpix.densmap.densmap_for_depth_delayed">densmap_for_depth_delayed() (in module hipscatalog_gen.healpix.densmap)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.densmaps">densmaps (PipelineContext attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.LogContext.depth">depth (LogContext attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.description">description (SelectionMode attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.diag_ctx">diag_ctx (PipelineContext attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage.diag_label">diag_label (PipelineStage attribute)</a>
+</li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg.diagnostics_mode">diagnostics_mode (ClusterCfg attribute)</a>
 
       <ul>
@@ -229,9 +250,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.finalize_write_tiles">finalize_write_tiles() (in module hipscatalog_gen.io.output)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.flux_column">flux_column (AlgoOpts attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.flux_column">flux_column (AlgoOpts attribute)</a>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage.fn">fn (PipelineStage attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.InputCfg.format">format (InputCfg attribute)</a>
 </li>
@@ -240,6 +263,10 @@
 
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.get_selection_mode">get_selection_mode() (in module hipscatalog_gen.pipeline.modes)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.example_module.greetings">greetings() (in module hipscatalog_gen.example_module)</a>
 </li>
@@ -342,8 +369,6 @@
         <li><a href="api/hipscatalog_gen.mag_global.html#module-hipscatalog_gen.mag_global">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     hipscatalog_gen.mag_global.pipeline
 
@@ -365,11 +390,48 @@
         <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.common">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    hipscatalog_gen.pipeline.logging_utils
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.logging_utils">module</a>
+</li>
+      </ul></li>
       <li>
     hipscatalog_gen.pipeline.main
 
       <ul>
         <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.main">module</a>
+</li>
+      </ul></li>
+      <li>
+    hipscatalog_gen.pipeline.modes
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.modes">module</a>
+</li>
+      </ul></li>
+      <li>
+    hipscatalog_gen.pipeline.params
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.params">module</a>
+</li>
+      </ul></li>
+      <li>
+    hipscatalog_gen.pipeline.structure
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.structure">module</a>
+</li>
+      </ul></li>
+      <li>
+    hipscatalog_gen.pipeline.validation
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.validation">module</a>
 </li>
       </ul></li>
       <li>
@@ -450,11 +512,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.Config.input">input (Config attribute)</a>, <a href="api/hipscatalog_gen.html#hipscatalog_gen.config.Config.input">[1]</a>
 </li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.input_total">input_total (PipelineContext attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.InputCfg">InputCfg (class in hipscatalog_gen.config)</a>
 </li>
       <li><a href="api/hipscatalog_gen.healpix.html#hipscatalog_gen.healpix.densmap.ipix_for_depth">ipix_for_depth() (in module hipscatalog_gen.healpix.densmap)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.is_hats">is_hats (PipelineContext attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -472,6 +538,8 @@
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ColumnsCfg.keep">keep (ColumnsCfg attribute)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.keep_cols">keep_cols (PipelineContext attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -486,13 +554,19 @@
         <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.load_config">(in module hipscatalog_gen.config)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.load_config_from_dict">load_config_from_dict() (in module hipscatalog_gen.config)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.log_ctx">log_ctx (PipelineContext attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.log_epilogue">log_epilogue() (in module hipscatalog_gen.pipeline.common)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.log_fn">log_fn (PipelineContext attribute)</a>
+</li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.log_prologue">log_prologue() (in module hipscatalog_gen.pipeline.common)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.LogContext">LogContext (class in hipscatalog_gen.pipeline.logging_utils)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg.low_memory_mode">low_memory_mode (ClusterCfg attribute)</a>
 </li>
@@ -511,14 +585,26 @@
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_keep_invalid_values">mag_keep_invalid_values (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_max">mag_max (AlgoOpts attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.MagGlobalParams.mag_max">(MagGlobalParams attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_min">mag_min (AlgoOpts attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.MagGlobalParams.mag_min">(MagGlobalParams attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_offset">mag_offset (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_tie_column">mag_tie_column (AlgoOpts attribute)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.MagGlobalParams">MagGlobalParams (class in hipscatalog_gen.pipeline.params)</a>
+</li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.cli.main">main() (in module hipscatalog_gen.cli)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.maybe_persist_ddf">maybe_persist_ddf() (in module hipscatalog_gen.pipeline.common)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.example_module.meaning">meaning() (in module hipscatalog_gen.example_module)</a>
 </li>
@@ -568,7 +654,17 @@
 </li>
         <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.common">hipscatalog_gen.pipeline.common</a>
 </li>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.logging_utils">hipscatalog_gen.pipeline.logging_utils</a>
+</li>
         <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.main">hipscatalog_gen.pipeline.main</a>
+</li>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.modes">hipscatalog_gen.pipeline.modes</a>
+</li>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.params">hipscatalog_gen.pipeline.params</a>
+</li>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.structure">hipscatalog_gen.pipeline.structure</a>
+</li>
+        <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.validation">hipscatalog_gen.pipeline.validation</a>
 </li>
         <li><a href="api/hipscatalog_gen.score_density_hybrid.html#module-hipscatalog_gen.score_density_hybrid">hipscatalog_gen.score_density_hybrid</a>
 </li>
@@ -601,11 +697,25 @@
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.n_2">n_2 (AlgoOpts attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.n_3">n_3 (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg.n_workers">n_workers (ClusterCfg attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage.name">name (PipelineStage attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.name">(SelectionMode attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.normalize_fn">normalize_fn (SelectionMode attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.pipeline.normalize_mag_global">normalize_mag_global() (in module hipscatalog_gen.mag_global.pipeline)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.score_density_hybrid.html#hipscatalog_gen.score_density_hybrid.pipeline.normalize_score_density_hybrid">normalize_score_density_hybrid() (in module hipscatalog_gen.score_density_hybrid.pipeline)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.score_global.html#hipscatalog_gen.score_global.pipeline.normalize_score_global">normalize_score_global() (in module hipscatalog_gen.score_global.pipeline)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -618,7 +728,11 @@
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.order_desc">order_desc (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.OutputCfg.out_dir">out_dir (OutputCfg attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.out_dir">(PipelineContext attribute)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.Config.output">output (Config attribute)</a>, <a href="api/hipscatalog_gen.html#hipscatalog_gen.config.Config.output">[1]</a>
@@ -634,15 +748,27 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.InputCfg.paths">paths (InputCfg attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.paths">(PipelineContext attribute)</a>
 </li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg.persist_ddfs">persist_ddfs (ClusterCfg attribute)</a>
 
       <ul>
         <li><a href="api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime.persist_ddfs">(ClusterRuntime attribute)</a>
 </li>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.persist_ddfs">(PipelineContext attribute)</a>
+</li>
       </ul></li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext">PipelineContext (class in hipscatalog_gen.pipeline.structure)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage">PipelineStage (class in hipscatalog_gen.pipeline.structure)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.prepare_fn">prepare_fn (SelectionMode attribute)</a>
+</li>
       <li><a href="api/hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.pipeline.prepare_mag_global">prepare_mag_global() (in module hipscatalog_gen.mag_global.pipeline)</a>
 </li>
       <li><a href="api/hipscatalog_gen.score_density_hybrid.html#hipscatalog_gen.score_density_hybrid.prepare_score_density_hybrid">prepare_score_density_hybrid() (in module hipscatalog_gen.score_density_hybrid)</a>
@@ -661,22 +787,30 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ColumnsCfg.ra">ra (ColumnsCfg attribute)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.RA_NAME">RA_NAME (PipelineContext attribute)</a>
+</li>
       <li><a href="api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.reduce_topk_by_group_dask">reduce_topk_by_group_dask() (in module hipscatalog_gen.selection)</a>
 
       <ul>
         <li><a href="api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.common.reduce_topk_by_group_dask">(in module hipscatalog_gen.selection.common)</a>
 </li>
       </ul></li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.remainder_ddf">remainder_ddf (PipelineContext attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.report_dir">report_dir (PipelineContext attribute)</a>
+</li>
       <li><a href="api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.resolve_value_range">resolve_value_range() (in module hipscatalog_gen.selection)</a>
 
       <ul>
         <li><a href="api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.score.resolve_value_range">(in module hipscatalog_gen.selection.score)</a>
 </li>
       </ul></li>
-      <li><a href="api/hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.pipeline.run_mag_global_selection">run_mag_global_selection() (in module hipscatalog_gen.mag_global.pipeline)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.run_fn">run_fn (SelectionMode attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.pipeline.run_mag_global_selection">run_mag_global_selection() (in module hipscatalog_gen.mag_global.pipeline)</a>
+</li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.run_pipeline">run_pipeline() (in module hipscatalog_gen)</a>
 
       <ul>
@@ -690,6 +824,8 @@
 </li>
       </ul></li>
       <li><a href="api/hipscatalog_gen.score_global.html#hipscatalog_gen.score_global.pipeline.run_score_global_selection">run_score_global_selection() (in module hipscatalog_gen.score_global.pipeline)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.run_stages">run_stages() (in module hipscatalog_gen.pipeline.structure)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.example_benchmarks.runtime_computation">runtime_computation() (in module hipscatalog_gen.example_benchmarks)</a>
 </li>
@@ -714,9 +850,21 @@
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.score_keep_invalid_values">score_keep_invalid_values (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.score_max">score_max (AlgoOpts attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_max">(ScoreDensityHybridParams attribute)</a>
 </li>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_max">(ScoreGlobalParams attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.score_min">score_min (AlgoOpts attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_min">(ScoreDensityHybridParams attribute)</a>
 </li>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_min">(ScoreGlobalParams attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.score_n_1">score_n_1 (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.score_n_2">score_n_2 (AlgoOpts attribute)</a>
@@ -724,6 +872,10 @@
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.score_n_3">score_n_3 (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.score_tie_column">score_tie_column (AlgoOpts attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams">ScoreDensityHybridParams (class in hipscatalog_gen.pipeline.params)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreGlobalParams">ScoreGlobalParams (class in hipscatalog_gen.pipeline.params)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.sdh_density_bias_n1">sdh_density_bias_n1 (AlgoOpts attribute)</a>
 </li>
@@ -737,10 +889,10 @@
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.sdh_k_3">sdh_k_3 (AlgoOpts attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.sdh_keep_invalid_values">sdh_keep_invalid_values (AlgoOpts attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.sdh_n_1">sdh_n_1 (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.sdh_n_2">sdh_n_2 (AlgoOpts attribute)</a>
@@ -774,14 +926,34 @@
 </li>
       </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.selection_mode">selection_mode (AlgoOpts attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.selection_mode">(PipelineContext attribute)</a>
 </li>
+      </ul></li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.selection_params">selection_params (PipelineContext attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode">SelectionMode (class in hipscatalog_gen.pipeline.modes)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.MagGlobalParams.sentinel">sentinel (MagGlobalParams attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.sentinel">(ScoreDensityHybridParams attribute)</a>
+</li>
+        <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreGlobalParams.sentinel">(ScoreGlobalParams attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.setup_cluster">setup_cluster() (in module hipscatalog_gen.cluster.runtime)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.setup_structured_logger">setup_structured_logger() (in module hipscatalog_gen.pipeline.logging_utils)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.sg_order_desc">sg_order_desc (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.shutdown_cluster">shutdown_cluster() (in module hipscatalog_gen.cluster.runtime)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg.slurm">slurm (ClusterCfg attribute)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.LogContext.stage">stage (LogContext attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -797,13 +969,35 @@
         <li><a href="api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.common.targets_per_tile">(in module hipscatalog_gen.selection.common)</a>
 </li>
       </ul></li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.telemetry">telemetry (PipelineContext attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg.threads_per_worker">threads_per_worker (ClusterCfg attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.tie_column">tie_column (AlgoOpts attribute)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.total_written">total_written (PipelineContext attribute)</a>
+</li>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter">TSVTileWriter (class in hipscatalog_gen.io.output)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_common_cfg">validate_common_cfg() (in module hipscatalog_gen.pipeline.validation)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.validate_fn">validate_fn (SelectionMode attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_mag_global_cfg">validate_mag_global_cfg() (in module hipscatalog_gen.pipeline.validation)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg">validate_score_density_hybrid_cfg() (in module hipscatalog_gen.pipeline.validation)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_score_global_cfg">validate_score_global_cfg() (in module hipscatalog_gen.pipeline.validation)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -811,16 +1005,18 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.with_updates">with_updates() (PipelineContext method)</a>
+</li>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_arguments">write_arguments() (in module hipscatalog_gen.io.output)</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.write_common_static_products">write_common_static_products() (in module hipscatalog_gen.pipeline.common)</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.write_counts_summaries">write_counts_summaries() (in module hipscatalog_gen.pipeline.common)</a>
 </li>
-      <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_densmap_fits">write_densmap_fits() (in module hipscatalog_gen.io.output)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_densmap_fits">write_densmap_fits() (in module hipscatalog_gen.io.output)</a>
+</li>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_metadata_xml">write_metadata_xml() (in module hipscatalog_gen.io.output)</a>
 </li>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_moc">write_moc() (in module hipscatalog_gen.io.output)</a>
