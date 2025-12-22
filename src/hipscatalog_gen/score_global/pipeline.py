@@ -1,3 +1,5 @@
+"""Pipeline steps for score-based selection across all depths."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List
@@ -29,7 +31,22 @@ def normalize_score_global(
     persist_ddfs: bool = False,
     avoid_computes: bool = True,
 ) -> tuple[Any, ScoreGlobalParams]:
-    """Add __score__ column and compute score window without mutating cfg."""
+    """Add ``__score__`` column and compute score window without mutating cfg.
+
+    Args:
+        ddf: Dask-like collection with score columns or expressions.
+        cfg: Parsed configuration object.
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        persist_ddfs: Whether to persist intermediate DDFs.
+        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.
+
+    Returns:
+        Tuple ``(ddf_with_score, ScoreGlobalParams)``.
+
+    Raises:
+        ValueError: If the score expression/configuration is invalid.
+    """
     algo = cfg.algorithm
     score_expr = getattr(algo, "score_column", None)
     if not score_expr:
@@ -106,7 +123,20 @@ def prepare_score_global(
     persist_ddfs: bool = False,
     avoid_computes: bool = True,
 ):
-    """Restrict to a score window using pre-computed params."""
+    """Restrict to a score window using pre-computed params.
+
+    Args:
+        ddf: Dask-like collection with ``__score__`` already attached.
+        cfg: Parsed configuration object.
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        params: Resolved score parameters.
+        persist_ddfs: Whether to persist the filtered DDF.
+        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.
+
+    Returns:
+        Dask-like collection filtered to the score window.
+    """
     score_col_internal = "__score__"
 
     meta_sel = _get_meta_df(ddf).copy()
@@ -117,6 +147,7 @@ def prepare_score_global(
         score_min_val: float,
         score_max_val: float,
     ) -> pd.DataFrame:
+        """Keep rows whose score falls within the resolved window."""
         if pdf.empty:
             return pdf
         s = pd.to_numeric(pdf[score_col_internal], errors="coerce")
@@ -157,7 +188,21 @@ def run_score_global_selection(
     avoid_computes: bool = True,
     params: ScoreGlobalParams | None = None,
 ) -> None:
-    """Execute the score_global selection path and write tiles."""
+    """Execute the score_global selection path and write tiles.
+
+    Args:
+        remainder_ddf: Dask-like collection after pre-filtering.
+        densmaps: Mapping depth -> densmap counts.
+        keep_cols: Ordered list of columns to keep in tiles.
+        ra_col: Name of the RA column.
+        dec_col: Name of the DEC column.
+        cfg: Parsed configuration object.
+        out_dir: Output directory for HiPS tiles.
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.
+        params: Optional resolved score parameters (auto-resolved when None).
+    """
     algo = cfg.algorithm
     score_col_internal = "__score__"
     if params is None:

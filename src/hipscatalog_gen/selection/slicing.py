@@ -1,3 +1,5 @@
+"""Slice selections by value or score with HEALPix-aware ordering."""
+
 from __future__ import annotations
 
 import time

@@ -1,3 +1,5 @@
+"""Structured logging utilities for the pipeline."""
+
 from __future__ import annotations
 
 import json
@@ -40,7 +42,10 @@ def setup_structured_logger(
         json_handler = logging.FileHandler(json_path, encoding="utf-8")
 
         class _JsonFormatter(logging.Formatter):
+            """Format log records as structured JSON lines."""
+
             def format(self, record: logging.LogRecord) -> str:  # type: ignore[override]
+                """Render a log record to JSON with timestamp, level, and context."""
                 payload = {
                     "ts": self.formatTime(record),
                     "level": record.levelname,
@@ -61,6 +66,7 @@ def setup_structured_logger(
     log_ctx = LogContext()
 
     def _log(msg: str, always: bool = False, *, stage: str | None = None, depth: int | None = None) -> None:
+        """Emit a structured log line with optional stage/depth overrides."""
         level = logging.INFO
         extra = {
             "selection_mode": selection_mode,

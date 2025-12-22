@@ -1,5 +1,8 @@
+"""Pipeline steps for magnitude-complete selection."""
+
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, List
 
 import numpy as np
@@ -20,7 +23,8 @@ from ..utils import _get_meta_df
 
 __all__ = ["normalize_mag_global", "prepare_mag_global", "run_mag_global_selection"]
 
-MAG_CONV = np.log(10.0) * 0.4
+# Use math.log to avoid numpy dependency during module import (Sphinx mocks may lack it).
+MAG_CONV = math.log(10.0) * 0.4
 
 
 def normalize_mag_global(
@@ -31,7 +35,23 @@ def normalize_mag_global(
     persist_ddfs: bool = False,
     avoid_computes: bool = True,
 ) -> tuple[Any, MagGlobalParams]:
-    """Add __mag__ column and compute selection window without mutating cfg."""
+    """Add ``__mag__`` column and compute selection window without mutating cfg.
+
+    Args:
+        ddf: Dask-like collection with magnitude or flux columns.
+        cfg: Parsed configuration object.
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        persist_ddfs: Whether to persist intermediate DDFs.
+        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.
+
+    Returns:
+        Tuple ``(ddf_with_mag, MagGlobalParams)``.
+
+    Raises:
+        ValueError: When magnitude/flux configuration is invalid or missing.
+        KeyError: If configured magnitude/flux columns are not present.
+    """
     algo = cfg.algorithm
     mag_col_cfg = getattr(algo, "mag_column", None)
     flux_col_cfg = getattr(algo, "flux_column", None)
@@ -58,6 +78,7 @@ def normalize_mag_global(
     meta_with_mag["__mag__"] = pd.Series([], dtype="float64")
 
     def _add_mag_column(pdf: pd.DataFrame, mag_col_name: str) -> pd.DataFrame:
+        """Copy a magnitude column into the internal __mag__ field."""
         if pdf.empty:
             pdf["__mag__"] = pd.Series([], dtype="float64")
             return pdf
@@ -66,6 +87,7 @@ def normalize_mag_global(
         return pdf
 
     def _add_mag_from_flux(pdf: pd.DataFrame, flux_col_name: str, mag_offset_val: float) -> pd.DataFrame:
+        """Derive magnitude from flux and store in the internal __mag__ field."""
         if pdf.empty:
             pdf["__mag__"] = pd.Series([], dtype="float64")
             return pdf
@@ -301,7 +323,20 @@ def prepare_mag_global(
     persist_ddfs: bool = False,
     avoid_computes: bool = True,
 ):
-    """Restrict to the configured magnitude window using pre-computed params."""
+    """Restrict to the configured magnitude window using pre-computed params.
+
+    Args:
+        ddf: Dask-like collection with ``__mag__`` already attached.
+        cfg: Parsed configuration object.
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        params: Resolved magnitude parameters.
+        persist_ddfs: Whether to persist the filtered DDF.
+        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.
+
+    Returns:
+        Dask-like collection filtered to the magnitude window.
+    """
     mag_col_internal = "__mag__"
     meta_sel = _get_meta_df(ddf).copy()
     meta_sel["__mag__"] = pd.Series([], dtype="float64")
@@ -311,6 +346,7 @@ def prepare_mag_global(
         mag_min_val: float,
         mag_max_val: float,
     ) -> pd.DataFrame:
+        """Keep rows within the resolved magnitude window for one partition."""
         if pdf.empty:
             return pdf
         m = pd.to_numeric(pdf[mag_col_internal], errors="coerce")
@@ -352,7 +388,21 @@ def run_mag_global_selection(
     avoid_computes: bool = True,
     params: MagGlobalParams | None = None,
 ) -> None:
-    """Execute the mag_global selection path and write tiles."""
+    """Execute the mag_global selection path and write tiles.
+
+    Args:
+        remainder_ddf: Dask-like collection after pre-filtering.
+        densmaps: Mapping depth -> densmap counts.
+        keep_cols: Ordered list of columns to keep in tiles.
+        ra_col: Name of the RA column.
+        dec_col: Name of the DEC column.
+        cfg: Parsed configuration object.
+        out_dir: Output directory for HiPS tiles.
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.
+        params: Optional resolved magnitude parameters (auto-resolved when None).
+    """
     algo = cfg.algorithm
     mag_col_internal = "__mag__"
     if params is None:

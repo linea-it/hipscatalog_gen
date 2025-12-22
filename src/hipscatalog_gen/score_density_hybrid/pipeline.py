@@ -1,3 +1,5 @@
+"""Hybrid density-first then score-based selection pipeline."""
+
 from __future__ import annotations
 
 import time
@@ -42,7 +44,22 @@ def normalize_score_density_hybrid(
     persist_ddfs: bool = False,
     avoid_computes: bool = True,
 ) -> tuple[Any, ScoreDensityHybridParams]:
-    """Add __score__ column and compute window without mutating cfg."""
+    """Add ``__score__`` column and compute window without mutating cfg.
+
+    Args:
+        ddf: Dask-like collection with score columns or expressions.
+        cfg: Parsed configuration object.
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        persist_ddfs: Whether to persist intermediate DDFs.
+        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.
+
+    Returns:
+        Tuple ``(ddf_with_score, ScoreDensityHybridParams)``.
+
+    Raises:
+        ValueError: If the score expression/configuration is invalid.
+    """
     algo = cfg.algorithm
     score_expr = getattr(algo, "sdh_score_column", getattr(algo, "score_column", None))
     if not score_expr:
@@ -112,6 +129,7 @@ def normalize_score_density_hybrid(
 
 
 def _filter_score_window(pdf: pd.DataFrame, score_min_val: float, score_max_val: float) -> pd.DataFrame:
+    """Keep rows within the resolved score window for one partition."""
     if pdf.empty:
         return pdf
     s = pd.to_numeric(pdf["__score__"], errors="coerce")
@@ -209,6 +227,7 @@ def _targets_stage1_by_depth(
 
 
 def _drop_selected_ids(pdf: pd.DataFrame, ids: Iterable[int]) -> pd.DataFrame:
+    """Remove already-selected IDs from a partition."""
     if pdf.empty:
         return pdf
     ids_set = set(int(x) for x in ids)
@@ -231,7 +250,20 @@ def prepare_score_density_hybrid(
     persist_ddfs: bool = False,
     avoid_computes: bool = True,
 ):
-    """Restrict to a score window using pre-computed params."""
+    """Restrict to a score window using pre-computed params.
+
+    Args:
+        ddf: Dask-like collection with ``__score__`` already attached.
+        cfg: Parsed configuration object.
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        params: Resolved score parameters.
+        persist_ddfs: Whether to persist the filtered DDF.
+        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.
+
+    Returns:
+        Dask-like collection filtered to the score window with unique IDs attached.
+    """
 
     meta_sel = _get_meta_df(ddf).copy()
     meta_sel["__score__"] = pd.Series([], dtype="float64")
@@ -274,7 +306,21 @@ def run_score_density_hybrid_selection(
     avoid_computes: bool = True,
     params: ScoreDensityHybridParams | None = None,
 ) -> None:
-    """Execute the score_density_hybrid selection."""
+    """Execute the score_density_hybrid selection.
+
+    Args:
+        remainder_ddf: Dask-like collection after pre-filtering.
+        densmaps: Mapping depth -> densmap counts.
+        keep_cols: Ordered list of columns to keep in tiles.
+        ra_col: Name of the RA column.
+        dec_col: Name of the DEC column.
+        cfg: Parsed configuration object.
+        out_dir: Output directory for HiPS tiles.
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.
+        params: Resolved score parameters (required).
+    """
     algo = cfg.algorithm
     score_col_internal = "__score__"
     if params is None:

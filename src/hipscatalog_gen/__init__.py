@@ -1,3 +1,5 @@
+"""Public entrypoints for the HiPS catalog generation library."""
+
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError

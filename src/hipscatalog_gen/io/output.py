@@ -1,3 +1,5 @@
+"""Writers for HiPS tiles, metadata, MOC, and density map products."""
+
 from __future__ import annotations
 
 import json
@@ -34,7 +36,13 @@ __all__ = [
 
 
 class TSVTileWriter:
-    """Helper for writing HiPS catalogue tiles in TSV format."""
+    """Helper for writing HiPS catalogue tiles in TSV format.
+
+    Args:
+        out_dir: HiPS root output directory.
+        depth: HiPS order (NorderX).
+        header_line: Header line for TSV tiles (without completeness line).
+    """
 
     def __init__(self, out_dir: Path, depth: int, header_line: str):
         """Initialize tile writer for a given depth.
@@ -108,6 +116,9 @@ def finalize_write_tiles(
         Tuple (written, allsky_df) where:
             written: Mapping ipix -> number of rows written.
             allsky_df: DataFrame with all rows (if allsky_collect=True), else None.
+
+    Raises:
+        OSError: If tile files cannot be written or renamed.
     """
     writer = TSVTileWriter(out_dir, depth, header_line)
     npix = len(counts)
@@ -243,7 +254,12 @@ def write_properties(
 
 
 def write_arguments(out_dir: Path, args_text: str) -> None:
-    """Write command-line arguments used to run the pipeline."""
+    """Write command-line arguments used to run the pipeline.
+
+    Args:
+        out_dir: HiPS root output directory.
+        args_text: Text blob to persist under ``arguments``.
+    """
     _write_text(out_dir / "arguments", args_text)
 
 
@@ -259,9 +275,9 @@ def write_metadata_xml(
 
     Args:
         out_dir: HiPS root output directory.
-        columns: List of (name, dtype, ucd) tuples.
-        ra_idx: Index of RA column in `columns`.
-        dec_idx: Index of DEC column in `columns`.
+        columns: List of ``(name, dtype, ucd)`` tuples.
+        ra_idx: Index of RA column in ``columns``.
+        dec_idx: Index of DEC column in ``columns``.
     """
     table = Table()
     for name, dtype, _ucd in columns:  # _ucd intentionally unused here
@@ -312,6 +328,9 @@ def write_moc(out_dir: Path, moc_order: int, dens_counts: np.ndarray) -> None:
         out_dir: HiPS root output directory.
         moc_order: HEALPix order used for the MOC.
         dens_counts: Densmap counts at the MOC order.
+
+    Raises:
+        RuntimeError: If MOC construction fails for all attempted mocpy builders.
     """
     order = int(moc_order)
     ipix = np.flatnonzero(dens_counts > 0)
@@ -372,7 +391,7 @@ def write_densmap_fits(out_dir: Path, depth: int, counts: np.ndarray) -> None:
 
     Args:
         out_dir: HiPS root output directory.
-        depth: HiPS order (depth).
+        depth: HEALPix order (depth).
         counts: Counts per pixel at this depth.
     """
     if depth >= 13:

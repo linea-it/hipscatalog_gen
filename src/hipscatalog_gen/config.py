@@ -1,3 +1,5 @@
+"""Configuration parsing and validation for hipscatalog-gen."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -346,6 +348,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     sdh_cfg = algo.get("score_density_hybrid", {}) or {}
 
     def _to_int_or_none(x, name: str) -> Optional[int]:
+        """Convert to int when set, enforcing non-negative inputs."""
         if x is None:
             return None
         try:
@@ -357,6 +360,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         return v
 
     def _require_order(vals: List[Optional[int]], names: List[str]) -> List[Optional[int]]:
+        """Ensure values are provided in order without gaps."""
         for idx, val in enumerate(vals):
             if val is not None and any(v is None for v in vals[:idx]):
                 prev = names[idx - 1]
@@ -364,23 +368,29 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         return vals
 
     def _hist_nbins(block: Mapping[str, Any]) -> int:
+        """Resolve histogram bin count with per-mode override."""
         return int(block.get("hist_nbins", defaults.get("hist_nbins", 2048)))
 
     def _keep_invalid(block: Mapping[str, Any]) -> bool:
+        """Resolve keep_invalid_values flag with per-mode override."""
         return bool(block.get("keep_invalid_values", defaults.get("keep_invalid_values", False)))
 
     def _tie_col(block: Mapping[str, Any]) -> Optional[str]:
+        """Resolve tie-breaker column with per-mode override."""
         return block.get("tie_column", defaults.get("tie_column", None))
 
     def _adaptive(block: Mapping[str, Any]) -> str:
+        """Resolve adaptive_range mode with per-mode override."""
         return str(block.get("adaptive_range", defaults.get("adaptive_range", "complete"))).lower()
 
     def _order_desc(block: Mapping[str, Any]) -> bool:
+        """Resolve ordering direction with per-mode override."""
         return bool(block.get("order_desc", defaults.get("order_desc", False)))
 
     order_desc_global = _order_desc(defaults)
 
     def _order_desc_mode(block: Mapping[str, Any]) -> bool:
+        """Resolve per-mode order_desc with fallback to global default."""
         return bool(block.get("order_desc", order_desc_global))
 
     # Target validation

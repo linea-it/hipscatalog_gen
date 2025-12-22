@@ -1,3 +1,5 @@
+"""Score quantile helpers for selection (regression tests)."""
+
 import numpy as np
 from hipscatalog_gen.selection.score import _quantile_from_histogram
 
@@ -27,3 +29,6 @@ def test_quantile_progresses_through_flat_regions():
     assert 2.0 <= low <= 5.0
     assert 2.0 <= mid <= 5.0
     assert 3.0 <= high <= 5.0
+
+
+"""Score quantile helpers for selection (regression tests)."""

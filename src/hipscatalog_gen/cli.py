@@ -1,3 +1,5 @@
+"""Command-line interface for running the HiPS catalog pipeline."""
+
 from __future__ import annotations
 
 import argparse
@@ -21,7 +23,8 @@ def main(argv: Optional[List[str]] = None) -> None:
     desc = (
         "HiPS Catalog Pipeline "
         "(Dask, Parquet, mag_global/score_global/score_density_hybrid selection). "
-        "Use a YAML config file to control inputs, cluster, and algorithm options."
+        "Use a YAML config file to control inputs, cluster, and algorithm options. "
+        "Docs: https://linea-it.github.io/hipscatalog_gen/"
     )
     parser = argparse.ArgumentParser(description=desc)
     group = parser.add_mutually_exclusive_group(required=True)

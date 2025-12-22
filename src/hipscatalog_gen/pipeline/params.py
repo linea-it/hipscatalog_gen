@@ -1,3 +1,5 @@
+"""Normalized parameter containers used by selection modes."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

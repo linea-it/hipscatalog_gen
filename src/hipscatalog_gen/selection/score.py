@@ -1,3 +1,5 @@
+"""Score computations, histograms, and sentinel handling for selection modes."""
+
 from __future__ import annotations
 
 import math
@@ -57,10 +59,27 @@ def compute_histogram_ddf(
     keep_invalid: bool = False,
     sentinel: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray, int]:
-    """Generic 1D histogram computation for Dask DataFrames or LSDB catalogs."""
+    """Generic 1D histogram computation for Dask DataFrames or LSDB catalogs.
+
+    Args:
+        ddf_like: Dask-like collection or LSDB catalog with the target column.
+        value_col: Column name to histogram.
+        value_min: Lower bound (inclusive).
+        value_max: Upper bound (inclusive).
+        nbins: Number of bins.
+        keep_invalid: When True, replace NaN/Inf with ``sentinel`` instead of dropping.
+        sentinel: Sentinel value for invalid entries (used only when ``keep_invalid`` is True).
+
+    Returns:
+        Tuple of ``(hist, edges, n_total)`` where:
+            - hist: numpy array with bin counts.
+            - edges: numpy array with bin edges.
+            - n_total: total number of rows inspected (including invalid rows).
+    """
     edges = np.linspace(value_min, value_max, nbins + 1, dtype="float64")
 
     def _part_hist(pdf: pd.DataFrame) -> tuple[np.ndarray, int]:
+        """Build histogram counts and totals for one partition."""
         if pdf is None or len(pdf) == 0:
             return np.zeros(nbins, dtype="int64"), 0
 
@@ -90,6 +109,7 @@ def compute_histogram_ddf(
     delayed_results = [_delayed(_part_hist)(p) for p in parts]
 
     def _sum_results(seq: List[tuple[np.ndarray, int]]) -> tuple[np.ndarray, int]:
+        """Sum partition histograms into a total histogram and row count."""
         h_total = np.zeros(nbins, dtype="int64")
         n_total = 0
         for h, n in seq:
@@ -148,6 +168,7 @@ def _finite_min_max(ddf_like: Any, value_col: str) -> tuple[float | None, float 
     """Return finite (min, max) ignoring NaN/Inf; (None, None) if no finite values."""
 
     def _part(pdf: pd.DataFrame) -> tuple[float | None, float | None]:
+        """Return finite min/max for one partition."""
         vals = pd.to_numeric(pdf[value_col], errors="coerce")
         vals = vals[np.isfinite(vals)]
         if vals.empty:
@@ -190,6 +211,7 @@ def _map_invalid_to_sentinel(
     meta_out[col] = pd.Series([], dtype="float64")
 
     def _map(pdf: pd.DataFrame) -> pd.DataFrame:
+        """Replace invalid values (and optional mask) with a sentinel."""
         if pdf.empty:
             pdf[col] = pd.Series([], dtype="float64")
             return pdf
@@ -217,6 +239,7 @@ def add_score_column(ddf: Any, score_expr: str, output_col: str = "__score__") -
     code = compile(score_expr, "<score_expr>", "eval")
 
     def _add(pdf: pd.DataFrame, expr: str, compiled_expr) -> pd.DataFrame:
+        """Attach a numeric score column to one partition."""
         if pdf.empty:
             pdf[output_col] = pd.Series([], dtype="float64")
             return pdf
@@ -249,7 +272,27 @@ def resolve_value_range(
     log_fn,
     label: str,
 ) -> tuple[float, float]:
-    """Resolve [min, max] for score-like columns with optional histogram peak."""
+    """Resolve [min, max] for score-like columns with optional histogram peak.
+
+    Args:
+        ddf: Dask-like collection with the target column.
+        value_col: Column name to inspect.
+        range_mode: Either ``\"complete\"`` or ``\"hist_peak\"``.
+        min_cfg: Optional configured minimum.
+        max_cfg: Optional configured maximum.
+        hist_nbins: Number of bins for histogram estimation.
+        compute_hist_fn: Callable to compute histograms (signature-compatible with ``compute_histogram_ddf``).
+        diag_ctx: Diagnostics context factory.
+        log_fn: Logging callback.
+        label: Human-readable label for logging and error messages.
+
+    Returns:
+        Tuple ``(min_value, max_value)`` resolved according to the mode.
+
+    Raises:
+        ValueError: When ranges are invalid, non-finite, or histogram estimation fails.
+        RuntimeError: When required bounds are missing for the chosen mode.
+    """
     if range_mode not in ("complete", "hist_peak"):
         raise ValueError(f"{label}: range_mode must be 'complete' or 'hist_peak'.")
 
@@ -272,6 +315,7 @@ def resolve_value_range(
         raise ValueError(f"{label}: invalid global range [{val_min_raw}, {val_max_raw}].")
 
     def _hist_peak(lo: float, hi: float, ctx_name: str) -> tuple[float, float, float]:
+        """Estimate histogram peak center within provided bounds."""
         with diag_ctx(ctx_name):
             hist, edges, n_tot = compute_hist_fn(ddf, value_col, lo, hi, hist_nbins)
 
