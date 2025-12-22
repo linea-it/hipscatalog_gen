@@ -8,9 +8,9 @@ Overview
 
 - Three selection modes (``algorithm.selection_mode``):
 
-  - ``mag_global``: magnitude-complete selection (``mg_*`` parameters).
-  - ``score_global``: selection driven by an arbitrary score/expression (``sg_*``).
-  - ``score_density_hybrid``: density-driven depths 1–3 with score-driven remainder (``sdh_*``).
+  - ``mag_global``: magnitude-complete selection (see ``algorithm.mag_global.*``).
+  - ``score_global``: selection driven by an arbitrary score/expression (see ``algorithm.score_global.*``).
+  - ``score_density_hybrid``: density-driven depths 1–3 with score-driven remainder (see ``algorithm.score_density_hybrid.*``).
 
 - Runs locally; outputs full HiPS layouts (tiles, all-sky, MOC, metadata, density maps).
 
@@ -44,7 +44,7 @@ Optional: expose the env as a Jupyter kernel:
 Configuration
 -------------
 
-- Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters (``mg_*``, ``sg_*``, ``sdh_*``). More examples live under ``examples/configs/``.
+- Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters inside the per-mode blocks under ``algorithm``. More examples live under ``examples/configs/``.
 
 Run the pipeline
 ----------------

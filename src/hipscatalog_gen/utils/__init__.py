@@ -23,6 +23,7 @@ __all__ = [
     "_HEALPIX_INDEX_RE",
     "_score_deps",
     "_resolve_col_name",
+    "_get_dask_base",
     "_get_meta_df",
     "_validate_and_normalize_radec",
 ]
@@ -109,7 +110,7 @@ def _stats_counts(counts: np.ndarray) -> tuple[int, int]:
 
 
 def _log_depth_stats(
-    _log_fn: Callable[[str, bool], None],
+    _log_fn: Callable[..., None],
     depth: int,
     phase: str,
     counts: Optional[np.ndarray] = None,
@@ -147,7 +148,53 @@ def _log_depth_stats(
     if remainder_len is not None:
         parts.append(f"remainder={remainder_len}")
 
-    _log_fn(f"[DEPTH {depth}] {phase}: " + "; ".join(parts), True)
+    _log_fn(f"[DEPTH {depth}] {phase}: " + "; ".join(parts), True, depth=depth)
+
+
+# =============================================================================
+# Dask/LSDB base resolution
+# =============================================================================
+
+
+def _get_dask_base(
+    ddf_like: Any,
+    require_groupby: bool = False,
+    require_map_partitions: bool = False,
+    require_to_delayed: bool = False,
+) -> Any:
+    """Prefer public Dask-like interfaces; fall back to LSDB ._ddf only when needed."""
+
+    def _has_required(obj: Any) -> bool:
+        """Check that obj exposes all required dask-like methods."""
+        if require_groupby and not hasattr(obj, "groupby"):
+            return False
+        if require_map_partitions and not hasattr(obj, "map_partitions"):
+            return False
+        if require_to_delayed and not hasattr(obj, "to_delayed"):
+            return False
+        # If nothing explicitly required, accept any of the common dask-like methods.
+        if not (require_groupby or require_map_partitions or require_to_delayed):
+            return hasattr(obj, "groupby") or hasattr(obj, "map_partitions") or hasattr(obj, "to_delayed")
+        return True
+
+    try:
+        from lsdb.catalog import Catalog as LsdbCatalog  # type: ignore
+    except Exception:  # pragma: no cover - lsdb optional
+        LsdbCatalog = None  # type: ignore
+
+    if _has_required(ddf_like):
+        return ddf_like
+
+    # For LSDB catalogs without public Dask-like methods, fall back to the underlying Dask DataFrame.
+    if LsdbCatalog is not None and isinstance(ddf_like, LsdbCatalog):
+        base = getattr(ddf_like, "_ddf", None)  # type: ignore[attr-defined]
+        if base is None:
+            raise TypeError("LSDB catalog missing _ddf attribute; cannot extract Dask base.")
+        if _has_required(base):
+            return base
+        raise TypeError("LSDB catalog _ddf does not expose required dask-like methods.")
+
+    raise TypeError("Object is not Dask-like (missing groupby/map_partitions/to_delayed).")
 
 
 # =============================================================================
@@ -226,26 +273,33 @@ def _get_meta_df(ddf_like: Any) -> pd.DataFrame:
     Returns:
         Empty pandas.DataFrame with the same schema.
     """
-    # Plain Dask DataFrame
-    if hasattr(ddf_like, "_meta"):
-        meta = ddf_like._meta
-        if isinstance(meta, pd.DataFrame):
-            return meta
+    base = _get_dask_base(ddf_like)
 
-    # LSDB Catalog: use underlying Dask DataFrame (_ddf) for meta only
-    if hasattr(ddf_like, "_ddf"):
-        try:
-            meta = ddf_like._ddf._meta  # type: ignore[attr-defined]
-            if isinstance(meta, pd.DataFrame):
-                return meta
-        except Exception:
-            pass
+    def _as_pandas_df(obj: Any) -> pd.DataFrame | None:
+        """Convert meta-like objects (including NestedFrame) to pandas."""
+        if isinstance(obj, pd.DataFrame):
+            return obj
+        if hasattr(obj, "to_pandas"):
+            try:
+                candidate = obj.to_pandas()
+                if isinstance(candidate, pd.DataFrame):
+                    return candidate
+            except Exception:
+                pass
+        return None
+
+    if hasattr(base, "_meta"):
+        meta = base._meta  # type: ignore[attr-defined]
+        meta_pdf = _as_pandas_df(meta)
+        if meta_pdf is not None:
+            return meta_pdf
 
     # Fallback: try .head(0)
     try:
-        head0 = ddf_like.head(0)
-        if isinstance(head0, pd.DataFrame):
-            return head0
+        head0 = base.head(0)
+        meta_pdf = _as_pandas_df(head0)
+        if meta_pdf is not None:
+            return meta_pdf
     except Exception:
         pass
 

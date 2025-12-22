@@ -12,14 +12,6 @@ hipscatalog\_gen.score\_global.pipeline module
    :undoc-members:
    :show-inheritance:
 
-hipscatalog\_gen.score\_global.utils module
--------------------------------------------
-
-.. automodule:: hipscatalog_gen.score_global.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 

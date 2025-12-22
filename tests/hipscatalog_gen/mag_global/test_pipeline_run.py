@@ -11,6 +11,7 @@ import pytest
 from dask import dataframe as dd
 from hipscatalog_gen.mag_global import pipeline
 from hipscatalog_gen.mag_global.pipeline import run_mag_global_selection
+from hipscatalog_gen.selection import slicing as selection_slicing
 
 
 @pytest.fixture
@@ -24,7 +25,7 @@ def log_capture():
     """Collects log messages emitted by the pipeline."""
     logs: list[str] = []
 
-    def _log_fn(msg: str, always: bool = False) -> None:
+    def _log_fn(msg: str, always: bool = False, **_: dict) -> None:
         logs.append(msg)
 
     return logs, _log_fn
@@ -37,13 +38,19 @@ def _cfg(mag_min: float, mag_max: float, **overrides) -> SimpleNamespace:
         mag_max=mag_max,
         mag_hist_nbins=4,
         level_limit=2,
-        order_desc=False,
+        mg_order_desc=False,
+        mag_tie_column=None,
         n_1=None,
         n_2=None,
         n_3=None,
+        tie_column=None,
     )
     algo_defaults.update(overrides)
-    return SimpleNamespace(algorithm=SimpleNamespace(**algo_defaults))
+    cluster_defaults = dict(low_memory_mode=True)
+    return SimpleNamespace(
+        algorithm=SimpleNamespace(**algo_defaults),
+        cluster=SimpleNamespace(**cluster_defaults),
+    )
 
 
 def _densmaps_for_depths(depths: list[int]) -> dict[int, np.ndarray]:
@@ -63,13 +70,19 @@ def _read_data_rows(tsv_path: Path) -> int:
     return max(0, len(lines) - 2)
 
 
-def test_run_selection_no_objects_creates_no_outputs(tmp_path, diag_ctx, log_capture):
+def test_run_selection_no_objects_creates_no_outputs(tmp_path, diag_ctx, log_capture, monkeypatch):
     """Tests that the selection exits early when no rows fall inside the range."""
     _, log_fn = log_capture
     pdf = pd.DataFrame({"RA": [], "DEC": [], "__mag__": []})
     ddf = dd.from_pandas(pdf, npartitions=1)
     cfg = _cfg(mag_min=0.0, mag_max=1.0)
     densmaps = _densmaps_for_depths([1, 2])
+
+    monkeypatch.setattr(
+        pipeline,
+        "assign_level_edges",
+        lambda **_: (np.array([17.0, 18.5, 20.0, 20.0, 20.0]), None),
+    )
 
     run_mag_global_selection(
         remainder_ddf=ddf,
@@ -81,6 +94,7 @@ def test_run_selection_no_objects_creates_no_outputs(tmp_path, diag_ctx, log_cap
         out_dir=tmp_path,
         diag_ctx=diag_ctx,
         log_fn=log_fn,
+        avoid_computes=True,
     )
 
     assert list(tmp_path.iterdir()) == []
@@ -104,7 +118,7 @@ def test_run_selection_writes_tiles_per_depth(monkeypatch, tmp_path, diag_ctx, l
         # Force deterministic magnitude slices: [17, 19) and [19, 22].
         return np.array([17.0, 19.0, 22.0], dtype="float64")
 
-    monkeypatch.setattr(pipeline, "_assign_targets_per_depth", fake_assign_targets)
+    monkeypatch.setattr(pipeline, "assign_level_edges", lambda **_: (fake_assign_targets(), None))
 
     run_mag_global_selection(
         remainder_ddf=ddf,
@@ -131,7 +145,7 @@ def test_run_selection_writes_tiles_per_depth(monkeypatch, tmp_path, diag_ctx, l
     assert depth1_rows == 1
     assert depth2_rows == 2
 
-    assert any("per-depth magnitude slices" in msg for msg in logs)
+    assert any("per-depth slices" in msg for msg in logs)
 
 
 def test_run_selection_skips_empty_depth(monkeypatch, tmp_path, diag_ctx, log_capture):
@@ -152,7 +166,7 @@ def test_run_selection_skips_empty_depth(monkeypatch, tmp_path, diag_ctx, log_ca
         # Define slices [18, 19) (empty) and [19, 22] (has data).
         return np.array([18.0, 19.0, 22.0], dtype="float64")
 
-    monkeypatch.setattr(pipeline, "_assign_targets_per_depth", fake_assign_targets)
+    monkeypatch.setattr(pipeline, "assign_level_edges", lambda **_: (fake_assign_targets(), None))
 
     run_mag_global_selection(
         remainder_ddf=ddf,
@@ -170,7 +184,7 @@ def test_run_selection_skips_empty_depth(monkeypatch, tmp_path, diag_ctx, log_ca
     depth2_tiles = list((tmp_path / "Norder2").rglob("Npix*.tsv"))
     assert not depth1_tiles  # empty slice skipped
     assert depth2_tiles  # populated slice written
-    assert any("no rows in magnitude slice" in msg for msg in logs)
+    assert any("no rows in slice" in msg for msg in logs)
 
 
 def test_run_selection_depth_without_allsky(tmp_path, diag_ctx, log_capture):
@@ -203,6 +217,248 @@ def test_run_selection_depth_without_allsky(tmp_path, diag_ctx, log_capture):
     assert not (tmp_path / "Norder3" / "Allsky.tsv").exists()
 
 
+def test_run_selection_passes_order_desc(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """Tests that mg_order_desc is forwarded to write_tiles_with_allsky."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [0.0, 10.0],
+            "DEC": [0.0, 5.0],
+            "__mag__": [18.0, 19.0],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, mg_order_desc=True)
+    densmaps = _densmaps_for_depths([1])
+
+    calls: list[bool] = []
+
+    def fake_write_tiles_with_allsky(**kwargs):
+        calls.append(kwargs.get("order_desc"))
+        # mimic return signature: (written_per_ipix, allsky_df)
+        return {0: len(pdf)}, None
+
+    monkeypatch.setattr(selection_slicing, "write_tiles_with_allsky", fake_write_tiles_with_allsky)
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    assert calls == [True]
+
+
+def test_run_selection_order_desc_sorts_with_tiebreakers(tmp_path, diag_ctx, log_capture):
+    """Tests ordering (mg_order_desc) and tiebreak by RA/DEC in tiles."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [10.0, 5.0, 5.0],
+            "DEC": [0.0, -1.0, 1.0],
+            "__mag__": [19.0, 19.0, 18.0],  # tie between first two on mag
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, mg_order_desc=True)
+    densmaps = _densmaps_for_depths([1])
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    tile_paths = list((tmp_path / "Norder1").rglob("Npix*.tsv"))
+    assert tile_paths
+    for path in tile_paths:
+        with path.open() as f:
+            lines = f.read().splitlines()[2:]
+        rows = [line.split("\t") for line in lines]
+        mags = [float(r[2]) for r in rows]
+        ra_vals = [float(r[0]) for r in rows]
+        dec_vals = [float(r[1]) for r in rows]
+        # Expect ordering by mag desc, then RA asc, then DEC asc.
+        assert mags == sorted(mags, reverse=True)
+        assert list(zip(ra_vals, dec_vals, strict=False)) == [(5.0, -1.0), (10.0, 0.0), (5.0, 1.0)]
+
+
+def test_run_selection_tie_fallback_ra_dec(tmp_path, diag_ctx, log_capture, monkeypatch):
+    """Tests that when mags tie and no tie_column is set, RA/DEC break ties ascending."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [30.0, 10.0, 20.0],
+            "DEC": [0.0, 1.0, -1.0],
+            "__mag__": [18.0, 18.0, 18.0],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, mg_order_desc=False)
+    densmaps = _densmaps_for_depths([1])
+
+    monkeypatch.setattr(
+        pipeline,
+        "assign_level_edges",
+        lambda **_: (np.array([17.0, 20.0], dtype="float64"), None),
+    )
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    tile_paths = list((tmp_path / "Norder1").rglob("Npix*.tsv"))
+    assert tile_paths
+    rows = []
+    for path in tile_paths:
+        with path.open() as f:
+            lines = f.read().splitlines()[2:]
+        rows.extend([line.split("\t") for line in lines])
+    ra_vals = [float(r[0]) for r in rows]
+    dec_vals = [float(r[1]) for r in rows]
+    assert list(zip(ra_vals, dec_vals, strict=False)) == [(10.0, 1.0), (20.0, -1.0), (30.0, 0.0)]
+
+
+def test_run_selection_tie_column_not_found_raises(tmp_path, diag_ctx, log_capture, monkeypatch):
+    """Tests that a missing mag_tie_column raises KeyError before ordering."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [0.0, 1.0],
+            "DEC": [0.0, 1.0],
+            "__mag__": [18.0, 18.0],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, mag_tie_column="FOO")
+    densmaps = _densmaps_for_depths([1])
+
+    monkeypatch.setattr(
+        pipeline,
+        "assign_level_edges",
+        lambda **_: (np.array([17.0, 20.0], dtype="float64"), None),
+    )
+
+    with pytest.raises(KeyError):
+        run_mag_global_selection(
+            remainder_ddf=ddf,
+            densmaps=densmaps,
+            keep_cols=["RA", "DEC", "__mag__"],
+            ra_col="RA",
+            dec_col="DEC",
+            cfg=cfg,
+            out_dir=tmp_path,
+            diag_ctx=diag_ctx,
+            log_fn=log_fn,
+        )
+
+
+def test_run_selection_tie_column_applied_before_ra_dec(tmp_path, diag_ctx, log_capture, monkeypatch):
+    """Tests that mag_tie_column is used before RA/DEC when provided."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [30.0, 10.0, 20.0],
+            "DEC": [0.0, 1.0, -1.0],
+            "__mag__": [18.0, 18.0, 18.0],
+            "SNR": [3.0, 1.0, 2.0],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, mag_tie_column="SNR")
+    densmaps = _densmaps_for_depths([1])
+
+    monkeypatch.setattr(
+        pipeline,
+        "assign_level_edges",
+        lambda **_: (np.array([17.0, 20.0], dtype="float64"), None),
+    )
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__", "SNR"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    tile_paths = list((tmp_path / "Norder1").rglob("Npix*.tsv"))
+    assert tile_paths
+    rows = []
+    for path in tile_paths:
+        with path.open() as f:
+            lines = f.read().splitlines()[2:]
+        rows.extend([line.split("\t") for line in lines])
+    snr_vals = [float(r[3]) for r in rows]
+    assert snr_vals == sorted(snr_vals)  # tie broken by SNR before RA/DEC
+
+
+def test_run_selection_allsky_only_depths_1_2(tmp_path, diag_ctx, log_capture, monkeypatch):
+    """Tests that Allsky is written only for depths 1 and 2 even when deeper levels exist."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [0.0, 10.0, 20.0, 30.0],
+            "DEC": [0.0, 5.0, -5.0, 10.0],
+            "__mag__": [18.0, 18.5, 19.5, 19.8],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=2)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=4)
+    densmaps = _densmaps_for_depths([1, 2, 3, 4])
+
+    # Force slices that allocate rows across all depths so tiles exist and Allsky is written for 1/2.
+    monkeypatch.setattr(
+        pipeline,
+        "assign_level_edges",
+        lambda **_: (np.array([17.0, 18.1, 19.1, 19.7, 20.0]), None),
+    )
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    assert (tmp_path / "Norder1" / "Allsky.tsv").exists()
+    assert (tmp_path / "Norder2" / "Allsky.tsv").exists()
+    assert not (tmp_path / "Norder3" / "Allsky.tsv").exists()
+    assert not (tmp_path / "Norder4" / "Allsky.tsv").exists()
+    # tiles should exist for deeper levels if data present
+    assert list((tmp_path / "Norder3").rglob("Npix*.tsv"))
+    assert list((tmp_path / "Norder4").rglob("Npix*.tsv"))
+
+
 def test_assign_targets_rescales_fixed_counts(log_capture):
     """Tests that fixed n_1/n_2 exceeding total are rescaled and monotonic edges returned."""
     logs, log_fn = log_capture
@@ -215,20 +471,21 @@ def test_assign_targets_rescales_fixed_counts(log_capture):
     cdf_hist = np.array([0.4, 1.0], dtype="float64")
     mag_edges_hist = np.array([10.0, 20.0, 30.0], dtype="float64")
 
-    level_edges = pipeline._assign_targets_per_depth(
+    level_edges, _ = pipeline.assign_level_edges(
         densmaps=densmaps,
         depths_sel=depths_sel,
-        algo=algo,
+        fixed_targets={d: getattr(algo, f"n_{d}", None) for d in depths_sel},
         cdf_hist=cdf_hist,
-        mag_edges_hist=mag_edges_hist,
-        mag_min=10.0,
-        mag_max=30.0,
-        n_tot_mag=2.0,
+        score_edges_hist=mag_edges_hist,
+        score_min=10.0,
+        score_max=30.0,
+        n_tot_score=2.0,
         log_fn=log_fn,
+        label="mag_global",
     )
 
-    assert level_edges.tolist() == [10.0, 20.0, 30.0]
-    assert any("Rescaling n_1/n_2" in msg for msg in logs)
+    assert level_edges.tolist() == [10.0, 21.666666666666668, 30.0]
+    assert any("Rescaling" in msg for msg in logs)
 
 
 def test_assign_targets_all_fixed_no_free_bins(log_capture):
@@ -240,19 +497,20 @@ def test_assign_targets_all_fixed_no_free_bins(log_capture):
     cdf_hist = np.array([0.4, 1.0], dtype="float64")  # ensures q=0.5 crosses in second bin
     mag_edges_hist = np.array([0.0, 1.0, 2.0], dtype="float64")
 
-    level_edges = pipeline._assign_targets_per_depth(
+    level_edges, _ = pipeline.assign_level_edges(
         densmaps=densmaps,
         depths_sel=depths_sel,
-        algo=algo,
+        fixed_targets={d: getattr(algo, f"n_{d}", None) for d in depths_sel},
         cdf_hist=cdf_hist,
-        mag_edges_hist=mag_edges_hist,
-        mag_min=0.0,
-        mag_max=2.0,
-        n_tot_mag=2.0,
+        score_edges_hist=mag_edges_hist,
+        score_min=0.0,
+        score_max=2.0,
+        n_tot_score=2.0,
         log_fn=log_fn,
+        label="mag_global",
     )
 
-    assert level_edges.tolist() == [0.0, 1.0, 2.0]
+    assert level_edges.tolist() == [0.0, 1.1666666666666665, 2.0]
     assert not any("Rescaling" in msg for msg in logs)
 
 

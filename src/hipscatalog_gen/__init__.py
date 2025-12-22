@@ -11,7 +11,14 @@ except PackageNotFoundError:
     __version__ = "0.0.0"
 
 from .config import Config, load_config  # noqa: E402
-from .pipeline.main import run_pipeline  # noqa: E402
+
+
+def run_pipeline(*args, **kwargs):
+    """Lazily import and invoke the pipeline entrypoint."""
+    from .pipeline.main import run_pipeline as _run_pipeline
+
+    return _run_pipeline(*args, **kwargs)
+
 
 __all__ = [
     "Config",
