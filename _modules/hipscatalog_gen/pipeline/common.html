@@ -45,7 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -75,7 +75,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.pipeline.common</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Shared pipeline steps for input handling, densmaps, and outputs.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">textwrap</span>
@@ -113,7 +115,7 @@
 
 
 <div class="viewcode-block" id="log_prologue">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.log_prologue">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.common.log_prologue.html#hipscatalog_gen.pipeline.common.log_prologue">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">log_prologue</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">log_fn</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Emit the initial pipeline log lines.&quot;&quot;&quot;</span>
     <span class="n">log_fn</span><span class="p">(</span>
@@ -127,7 +129,7 @@
 
 
 <div class="viewcode-block" id="log_epilogue">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.log_epilogue">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.common.log_epilogue.html#hipscatalog_gen.pipeline.common.log_epilogue">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">log_epilogue</span><span class="p">(</span>
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">log_lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">t0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">log_fn</span><span class="p">,</span> <span class="n">write_process_log</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -214,14 +216,29 @@
 
 
 <div class="viewcode-block" id="build_and_prepare_input">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.build_and_prepare_input">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.common.build_and_prepare_input.html#hipscatalog_gen.pipeline.common.build_and_prepare_input">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_and_prepare_input</span><span class="p">(</span>
     <span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">diag_ctx</span><span class="p">,</span>
     <span class="n">log_fn</span><span class="p">,</span>
     <span class="n">persist_ddfs</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load inputs, validate RA/DEC, repartition, and persist when needed.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load inputs, validate RA/DEC, repartition, and persist when needed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cfg: Parsed configuration object.</span>
+<span class="sd">        diag_ctx: Diagnostics context factory (label -&gt; context manager).</span>
+<span class="sd">        log_fn: Logging callback.</span>
+<span class="sd">        persist_ddfs: Whether to persist the input collection in memory.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple containing ``(ddf, RA_NAME, DEC_NAME, keep_cols, is_hats, paths)`` where:</span>
+<span class="sd">            - ddf: Dask-like collection ready for downstream stages.</span>
+<span class="sd">            - RA_NAME / DEC_NAME: Resolved column names for coordinates.</span>
+<span class="sd">            - keep_cols: Ordered list of columns to keep.</span>
+<span class="sd">            - is_hats: True when the input is an LSDB/HATS catalog.</span>
+<span class="sd">            - paths: List of resolved input paths.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">paths</span> <span class="o">=</span> <span class="n">_collect_input_paths</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">log_fn</span><span class="p">)</span>
     <span class="n">_warn_if_hats_mismatch</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">log_fn</span><span class="p">)</span>
 
@@ -251,7 +268,7 @@
 
 
 <div class="viewcode-block" id="compute_and_write_densmaps">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.compute_and_write_densmaps">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.common.compute_and_write_densmaps.html#hipscatalog_gen.pipeline.common.compute_and_write_densmaps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_and_write_densmaps</span><span class="p">(</span>
     <span class="n">ddf_sel</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">ra_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -260,7 +277,19 @@
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">diag_ctx</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute density maps for all depths and write them to disk.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute density maps for all depths and write them to disk.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ddf_sel: Dask-like collection with RA/DEC columns.</span>
+<span class="sd">        ra_col: Name of the RA column (degrees).</span>
+<span class="sd">        dec_col: Name of the DEC column (degrees).</span>
+<span class="sd">        level_limit: Maximum HiPS order to compute.</span>
+<span class="sd">        out_dir: Output directory where FITS files are written.</span>
+<span class="sd">        diag_ctx: Diagnostics context factory (label -&gt; context manager).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Mapping of depth -&gt; numpy array with counts per HEALPix pixel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">depths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">level_limit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">densmaps</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -280,7 +309,17 @@
 <div class="viewcode-block" id="compute_input_total">
 <a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.compute_input_total">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_input_total</span><span class="p">(</span><span class="n">ddf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">diag_ctx</span><span class="p">,</span> <span class="n">log_fn</span><span class="p">,</span> <span class="n">avoid_computes</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute total number of input rows (post RA/DEC validation).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute total number of input rows (post RA/DEC validation).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ddf: Dask-like collection with validated RA/DEC.</span>
+<span class="sd">        diag_ctx: Diagnostics context factory (label -&gt; context manager).</span>
+<span class="sd">        log_fn: Logging callback.</span>
+<span class="sd">        avoid_computes: Whether to avoid explicit ``compute()`` when possible.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Total number of rows as an integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">log_fn</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;[input] Counting total number of rows (avoid_computes=</span><span class="si">{</span><span class="n">avoid_computes</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">,</span>
         <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -321,7 +360,18 @@
     <span class="n">paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">ddf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write MOC, metadata.xml, and arguments echo.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write MOC, metadata.xml, and arguments echo.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        out_dir: Destination HiPS root directory.</span>
+<span class="sd">        cfg: Parsed configuration object.</span>
+<span class="sd">        densmaps: Mapping depth -&gt; densmap counts.</span>
+<span class="sd">        keep_cols: Ordered list of columns retained in outputs.</span>
+<span class="sd">        ra_col: Name of the RA column.</span>
+<span class="sd">        dec_col: Name of the DEC column.</span>
+<span class="sd">        paths: Resolved input paths.</span>
+<span class="sd">        ddf: Dask-like collection used to infer column dtypes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">moc_order</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;moc_order&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">)</span>
     <span class="n">dens_lc</span> <span class="o">=</span> <span class="n">densmaps</span><span class="p">[</span><span class="n">moc_order</span><span class="p">]</span>
     <span class="n">write_moc</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">moc_order</span><span class="p">,</span> <span class="n">dens_lc</span><span class="p">)</span>
@@ -453,7 +503,7 @@
 
 
 <div class="viewcode-block" id="write_tiles_with_allsky">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.write_tiles_with_allsky">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.common.write_tiles_with_allsky.html#hipscatalog_gen.pipeline.common.write_tiles_with_allsky">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_tiles_with_allsky</span><span class="p">(</span>
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -488,11 +538,12 @@
 
 
 <div class="viewcode-block" id="write_counts_summaries">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.write_counts_summaries">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.common.write_counts_summaries.html#hipscatalog_gen.pipeline.common.write_counts_summaries">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_counts_summaries</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">level_limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">input_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">log_fn</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute counts for later cross-checks and return (total written, counts dict).&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_count_rows</span><span class="p">(</span><span class="n">tile_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count rows for one tile file (ignoring header lines).&quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="n">tile_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="c1"># Skip completeness + header lines.</span>
             <span class="nb">next</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>

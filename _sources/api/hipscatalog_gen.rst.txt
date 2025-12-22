@@ -12,9 +12,9 @@ Subpackages
    hipscatalog_gen.io
    hipscatalog_gen.mag_global
    hipscatalog_gen.pipeline
-   hipscatalog_gen.selection
    hipscatalog_gen.score_density_hybrid
    hipscatalog_gen.score_global
+   hipscatalog_gen.selection
    hipscatalog_gen.utils
 
 Submodules
@@ -25,21 +25,21 @@ hipscatalog\_gen.cli module
 
 .. automodule:: hipscatalog_gen.cli
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 hipscatalog\_gen.config module
 ------------------------------
 
 .. automodule:: hipscatalog_gen.config
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: hipscatalog_gen
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

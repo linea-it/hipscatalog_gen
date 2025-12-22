@@ -78,12 +78,12 @@ Outputs (HiPS layout)
 Navigation
 ----------
 
-- API reference (generated from code).
+- Reference (generated from code, grouped by domain).
 - Example notebooks, including an intro and a simple pipeline run.
 
 .. toctree::
    :hidden:
 
    Home page <self>
-   API Reference <api/index>
+   Reference <reference/index>
    Notebooks <notebooks>

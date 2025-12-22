@@ -45,7 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -75,7 +75,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.io.output</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Writers for HiPS tiles, metadata, MOC, and density map products.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -113,7 +115,13 @@
 <div class="viewcode-block" id="TSVTileWriter">
 <a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TSVTileWriter</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper for writing HiPS catalogue tiles in TSV format.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper for writing HiPS catalogue tiles in TSV format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        out_dir: HiPS root output directory.</span>
+<span class="sd">        depth: HiPS order (NorderX).</span>
+<span class="sd">        header_line: Header line for TSV tiles (without completeness line).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">header_line</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize tile writer for a given depth.</span>
@@ -167,7 +175,7 @@
 
 
 <div class="viewcode-block" id="finalize_write_tiles">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.finalize_write_tiles">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.finalize_write_tiles.html#hipscatalog_gen.io.output.finalize_write_tiles">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">finalize_write_tiles</span><span class="p">(</span>
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -202,6 +210,9 @@
 <span class="sd">        Tuple (written, allsky_df) where:</span>
 <span class="sd">            written: Mapping ipix -&gt; number of rows written.</span>
 <span class="sd">            allsky_df: DataFrame with all rows (if allsky_collect=True), else None.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        OSError: If tile files cannot be written or renamed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">writer</span> <span class="o">=</span> <span class="n">TSVTileWriter</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">header_line</span><span class="p">)</span>
     <span class="n">npix</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
@@ -268,7 +279,7 @@
 
 
 <div class="viewcode-block" id="build_header_line_from_keep">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.build_header_line_from_keep">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.build_header_line_from_keep.html#hipscatalog_gen.io.output.build_header_line_from_keep">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_header_line_from_keep</span><span class="p">(</span><span class="n">keep_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build header line from a list of column names.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">keep_cols</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span></div>
@@ -281,7 +292,7 @@
 
 
 <div class="viewcode-block" id="write_properties">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_properties">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.write_properties.html#hipscatalog_gen.io.output.write_properties">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_properties</span><span class="p">(</span>
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">output_cfg</span><span class="p">:</span> <span class="n">OutputCfg</span><span class="p">,</span>
@@ -344,15 +355,20 @@
 
 
 <div class="viewcode-block" id="write_arguments">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_arguments">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.write_arguments.html#hipscatalog_gen.io.output.write_arguments">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_arguments</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">args_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write command-line arguments used to run the pipeline.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write command-line arguments used to run the pipeline.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        out_dir: HiPS root output directory.</span>
+<span class="sd">        args_text: Text blob to persist under ``arguments``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_write_text</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;arguments&quot;</span><span class="p">,</span> <span class="n">args_text</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="write_metadata_xml">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_metadata_xml">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.write_metadata_xml.html#hipscatalog_gen.io.output.write_metadata_xml">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_metadata_xml</span><span class="p">(</span>
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">columns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span>
@@ -365,9 +381,9 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        out_dir: HiPS root output directory.</span>
-<span class="sd">        columns: List of (name, dtype, ucd) tuples.</span>
-<span class="sd">        ra_idx: Index of RA column in `columns`.</span>
-<span class="sd">        dec_idx: Index of DEC column in `columns`.</span>
+<span class="sd">        columns: List of ``(name, dtype, ucd)`` tuples.</span>
+<span class="sd">        ra_idx: Index of RA column in ``columns``.</span>
+<span class="sd">        dec_idx: Index of DEC column in ``columns``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">_ucd</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>  <span class="c1"># _ucd intentionally unused here</span>
@@ -411,7 +427,7 @@
 
 
 <div class="viewcode-block" id="write_moc">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_moc">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.write_moc.html#hipscatalog_gen.io.output.write_moc">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_moc</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">moc_order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dens_counts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build and write MOC from densmap counts.</span>
 
@@ -421,6 +437,9 @@
 <span class="sd">        out_dir: HiPS root output directory.</span>
 <span class="sd">        moc_order: HEALPix order used for the MOC.</span>
 <span class="sd">        dens_counts: Densmap counts at the MOC order.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: If MOC construction fails for all attempted mocpy builders.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">order</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">moc_order</span><span class="p">)</span>
     <span class="n">ipix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">dens_counts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
@@ -478,13 +497,13 @@
 
 
 <div class="viewcode-block" id="write_densmap_fits">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_densmap_fits">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.write_densmap_fits.html#hipscatalog_gen.io.output.write_densmap_fits">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_densmap_fits</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">counts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write densmap_o&lt;depth&gt;.fits for depths &lt; 13.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        out_dir: HiPS root output directory.</span>
-<span class="sd">        depth: HiPS order (depth).</span>
+<span class="sd">        depth: HEALPix order (depth).</span>
 <span class="sd">        counts: Counts per pixel at this depth.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">depth</span> <span class="o">&gt;=</span> <span class="mi">13</span><span class="p">:</span>

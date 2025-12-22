@@ -22,9 +22,7 @@
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hipscatalog_gen.selection package" href="hipscatalog_gen.selection.html" />
-    <link rel="prev" title="hipscatalog_gen.mag_global package" href="hipscatalog_gen.mag_global.html" /> 
+    <link rel="search" title="Search" href="../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,22 +44,9 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="modules.html">hipscatalog_gen</a><ul class="current">
-<li class="toctree-l3 current"><a class="reference internal" href="hipscatalog_gen.html">hipscatalog_gen package</a><ul class="current">
-<li class="toctree-l4 current"><a class="reference internal" href="hipscatalog_gen.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#module-hipscatalog_gen.cli">hipscatalog_gen.cli module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#module-hipscatalog_gen.config">hipscatalog_gen.config module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#module-hipscatalog_gen">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -79,9 +64,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">API Reference</a></li>
-          <li class="breadcrumb-item"><a href="modules.html">hipscatalog_gen</a></li>
-          <li class="breadcrumb-item"><a href="hipscatalog_gen.html">hipscatalog_gen package</a></li>
       <li class="breadcrumb-item active">hipscatalog_gen.pipeline package</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -98,84 +80,245 @@
 </section>
 <section id="module-hipscatalog_gen.pipeline.common">
 <span id="hipscatalog-gen-pipeline-common-module"></span><h2>hipscatalog_gen.pipeline.common module<a class="headerlink" href="#module-hipscatalog_gen.pipeline.common" title="Link to this heading"></a></h2>
+<p>Shared pipeline steps for input handling, densmaps, and outputs.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.build_and_prepare_input">
-<span class="sig-name descname"><span class="pre">build_and_prepare_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#build_and_prepare_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.build_and_prepare_input" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">build_and_prepare_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#build_and_prepare_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.build_and_prepare_input" title="Link to this definition"></a></dt>
 <dd><p>Load inputs, validate RA/DEC, repartition, and persist when needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cfg</strong> (<em>Any</em>) – Parsed configuration object.</p></li>
+<li><p><strong>diag_ctx</strong> – Diagnostics context factory (label -&gt; context manager).</p></li>
+<li><p><strong>log_fn</strong> – Logging callback.</p></li>
+<li><p><strong>persist_ddfs</strong> (<em>bool</em>) – Whether to persist the input collection in memory.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>ddf: Dask-like collection ready for downstream stages.</p></li>
+<li><p>RA_NAME / DEC_NAME: Resolved column names for coordinates.</p></li>
+<li><p>keep_cols: Ordered list of columns to keep.</p></li>
+<li><p>is_hats: True when the input is an LSDB/HATS catalog.</p></li>
+<li><p>paths: List of resolved input paths.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple containing <code class="docutils literal notranslate"><span class="pre">(ddf,</span> <span class="pre">RA_NAME,</span> <span class="pre">DEC_NAME,</span> <span class="pre">keep_cols,</span> <span class="pre">is_hats,</span> <span class="pre">paths)</span></code> where</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.compute_and_write_densmaps">
-<span class="sig-name descname"><span class="pre">compute_and_write_densmaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_sel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#compute_and_write_densmaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.compute_and_write_densmaps" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute_and_write_densmaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_sel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#compute_and_write_densmaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.compute_and_write_densmaps" title="Link to this definition"></a></dt>
 <dd><p>Compute density maps for all depths and write them to disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ddf_sel</strong> (<em>Any</em>) – Dask-like collection with RA/DEC columns.</p></li>
+<li><p><strong>ra_col</strong> (<em>str</em>) – Name of the RA column (degrees).</p></li>
+<li><p><strong>dec_col</strong> (<em>str</em>) – Name of the DEC column (degrees).</p></li>
+<li><p><strong>level_limit</strong> (<em>int</em>) – Maximum HiPS order to compute.</p></li>
+<li><p><strong>out_dir</strong> (<em>Path</em>) – Output directory where FITS files are written.</p></li>
+<li><p><strong>diag_ctx</strong> – Diagnostics context factory (label -&gt; context manager).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Mapping of depth -&gt; numpy array with counts per HEALPix pixel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>Dict</em>[int, <em>ndarray</em>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.compute_input_total">
-<span class="sig-name descname"><span class="pre">compute_input_total</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#compute_input_total"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.compute_input_total" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute_input_total</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#compute_input_total"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.compute_input_total" title="Link to this definition"></a></dt>
 <dd><p>Compute total number of input rows (post RA/DEC validation).</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.log_epilogue">
-<span class="sig-name descname"><span class="pre">log_epilogue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_process_log</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#log_epilogue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.log_epilogue" title="Link to this definition"></a></dt>
-<dd><p>Emit closing log lines and optionally persist process.log.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.log_prologue">
-<span class="sig-name descname"><span class="pre">log_prologue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#log_prologue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.log_prologue" title="Link to this definition"></a></dt>
-<dd><p>Emit the initial pipeline log lines.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.maybe_persist_ddf">
-<span class="sig-name descname"><span class="pre">maybe_persist_ddf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_like</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_persist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#maybe_persist_ddf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.maybe_persist_ddf" title="Link to this definition"></a></dt>
-<dd><p>Persist a Dask collection when requested, logging and awaiting completion.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.write_common_static_products">
-<span class="sig-name descname"><span class="pre">write_common_static_products</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densmaps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_cols</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ddf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#write_common_static_products"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_common_static_products" title="Link to this definition"></a></dt>
-<dd><p>Write MOC, metadata.xml, and arguments echo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ddf</strong> (<em>Any</em>) – Dask-like collection with validated RA/DEC.</p></li>
+<li><p><strong>diag_ctx</strong> – Diagnostics context factory (label -&gt; context manager).</p></li>
+<li><p><strong>log_fn</strong> – Logging callback.</p></li>
+<li><p><strong>avoid_computes</strong> (<em>bool</em>) – Whether to avoid explicit <code class="docutils literal notranslate"><span class="pre">compute()</span></code> when possible.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Total number of rows as an integer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.write_counts_summaries">
-<span class="sig-name descname"><span class="pre">write_counts_summaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_total</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#write_counts_summaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_counts_summaries" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">write_counts_summaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#write_counts_summaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_counts_summaries" title="Link to this definition"></a></dt>
 <dd><p>Compute counts for later cross-checks and return (total written, counts dict).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>level_limit</strong> (<em>int</em>)</p></li>
+<li><p><strong>input_total</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[int, dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.write_common_static_products">
+<span class="sig-name descname"><span class="pre">write_common_static_products</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densmaps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paths</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ddf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#write_common_static_products"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_common_static_products" title="Link to this definition"></a></dt>
+<dd><p>Write MOC, metadata.xml, and arguments echo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>Path</em>) – Destination HiPS root directory.</p></li>
+<li><p><strong>cfg</strong> (<em>Any</em>) – Parsed configuration object.</p></li>
+<li><p><strong>densmaps</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>ndarray</em><em>]</em>) – Mapping depth -&gt; densmap counts.</p></li>
+<li><p><strong>keep_cols</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Ordered list of columns retained in outputs.</p></li>
+<li><p><strong>ra_col</strong> (<em>str</em>) – Name of the RA column.</p></li>
+<li><p><strong>dec_col</strong> (<em>str</em>) – Name of the DEC column.</p></li>
+<li><p><strong>paths</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Resolved input paths.</p></li>
+<li><p><strong>ddf</strong> (<em>Any</em>) – Dask-like collection used to infer column dtypes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.log_epilogue">
+<span class="sig-name descname"><span class="pre">log_epilogue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_process_log</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#log_epilogue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.log_epilogue" title="Link to this definition"></a></dt>
+<dd><p>Emit closing log lines and optionally persist process.log.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>log_lines</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>t0</strong> (<em>float</em>)</p></li>
+<li><p><strong>write_process_log</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.log_prologue">
+<span class="sig-name descname"><span class="pre">log_prologue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#log_prologue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.log_prologue" title="Link to this definition"></a></dt>
+<dd><p>Emit the initial pipeline log lines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cfg</strong> (<em>Any</em>)</p></li>
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.write_tiles_with_allsky">
-<span class="sig-name descname"><span class="pre">write_tiles_with_allsky</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header_line</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selected</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_desc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allsky_needed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#write_tiles_with_allsky"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_tiles_with_allsky" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">write_tiles_with_allsky</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header_line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selected</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allsky_needed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#write_tiles_with_allsky"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_tiles_with_allsky" title="Link to this definition"></a></dt>
 <dd><p>Finalize tiles and write optional Allsky.tsv.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>depth</strong> (<em>int</em>)</p></li>
+<li><p><strong>header_line</strong> (<em>str</em>)</p></li>
+<li><p><strong>ra_col</strong> (<em>str</em>)</p></li>
+<li><p><strong>dec_col</strong> (<em>str</em>)</p></li>
+<li><p><strong>counts</strong> (<em>ndarray</em>)</p></li>
+<li><p><strong>selected</strong> (<em>DataFrame</em>)</p></li>
+<li><p><strong>order_desc</strong> (<em>bool</em>)</p></li>
+<li><p><strong>allsky_needed</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[dict[int, int] | None, <em>DataFrame</em> | None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.maybe_persist_ddf">
+<span class="sig-name descname"><span class="pre">maybe_persist_ddf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_like</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_persist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#maybe_persist_ddf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.maybe_persist_ddf" title="Link to this definition"></a></dt>
+<dd><p>Persist a Dask collection when requested, logging and awaiting completion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ddf_like</strong> (<em>Any</em>)</p></li>
+<li><p><strong>should_persist</strong> (<em>bool</em>)</p></li>
+<li><p><strong>log_prefix</strong> (<em>str</em>)</p></li>
+<li><p><strong>diag_label</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>reason</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
 <section id="module-hipscatalog_gen.pipeline.logging_utils">
 <span id="hipscatalog-gen-pipeline-logging-utils-module"></span><h2>hipscatalog_gen.pipeline.logging_utils module<a class="headerlink" href="#module-hipscatalog_gen.pipeline.logging_utils" title="Link to this heading"></a></h2>
+<p>Structured logging utilities for the pipeline.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.logging_utils.LogContext">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LogContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/logging_utils.html#LogContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.logging_utils.LogContext" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LogContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/logging_utils.html#LogContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.logging_utils.LogContext" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Mutable context for structured logging fields.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.logging_utils.LogContext.depth">
-<span class="sig-name descname"><span class="pre">depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.logging_utils.LogContext.depth" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stage</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>depth</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.logging_utils.LogContext.stage">
 <span class="sig-name descname"><span class="pre">stage</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.logging_utils.LogContext.stage" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.logging_utils.LogContext.depth">
+<span class="sig-name descname"><span class="pre">depth</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.logging_utils.LogContext.depth" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.logging_utils.setup_structured_logger">
-<span class="sig-name descname"><span class="pre">setup_structured_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_logs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#hipscatalog_gen.pipeline.logging_utils.LogContext" title="hipscatalog_gen.pipeline.logging_utils.LogContext"><span class="pre">LogContext</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/logging_utils.html#setup_structured_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.logging_utils.setup_structured_logger" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">setup_structured_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_mode</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/logging_utils.html#setup_structured_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.logging_utils.setup_structured_logger" title="Link to this definition"></a></dt>
 <dd><p>Configure a structured logger that writes to stdout and process.log; optionally JSON lines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>selection_mode</strong> (<em>str</em>)</p></li>
+<li><p><strong>json_logs</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[<a class="reference internal" href="#hipscatalog_gen.pipeline.logging_utils.LogContext" title="hipscatalog_gen.pipeline.logging_utils.LogContext"><em>LogContext</em></a>, <em>Callable</em>[[str, bool], None]]</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -194,15 +337,24 @@ run_pipeline(cfg)</p>
 </dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.main.run_pipeline">
-<span class="sig-name descname"><span class="pre">run_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="hipscatalog_gen.html#hipscatalog_gen.config.Config" title="hipscatalog_gen.config.Config"><span class="pre">Config</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_logs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/main.html#run_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.main.run_pipeline" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">run_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_logs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/main.html#run_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.main.run_pipeline" title="Link to this definition"></a></dt>
 <dd><p>Run the full HiPS catalog generation pipeline.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>cfg</strong> – Parsed configuration object with input, algorithm, cluster,
-and output options.</p></li>
-<li><p><strong>json_logs</strong> – When True, also emit JSONL logs to process.jsonl.</p></li>
+<li><p><strong>cfg</strong> (<a class="reference internal" href="hipscatalog_gen.html#hipscatalog_gen.config.Config" title="hipscatalog_gen.config.Config"><em>Config</em></a>) – Parsed configuration object with input, algorithm, cluster, and output options.</p></li>
+<li><p><strong>json_logs</strong> (<em>bool</em>) – Whether to also emit structured JSON lines to <code class="docutils literal notranslate"><span class="pre">process.jsonl</span></code>.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">output.out_dir</span></code> already exists without <code class="docutils literal notranslate"><span class="pre">output.overwrite</span></code> set.</p></li>
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">level_limit</span></code> is outside the supported range [4, 11].</p></li>
+<li><p><strong>ValueError</strong> – If the configured <code class="docutils literal notranslate"><span class="pre">selection_mode</span></code> is unsupported.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -210,19 +362,32 @@ and output options.</p></li>
 </section>
 <section id="module-hipscatalog_gen.pipeline.modes">
 <span id="hipscatalog-gen-pipeline-modes-module"></span><h2>hipscatalog_gen.pipeline.modes module<a class="headerlink" href="#module-hipscatalog_gen.pipeline.modes" title="Link to this heading"></a></h2>
+<p>Registry of selection modes and helpers to resolve them by name.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.modes.SelectionMode">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SelectionMode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prepare_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/modes.html#SelectionMode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.SelectionMode" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SelectionMode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prepare_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/modes.html#SelectionMode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.SelectionMode" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Registry entry for a selection mode.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.modes.SelectionMode.description">
-<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.SelectionMode.description" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>validate_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>Any</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p></li>
+<li><p><strong>normalize_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Any</em><em>, </em><em>Any</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>prepare_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>run_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p></li>
+<li><p><strong>description</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.modes.SelectionMode.name">
 <span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.SelectionMode.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.modes.SelectionMode.validate_fn">
+<span class="sig-name descname"><span class="pre">validate_fn</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.SelectionMode.validate_fn" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -241,34 +406,58 @@ and output options.</p></li>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.modes.SelectionMode.validate_fn">
-<span class="sig-name descname"><span class="pre">validate_fn</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.SelectionMode.validate_fn" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.modes.SelectionMode.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.SelectionMode.description" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.modes.get_selection_mode">
-<span class="sig-name descname"><span class="pre">get_selection_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#hipscatalog_gen.pipeline.modes.SelectionMode" title="hipscatalog_gen.pipeline.modes.SelectionMode"><span class="pre">SelectionMode</span></a></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/modes.html#get_selection_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.get_selection_mode" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_selection_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/modes.html#get_selection_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.get_selection_mode" title="Link to this definition"></a></dt>
 <dd><p>Return a selection mode entry, raising on unsupported names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Selection mode identifier (e.g., <code class="docutils literal notranslate"><span class="pre">mag_global</span></code>).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">SelectionMode</span></code> instance with validators and handlers.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the name is not registered.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="../reference/generated/pipeline/hipscatalog_gen.pipeline.modes.SelectionMode.html#hipscatalog_gen.pipeline.modes.SelectionMode" title="hipscatalog_gen.pipeline.modes.SelectionMode"><em>SelectionMode</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
 <section id="module-hipscatalog_gen.pipeline.params">
 <span id="hipscatalog-gen-pipeline-params-module"></span><h2>hipscatalog_gen.pipeline.params module<a class="headerlink" href="#module-hipscatalog_gen.pipeline.params" title="Link to this heading"></a></h2>
+<p>Normalized parameter containers used by selection modes.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.MagGlobalParams">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MagGlobalParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentinel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/params.html#MagGlobalParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.params.MagGlobalParams" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MagGlobalParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mag_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentinel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/params.html#MagGlobalParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.params.MagGlobalParams" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Normalized parameters for mag_global selection.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.MagGlobalParams.mag_max">
-<span class="sig-name descname"><span class="pre">mag_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.MagGlobalParams.mag_max" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mag_min</strong> (<em>float</em>)</p></li>
+<li><p><strong>mag_max</strong> (<em>float</em>)</p></li>
+<li><p><strong>sentinel</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.MagGlobalParams.mag_min">
 <span class="sig-name descname"><span class="pre">mag_min</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.MagGlobalParams.mag_min" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.MagGlobalParams.mag_max">
+<span class="sig-name descname"><span class="pre">mag_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.MagGlobalParams.mag_max" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -279,40 +468,27 @@ and output options.</p></li>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ScoreDensityHybridParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentinel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/params.html#ScoreDensityHybridParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Normalized parameters for score_density_hybrid selection.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_max">
-<span class="sig-name descname"><span class="pre">score_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_max" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_min">
-<span class="sig-name descname"><span class="pre">score_min</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_min" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.sentinel">
-<span class="sig-name descname"><span class="pre">sentinel</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.sentinel" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreGlobalParams">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ScoreGlobalParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentinel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/params.html#ScoreGlobalParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreGlobalParams" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ScoreGlobalParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentinel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/params.html#ScoreGlobalParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreGlobalParams" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Normalized parameters for score_global selection.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_max">
-<span class="sig-name descname"><span class="pre">score_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_max" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>score_min</strong> (<em>float</em>)</p></li>
+<li><p><strong>score_max</strong> (<em>float</em>)</p></li>
+<li><p><strong>sentinel</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_min">
 <span class="sig-name descname"><span class="pre">score_min</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_min" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_max">
+<span class="sig-name descname"><span class="pre">score_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreGlobalParams.score_max" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -322,72 +498,107 @@ and output options.</p></li>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ScoreDensityHybridParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">score_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentinel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/params.html#ScoreDensityHybridParams"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Normalized parameters for score_density_hybrid selection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>score_min</strong> (<em>float</em>)</p></li>
+<li><p><strong>score_max</strong> (<em>float</em>)</p></li>
+<li><p><strong>sentinel</strong> (<em>float</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_min">
+<span class="sig-name descname"><span class="pre">score_min</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_min" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_max">
+<span class="sig-name descname"><span class="pre">score_max</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.score_max" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.sentinel">
+<span class="sig-name descname"><span class="pre">sentinel</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams.sentinel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="module-hipscatalog_gen.pipeline.structure">
 <span id="hipscatalog-gen-pipeline-structure-module"></span><h2>hipscatalog_gen.pipeline.structure module<a class="headerlink" href="#module-hipscatalog_gen.pipeline.structure" title="Link to this heading"></a></h2>
+<p>Pipeline data structures and execution harness.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineStage">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PipelineStage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/structure.html#PipelineStage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineStage" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents a single ordered pipeline step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>fn</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><em>PipelineContext</em></a><em>]</em><em>, </em><a class="reference internal" href="../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><em>PipelineContext</em></a><em> | </em><em>None</em><em>]</em>)</p></li>
+<li><p><strong>diag_label</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineStage.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineStage.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineStage.fn">
+<span class="sig-name descname"><span class="pre">fn</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><span class="pre">PipelineContext</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><span class="pre">PipelineContext</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineStage.fn" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineStage.diag_label">
+<span class="sig-name descname"><span class="pre">diag_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineStage.diag_label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PipelineContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">cfg:</span> <span class="pre">~hipscatalog_gen.config.Config,</span> <span class="pre">out_dir:</span> <span class="pre">~pathlib.Path,</span> <span class="pre">report_dir:</span> <span class="pre">~pathlib.Path,</span> <span class="pre">log_fn:</span> <span class="pre">~typing.Callable[[...],</span> <span class="pre">None],</span> <span class="pre">diag_ctx:</span> <span class="pre">~typing.Callable[[str],</span> <span class="pre">~typing.ContextManager[~typing.Any]],</span> <span class="pre">persist_ddfs:</span> <span class="pre">bool,</span> <span class="pre">avoid_computes:</span> <span class="pre">bool,</span> <span class="pre">selection_mode:</span> <span class="pre">str,</span> <span class="pre">log_ctx:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">ddf:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">RA_NAME:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">DEC_NAME:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">keep_cols:</span> <span class="pre">~typing.List[str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">is_hats:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">paths:</span> <span class="pre">~typing.List[str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">input_total:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">remainder_ddf:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">densmaps:</span> <span class="pre">~typing.Dict[int,</span> <span class="pre">~numpy.ndarray]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">total_written:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">selection_params:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">telemetry:</span> <span class="pre">~typing.Dict[str,</span> <span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/structure.html#PipelineContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PipelineContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_ctx=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ddf=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">RA_NAME=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DEC_NAME=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_cols=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_hats=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">paths=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_total=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remainder_ddf=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densmaps=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_written=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">telemetry=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/structure.html#PipelineContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Shared state passed between pipeline stages.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.DEC_NAME">
-<span class="sig-name descname"><span class="pre">DEC_NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.DEC_NAME" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.RA_NAME">
-<span class="sig-name descname"><span class="pre">RA_NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.RA_NAME" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.avoid_computes">
-<span class="sig-name descname"><span class="pre">avoid_computes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.avoid_computes" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cfg</strong> (<a class="reference internal" href="hipscatalog_gen.html#hipscatalog_gen.config.Config" title="hipscatalog_gen.config.Config"><em>Config</em></a>)</p></li>
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>report_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>log_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p></li>
+<li><p><strong>diag_ctx</strong> (<em>Callable</em><em>[</em><em>[</em><em>str</em><em>]</em><em>, </em><em>ContextManager</em><em>[</em><em>Any</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>persist_ddfs</strong> (<em>bool</em>)</p></li>
+<li><p><strong>avoid_computes</strong> (<em>bool</em>)</p></li>
+<li><p><strong>selection_mode</strong> (<em>str</em>)</p></li>
+<li><p><strong>log_ctx</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ddf</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>RA_NAME</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>DEC_NAME</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>keep_cols</strong> (<em>List</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>is_hats</strong> (<em>bool</em>)</p></li>
+<li><p><strong>paths</strong> (<em>List</em><em>[</em><em>str</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>input_total</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>remainder_ddf</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>densmaps</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>ndarray</em><em>]</em>)</p></li>
+<li><p><strong>total_written</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>selection_params</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>telemetry</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.cfg">
 <span class="sig-name descname"><span class="pre">cfg</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="hipscatalog_gen.html#hipscatalog_gen.config.Config" title="hipscatalog_gen.config.Config"><span class="pre">Config</span></a></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.cfg" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.ddf">
-<span class="sig-name descname"><span class="pre">ddf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.ddf" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.densmaps">
-<span class="sig-name descname"><span class="pre">densmaps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.densmaps" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.diag_ctx">
-<span class="sig-name descname"><span class="pre">diag_ctx</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ContextManager</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.diag_ctx" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.input_total">
-<span class="sig-name descname"><span class="pre">input_total</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.input_total" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.is_hats">
-<span class="sig-name descname"><span class="pre">is_hats</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.is_hats" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.keep_cols">
-<span class="sig-name descname"><span class="pre">keep_cols</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.keep_cols" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.log_ctx">
-<span class="sig-name descname"><span class="pre">log_ctx</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.log_ctx" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.log_fn">
-<span class="sig-name descname"><span class="pre">log_fn</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.log_fn" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -396,8 +607,18 @@ and output options.</p></li>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.paths">
-<span class="sig-name descname"><span class="pre">paths</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.paths" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.report_dir">
+<span class="sig-name descname"><span class="pre">report_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.report_dir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.log_fn">
+<span class="sig-name descname"><span class="pre">log_fn</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.log_fn" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.diag_ctx">
+<span class="sig-name descname"><span class="pre">diag_ctx</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ContextManager</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.diag_ctx" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -406,18 +627,68 @@ and output options.</p></li>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.remainder_ddf">
-<span class="sig-name descname"><span class="pre">remainder_ddf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.remainder_ddf" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.report_dir">
-<span class="sig-name descname"><span class="pre">report_dir</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.report_dir" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.avoid_computes">
+<span class="sig-name descname"><span class="pre">avoid_computes</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.avoid_computes" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.selection_mode">
 <span class="sig-name descname"><span class="pre">selection_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.selection_mode" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.log_ctx">
+<span class="sig-name descname"><span class="pre">log_ctx</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.log_ctx" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.ddf">
+<span class="sig-name descname"><span class="pre">ddf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.ddf" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.RA_NAME">
+<span class="sig-name descname"><span class="pre">RA_NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.RA_NAME" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.DEC_NAME">
+<span class="sig-name descname"><span class="pre">DEC_NAME</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.DEC_NAME" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.keep_cols">
+<span class="sig-name descname"><span class="pre">keep_cols</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.keep_cols" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.is_hats">
+<span class="sig-name descname"><span class="pre">is_hats</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.is_hats" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.paths">
+<span class="sig-name descname"><span class="pre">paths</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.paths" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.input_total">
+<span class="sig-name descname"><span class="pre">input_total</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.input_total" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.remainder_ddf">
+<span class="sig-name descname"><span class="pre">remainder_ddf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.remainder_ddf" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.densmaps">
+<span class="sig-name descname"><span class="pre">densmaps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.densmaps" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.total_written">
+<span class="sig-name descname"><span class="pre">total_written</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.total_written" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -430,87 +701,114 @@ and output options.</p></li>
 <span class="sig-name descname"><span class="pre">telemetry</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.telemetry" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.total_written">
-<span class="sig-name descname"><span class="pre">total_written</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.total_written" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineContext.with_updates">
-<span class="sig-name descname"><span class="pre">with_updates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><span class="pre">PipelineContext</span></a></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/structure.html#PipelineContext.with_updates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.with_updates" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">with_updates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/structure.html#PipelineContext.with_updates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineContext.with_updates" title="Link to this definition"></a></dt>
 <dd><p>Return a new context with updated fields.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><em>PipelineContext</em></a></p>
+</dd>
+</dl>
 </dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineStage">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PipelineStage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><span class="pre">PipelineContext</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><span class="pre">PipelineContext</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/structure.html#PipelineStage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineStage" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Represents a single ordered pipeline step.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineStage.diag_label">
-<span class="sig-name descname"><span class="pre">diag_label</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineStage.diag_label" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineStage.fn">
-<span class="sig-name descname"><span class="pre">fn</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><span class="pre">PipelineContext</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><span class="pre">PipelineContext</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineStage.fn" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.PipelineStage.name">
-<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.PipelineStage.name" title="Link to this definition"></a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.structure.run_stages">
-<span class="sig-name descname"><span class="pre">run_stages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#hipscatalog_gen.pipeline.structure.PipelineStage" title="hipscatalog_gen.pipeline.structure.PipelineStage"><span class="pre">PipelineStage</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><span class="pre">PipelineContext</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><span class="pre">PipelineContext</span></a></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/structure.html#run_stages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.run_stages" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">run_stages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/structure.html#run_stages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.structure.run_stages" title="Link to this definition"></a></dt>
 <dd><p>Execute ordered pipeline stages, threading a context object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stages</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineStage.html#hipscatalog_gen.pipeline.structure.PipelineStage" title="hipscatalog_gen.pipeline.structure.PipelineStage"><em>PipelineStage</em></a><em>]</em>) – Ordered sequence of <code class="docutils literal notranslate"><span class="pre">PipelineStage</span></code> objects.</p></li>
+<li><p><strong>ctx</strong> (<a class="reference internal" href="../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><em>PipelineContext</em></a>) – Initial pipeline context.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Final context returned after the last stage.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext" title="hipscatalog_gen.pipeline.structure.PipelineContext"><em>PipelineContext</em></a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
 <section id="module-hipscatalog_gen.pipeline.validation">
 <span id="hipscatalog-gen-pipeline-validation-module"></span><h2>hipscatalog_gen.pipeline.validation module<a class="headerlink" href="#module-hipscatalog_gen.pipeline.validation" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.validation.validate_common_cfg">
-<span class="sig-name descname"><span class="pre">validate_common_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_common_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_common_cfg" title="Link to this definition"></a></dt>
-<dd><p>Cross-field validation for cluster/output and shared algorithm settings.</p>
-</dd></dl>
-
+<p>Validation helpers for configuration blocks across selection modes.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.validation.validate_mag_global_cfg">
-<span class="sig-name descname"><span class="pre">validate_mag_global_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_mag_global_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_mag_global_cfg" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">validate_mag_global_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_mag_global_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_mag_global_cfg" title="Link to this definition"></a></dt>
 <dd><p>Surface mag_global config issues early.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg">
-<span class="sig-name descname"><span class="pre">validate_score_density_hybrid_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_score_density_hybrid_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg" title="Link to this definition"></a></dt>
-<dd><p>Surface score_density_hybrid config issues early.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.validation.validate_score_global_cfg">
-<span class="sig-name descname"><span class="pre">validate_score_global_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_score_global_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_score_global_cfg" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">validate_score_global_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_score_global_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_score_global_cfg" title="Link to this definition"></a></dt>
 <dd><p>Surface score_global config issues early.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg">
+<span class="sig-name descname"><span class="pre">validate_score_density_hybrid_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_score_density_hybrid_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg" title="Link to this definition"></a></dt>
+<dd><p>Surface score_density_hybrid config issues early.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.validation.validate_common_cfg">
+<span class="sig-name descname"><span class="pre">validate_common_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_common_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_common_cfg" title="Link to this definition"></a></dt>
+<dd><p>Cross-field validation for cluster/output and shared algorithm settings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
 <section id="module-hipscatalog_gen.pipeline">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-hipscatalog_gen.pipeline" title="Link to this heading"></a></h2>
+<p>Pipeline coordination, validation, and logging utilities.</p>
+<p>Imports are kept lazy here to avoid circular imports during documentation builds.</p>
 </section>
 </section>
 
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="hipscatalog_gen.mag_global.html" class="btn btn-neutral float-left" title="hipscatalog_gen.mag_global package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="hipscatalog_gen.selection.html" class="btn btn-neutral float-right" title="hipscatalog_gen.selection package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 

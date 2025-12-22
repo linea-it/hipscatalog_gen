@@ -9,13 +9,13 @@ hipscatalog\_gen.cluster.runtime module
 
 .. automodule:: hipscatalog_gen.cluster.runtime
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: hipscatalog_gen.cluster
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

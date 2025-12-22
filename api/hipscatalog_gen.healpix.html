@@ -22,9 +22,7 @@
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hipscatalog_gen.io package" href="hipscatalog_gen.io.html" />
-    <link rel="prev" title="hipscatalog_gen.cluster package" href="hipscatalog_gen.cluster.html" /> 
+    <link rel="search" title="Search" href="../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,22 +44,9 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="modules.html">hipscatalog_gen</a><ul class="current">
-<li class="toctree-l3 current"><a class="reference internal" href="hipscatalog_gen.html">hipscatalog_gen package</a><ul class="current">
-<li class="toctree-l4 current"><a class="reference internal" href="hipscatalog_gen.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#module-hipscatalog_gen.cli">hipscatalog_gen.cli module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#module-hipscatalog_gen.config">hipscatalog_gen.config module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#module-hipscatalog_gen">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -79,9 +64,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">API Reference</a></li>
-          <li class="breadcrumb-item"><a href="modules.html">hipscatalog_gen</a></li>
-          <li class="breadcrumb-item"><a href="hipscatalog_gen.html">hipscatalog_gen package</a></li>
       <li class="breadcrumb-item active">hipscatalog_gen.healpix package</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -98,29 +80,33 @@
 </section>
 <section id="module-hipscatalog_gen.healpix.densmap">
 <span id="hipscatalog-gen-healpix-densmap-module"></span><h2>hipscatalog_gen.healpix.densmap module<a class="headerlink" href="#module-hipscatalog_gen.healpix.densmap" title="Link to this heading"></a></h2>
+<p>HEALPix pixel computations and density map aggregation.</p>
 <dl class="py function">
-<dt class="sig sig-object py" id="hipscatalog_gen.healpix.densmap.densmap_for_depth">
-<span class="sig-name descname"><span class="pre">densmap_for_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/healpix/densmap.html#densmap_for_depth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.healpix.densmap.densmap_for_depth" title="Link to this definition"></a></dt>
-<dd><p>Compute a HEALPix density map for a given depth immediately.</p>
-<p>This is a simple wrapper around <cite>densmap_for_depth_delayed(…).compute()</cite>.</p>
+<dt class="sig sig-object py" id="hipscatalog_gen.healpix.densmap.ipix_for_depth">
+<span class="sig-name descname"><span class="pre">ipix_for_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ra_deg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_deg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/healpix/densmap.html#ipix_for_depth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.healpix.densmap.ipix_for_depth" title="Link to this definition"></a></dt>
+<dd><p>Return HEALPix NESTED pixel indices for a given depth (order).</p>
+<p>Ensures the return type is always a 1D numpy.ndarray[int64], even if Healpy
+would otherwise return a scalar for scalar inputs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ddf</strong> – Dask-like collection or LSDB catalog.</p></li>
-<li><p><strong>ra_col</strong> – RA column name (degrees).</p></li>
-<li><p><strong>dec_col</strong> – DEC column name (degrees).</p></li>
-<li><p><strong>depth</strong> – HEALPix order (depth).</p></li>
+<li><p><strong>ra_deg</strong> (<em>ndarray</em>) – Right ascension in degrees.</p></li>
+<li><p><strong>dec_deg</strong> (<em>ndarray</em>) – Declination in degrees.</p></li>
+<li><p><strong>depth</strong> (<em>int</em>) – HEALPix order (depth).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Numpy array with counts per pixel.</p>
+<dd class="field-even"><p>Numpy array (1D) with NESTED pixel indices (dtype=int64).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>ndarray</em>[tuple[<em>Any</em>, …], <em>dtype</em>[<em>int64</em>]]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.healpix.densmap.densmap_for_depth_delayed">
-<span class="sig-name descname"><span class="pre">densmap_for_depth_delayed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/healpix/densmap.html#densmap_for_depth_delayed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.healpix.densmap.densmap_for_depth_delayed" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">densmap_for_depth_delayed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/healpix/densmap.html#densmap_for_depth_delayed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.healpix.densmap.densmap_for_depth_delayed" title="Link to this definition"></a></dt>
 <dd><p>Build a delayed HEALPix density map at a given depth.</p>
 <p>For HATS/LSDB catalogs with a HEALPix nested index named “_healpix_&lt;order&gt;”,
 the density map is derived by bit-shifting that index to the requested
@@ -128,10 +114,10 @@ depth. For other inputs, pixel indices are computed from RA/DEC.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ddf</strong> – Dask-like collection or LSDB catalog.</p></li>
-<li><p><strong>ra_col</strong> – RA column name (degrees).</p></li>
-<li><p><strong>dec_col</strong> – DEC column name (degrees).</p></li>
-<li><p><strong>depth</strong> – HEALPix order (depth).</p></li>
+<li><p><strong>ddf</strong> (<em>Any</em>) – Dask-like collection or LSDB catalog.</p></li>
+<li><p><strong>ra_col</strong> (<em>str</em>) – RA column name (degrees).</p></li>
+<li><p><strong>dec_col</strong> (<em>str</em>) – DEC column name (degrees).</p></li>
+<li><p><strong>depth</strong> (<em>int</em>) – HEALPix order (depth).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -141,21 +127,24 @@ depth. For other inputs, pixel indices are computed from RA/DEC.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="hipscatalog_gen.healpix.densmap.ipix_for_depth">
-<span class="sig-name descname"><span class="pre">ipix_for_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ra_deg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_deg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">int64</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/healpix/densmap.html#ipix_for_depth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.healpix.densmap.ipix_for_depth" title="Link to this definition"></a></dt>
-<dd><p>Return HEALPix NESTED pixel indices for a given depth (order).</p>
-<p>Ensures the return type is always a 1D numpy.ndarray[int64], even if Healpy
-would otherwise return a scalar for scalar inputs.</p>
+<dt class="sig sig-object py" id="hipscatalog_gen.healpix.densmap.densmap_for_depth">
+<span class="sig-name descname"><span class="pre">densmap_for_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/healpix/densmap.html#densmap_for_depth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.healpix.densmap.densmap_for_depth" title="Link to this definition"></a></dt>
+<dd><p>Compute a HEALPix density map for a given depth immediately.</p>
+<p>This is a simple wrapper around <cite>densmap_for_depth_delayed(…).compute()</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ra_deg</strong> – Right ascension in degrees.</p></li>
-<li><p><strong>dec_deg</strong> – Declination in degrees.</p></li>
-<li><p><strong>depth</strong> – HEALPix order (depth).</p></li>
+<li><p><strong>ddf</strong> (<em>Any</em>) – Dask-like collection or LSDB catalog.</p></li>
+<li><p><strong>ra_col</strong> (<em>str</em>) – RA column name (degrees).</p></li>
+<li><p><strong>dec_col</strong> (<em>str</em>) – DEC column name (degrees).</p></li>
+<li><p><strong>depth</strong> (<em>int</em>) – HEALPix order (depth).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Numpy array (1D) with NESTED pixel indices (dtype=int64).</p>
+<dd class="field-even"><p>Numpy array with counts per pixel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>ndarray</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -163,16 +152,82 @@ would otherwise return a scalar for scalar inputs.</p>
 </section>
 <section id="module-hipscatalog_gen.healpix">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-hipscatalog_gen.healpix" title="Link to this heading"></a></h2>
+<p>HEALPix helpers and density map utilities.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.healpix.densmap_for_depth">
+<span class="sig-name descname"><span class="pre">densmap_for_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/healpix/densmap.html#densmap_for_depth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.healpix.densmap_for_depth" title="Link to this definition"></a></dt>
+<dd><p>Compute a HEALPix density map for a given depth immediately.</p>
+<p>This is a simple wrapper around <cite>densmap_for_depth_delayed(…).compute()</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ddf</strong> (<em>Any</em>) – Dask-like collection or LSDB catalog.</p></li>
+<li><p><strong>ra_col</strong> (<em>str</em>) – RA column name (degrees).</p></li>
+<li><p><strong>dec_col</strong> (<em>str</em>) – DEC column name (degrees).</p></li>
+<li><p><strong>depth</strong> (<em>int</em>) – HEALPix order (depth).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Numpy array with counts per pixel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.healpix.densmap_for_depth_delayed">
+<span class="sig-name descname"><span class="pre">densmap_for_depth_delayed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/healpix/densmap.html#densmap_for_depth_delayed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.healpix.densmap_for_depth_delayed" title="Link to this definition"></a></dt>
+<dd><p>Build a delayed HEALPix density map at a given depth.</p>
+<p>For HATS/LSDB catalogs with a HEALPix nested index named “_healpix_&lt;order&gt;”,
+the density map is derived by bit-shifting that index to the requested
+depth. For other inputs, pixel indices are computed from RA/DEC.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ddf</strong> (<em>Any</em>) – Dask-like collection or LSDB catalog.</p></li>
+<li><p><strong>ra_col</strong> (<em>str</em>) – RA column name (degrees).</p></li>
+<li><p><strong>dec_col</strong> (<em>str</em>) – DEC column name (degrees).</p></li>
+<li><p><strong>depth</strong> (<em>int</em>) – HEALPix order (depth).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dask delayed object that evaluates to a 1D numpy array of counts.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.healpix.ipix_for_depth">
+<span class="sig-name descname"><span class="pre">ipix_for_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ra_deg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_deg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/healpix/densmap.html#ipix_for_depth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.healpix.ipix_for_depth" title="Link to this definition"></a></dt>
+<dd><p>Return HEALPix NESTED pixel indices for a given depth (order).</p>
+<p>Ensures the return type is always a 1D numpy.ndarray[int64], even if Healpy
+would otherwise return a scalar for scalar inputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ra_deg</strong> (<em>ndarray</em>) – Right ascension in degrees.</p></li>
+<li><p><strong>dec_deg</strong> (<em>ndarray</em>) – Declination in degrees.</p></li>
+<li><p><strong>depth</strong> (<em>int</em>) – HEALPix order (depth).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Numpy array (1D) with NESTED pixel indices (dtype=int64).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>ndarray</em>[tuple[<em>Any</em>, …], <em>dtype</em>[<em>int64</em>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="hipscatalog_gen.cluster.html" class="btn btn-neutral float-left" title="hipscatalog_gen.cluster package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="hipscatalog_gen.io.html" class="btn btn-neutral float-right" title="hipscatalog_gen.io package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 

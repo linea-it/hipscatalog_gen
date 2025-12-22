@@ -45,7 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -75,7 +75,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.cluster.runtime</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Dask cluster setup and teardown utilities.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">nullcontext</span><span class="p">,</span> <span class="n">suppress</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
@@ -108,7 +110,7 @@
 
 
 <div class="viewcode-block" id="ClusterRuntime">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/cluster/hipscatalog_gen.cluster.runtime.ClusterRuntime.html#hipscatalog_gen.cluster.runtime.ClusterRuntime">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClusterRuntime</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Runtime handles for the Dask cluster.&quot;&quot;&quot;</span>
@@ -122,7 +124,7 @@
 
 
 <div class="viewcode-block" id="setup_cluster">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.setup_cluster">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/cluster/hipscatalog_gen.cluster.runtime.setup_cluster.html#hipscatalog_gen.cluster.runtime.setup_cluster">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">setup_cluster</span><span class="p">(</span>
     <span class="n">cfg</span><span class="p">:</span> <span class="n">ClusterCfg</span><span class="p">,</span>
     <span class="n">report_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
@@ -130,15 +132,8 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ClusterRuntime</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">ContextManager</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create and configure the Dask cluster and diagnostics context.</span>
 
-<span class="sd">    Cluster selection rules:</span>
-
-<span class="sd">    - ``mode=&quot;local&quot;`` uses ``LocalCluster``.</span>
-<span class="sd">    - ``mode=&quot;slurm&quot;`` uses ``SLURMCluster`` (when available).</span>
-<span class="sd">    - Logs dashboard URL and memory/compute policy.</span>
-<span class="sd">    - Wires diagnostics mode for performance reports.</span>
-
 <span class="sd">    Args:</span>
-<span class="sd">        cfg: Cluster configuration.</span>
+<span class="sd">        cfg: Cluster configuration (local or SLURM) with worker counts and memory limits.</span>
 <span class="sd">        report_dir: Directory where per-step diagnostics reports are written.</span>
 <span class="sd">        log_fn: Logging callback ``(message, always)``.</span>
 
@@ -146,9 +141,12 @@
 <span class="sd">        Tuple[ClusterRuntime, Callable[[str], ContextManager[Any]]]: A pair</span>
 <span class="sd">        ``(runtime, diag_ctx_factory)``, where:</span>
 
-<span class="sd">        - ``runtime``: ClusterRuntime with cluster/client and flags.</span>
-<span class="sd">        - ``diag_ctx_factory``: function ``label -&gt; context manager`` used as</span>
+<span class="sd">        - ``runtime``: ``ClusterRuntime`` with cluster/client handles and flags.</span>
+<span class="sd">        - ``diag_ctx_factory``: callable ``label -&gt; context manager`` used as</span>
 <span class="sd">          ``with diag_ctx_factory(&quot;step_name&quot;):`` around pipeline steps.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        AssertionError: If ``mode=&#39;slurm&#39;`` is set but ``dask-jobqueue`` is not available.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Cluster creation (local or SLURM)</span>
@@ -236,7 +234,7 @@
 
 
 <div class="viewcode-block" id="shutdown_cluster">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.shutdown_cluster">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/cluster/hipscatalog_gen.cluster.runtime.shutdown_cluster.html#hipscatalog_gen.cluster.runtime.shutdown_cluster">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">shutdown_cluster</span><span class="p">(</span><span class="n">runtime</span><span class="p">:</span> <span class="n">ClusterRuntime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Gracefully close client and cluster.</span>
 

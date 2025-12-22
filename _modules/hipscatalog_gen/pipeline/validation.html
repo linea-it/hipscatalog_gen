@@ -45,7 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -75,7 +75,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.pipeline.validation</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Validation helpers for configuration blocks across selection modes.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
@@ -94,7 +96,7 @@
 
 
 <div class="viewcode-block" id="validate_mag_global_cfg">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_mag_global_cfg">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.validation.validate_mag_global_cfg.html#hipscatalog_gen.pipeline.validation.validate_mag_global_cfg">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_mag_global_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Surface mag_global config issues early.&quot;&quot;&quot;</span>
     <span class="n">algo</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span>
@@ -111,7 +113,7 @@
 
 
 <div class="viewcode-block" id="validate_score_global_cfg">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_score_global_cfg">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.validation.validate_score_global_cfg.html#hipscatalog_gen.pipeline.validation.validate_score_global_cfg">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_score_global_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Surface score_global config issues early.&quot;&quot;&quot;</span>
     <span class="n">algo</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span>
@@ -124,7 +126,7 @@
 
 
 <div class="viewcode-block" id="validate_score_density_hybrid_cfg">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg.html#hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_score_density_hybrid_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Surface score_density_hybrid config issues early.&quot;&quot;&quot;</span>
     <span class="n">algo</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span>
@@ -138,7 +140,7 @@
 
 
 <div class="viewcode-block" id="validate_common_cfg">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.validation.validate_common_cfg">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.validation.validate_common_cfg.html#hipscatalog_gen.pipeline.validation.validate_common_cfg">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_common_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Cross-field validation for cluster/output and shared algorithm settings.&quot;&quot;&quot;</span>
     <span class="n">algo</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span>

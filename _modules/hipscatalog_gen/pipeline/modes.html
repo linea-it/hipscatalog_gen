@@ -45,7 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -75,7 +75,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.pipeline.modes</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Registry of selection modes and helpers to resolve them by name.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
@@ -104,7 +106,7 @@
 
 
 <div class="viewcode-block" id="SelectionMode">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.modes.SelectionMode.html#hipscatalog_gen.pipeline.modes.SelectionMode">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SelectionMode</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Registry entry for a selection mode.&quot;&quot;&quot;</span>
@@ -147,9 +149,19 @@
 
 
 <div class="viewcode-block" id="get_selection_mode">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.get_selection_mode">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.modes.get_selection_mode.html#hipscatalog_gen.pipeline.modes.get_selection_mode">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_selection_mode</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SelectionMode</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a selection mode entry, raising on unsupported names.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a selection mode entry, raising on unsupported names.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: Selection mode identifier (e.g., ``mag_global``).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``SelectionMode`` instance with validators and handlers.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the name is not registered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">MODE_REGISTRY</span><span class="p">:</span>
         <span class="n">opts</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">MODE_REGISTRY</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>

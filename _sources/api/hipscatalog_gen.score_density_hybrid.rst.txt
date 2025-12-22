@@ -9,13 +9,13 @@ hipscatalog\_gen.score\_density\_hybrid.pipeline module
 
 .. automodule:: hipscatalog_gen.score_density_hybrid.pipeline
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: hipscatalog_gen.score_density_hybrid
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

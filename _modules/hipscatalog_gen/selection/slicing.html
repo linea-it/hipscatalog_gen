@@ -45,7 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -75,7 +75,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.selection.slicing</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Slice selections by value or score with HEALPix-aware ordering.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span>
@@ -94,7 +96,7 @@
 
 
 <div class="viewcode-block" id="select_by_value_slices">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.slicing.select_by_value_slices">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/selection/hipscatalog_gen.selection.select_by_value_slices.html#hipscatalog_gen.selection.slicing.select_by_value_slices">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_by_value_slices</span><span class="p">(</span>
     <span class="n">remainder_ddf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">densmaps</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
@@ -264,7 +266,7 @@
 
 
 <div class="viewcode-block" id="select_by_score_slices">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.slicing.select_by_score_slices">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/selection/hipscatalog_gen.selection.select_by_score_slices.html#hipscatalog_gen.selection.slicing.select_by_score_slices">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_by_score_slices</span><span class="p">(</span>
     <span class="n">remainder_ddf</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">densmaps</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>

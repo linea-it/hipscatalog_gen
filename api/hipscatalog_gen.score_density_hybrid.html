@@ -22,9 +22,7 @@
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="hipscatalog_gen.score_global package" href="hipscatalog_gen.score_global.html" />
-    <link rel="prev" title="hipscatalog_gen.selection package" href="hipscatalog_gen.selection.html" /> 
+    <link rel="search" title="Search" href="../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,22 +44,9 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="modules.html">hipscatalog_gen</a><ul class="current">
-<li class="toctree-l3 current"><a class="reference internal" href="hipscatalog_gen.html">hipscatalog_gen package</a><ul class="current">
-<li class="toctree-l4 current"><a class="reference internal" href="hipscatalog_gen.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#module-hipscatalog_gen.cli">hipscatalog_gen.cli module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#module-hipscatalog_gen.config">hipscatalog_gen.config module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.html#module-hipscatalog_gen">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -79,9 +64,6 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="index.html">API Reference</a></li>
-          <li class="breadcrumb-item"><a href="modules.html">hipscatalog_gen</a></li>
-          <li class="breadcrumb-item"><a href="hipscatalog_gen.html">hipscatalog_gen package</a></li>
       <li class="breadcrumb-item active">hipscatalog_gen.score_density_hybrid package</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -98,22 +80,80 @@
 </section>
 <section id="module-hipscatalog_gen.score_density_hybrid.pipeline">
 <span id="hipscatalog-gen-score-density-hybrid-pipeline-module"></span><h2>hipscatalog_gen.score_density_hybrid.pipeline module<a class="headerlink" href="#module-hipscatalog_gen.score_density_hybrid.pipeline" title="Link to this heading"></a></h2>
+<p>Hybrid density-first then score-based selection pipeline.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.score_density_hybrid.pipeline.normalize_score_density_hybrid">
-<span class="sig-name descname"><span class="pre">normalize_score_density_hybrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><span class="pre">ScoreDensityHybridParams</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#normalize_score_density_hybrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.pipeline.normalize_score_density_hybrid" title="Link to this definition"></a></dt>
-<dd><p>Add __score__ column and compute window without mutating cfg.</p>
+<span class="sig-name descname"><span class="pre">normalize_score_density_hybrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#normalize_score_density_hybrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.pipeline.normalize_score_density_hybrid" title="Link to this definition"></a></dt>
+<dd><p>Add <code class="docutils literal notranslate"><span class="pre">__score__</span></code> column and compute window without mutating cfg.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ddf</strong> (<em>Any</em>) – Dask-like collection with score columns or expressions.</p></li>
+<li><p><strong>cfg</strong> (<em>Any</em>) – Parsed configuration object.</p></li>
+<li><p><strong>diag_ctx</strong> – Diagnostics context factory.</p></li>
+<li><p><strong>log_fn</strong> – Logging callback.</p></li>
+<li><p><strong>persist_ddfs</strong> (<em>bool</em>) – Whether to persist intermediate DDFs.</p></li>
+<li><p><strong>avoid_computes</strong> (<em>bool</em>) – Whether to avoid explicit <code class="docutils literal notranslate"><span class="pre">compute()</span></code> calls when possible.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple <code class="docutils literal notranslate"><span class="pre">(ddf_with_score,</span> <span class="pre">ScoreDensityHybridParams)</span></code>.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the score expression/configuration is invalid.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple[<em>Any</em>, <a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><em>ScoreDensityHybridParams</em></a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.score_density_hybrid.pipeline.prepare_score_density_hybrid">
-<span class="sig-name descname"><span class="pre">prepare_score_density_hybrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><span class="pre">ScoreDensityHybridParams</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#prepare_score_density_hybrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.pipeline.prepare_score_density_hybrid" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">prepare_score_density_hybrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#prepare_score_density_hybrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.pipeline.prepare_score_density_hybrid" title="Link to this definition"></a></dt>
 <dd><p>Restrict to a score window using pre-computed params.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ddf</strong> (<em>Any</em>) – Dask-like collection with <code class="docutils literal notranslate"><span class="pre">__score__</span></code> already attached.</p></li>
+<li><p><strong>cfg</strong> (<em>Any</em>) – Parsed configuration object.</p></li>
+<li><p><strong>diag_ctx</strong> – Diagnostics context factory.</p></li>
+<li><p><strong>log_fn</strong> – Logging callback.</p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><em>ScoreDensityHybridParams</em></a>) – Resolved score parameters.</p></li>
+<li><p><strong>persist_ddfs</strong> (<em>bool</em>) – Whether to persist the filtered DDF.</p></li>
+<li><p><strong>avoid_computes</strong> (<em>bool</em>) – Whether to avoid explicit <code class="docutils literal notranslate"><span class="pre">compute()</span></code> calls when possible.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dask-like collection filtered to the score window with unique IDs attached.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.score_density_hybrid.pipeline.run_score_density_hybrid_selection">
-<span class="sig-name descname"><span class="pre">run_score_density_hybrid_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remainder_ddf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densmaps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_cols</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><span class="pre">ScoreDensityHybridParams</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#run_score_density_hybrid_selection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.pipeline.run_score_density_hybrid_selection" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">run_score_density_hybrid_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remainder_ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densmaps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#run_score_density_hybrid_selection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.pipeline.run_score_density_hybrid_selection" title="Link to this definition"></a></dt>
 <dd><p>Execute the score_density_hybrid selection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>remainder_ddf</strong> (<em>Any</em>) – Dask-like collection after pre-filtering.</p></li>
+<li><p><strong>densmaps</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>ndarray</em><em>]</em>) – Mapping depth -&gt; densmap counts.</p></li>
+<li><p><strong>keep_cols</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Ordered list of columns to keep in tiles.</p></li>
+<li><p><strong>ra_col</strong> (<em>str</em>) – Name of the RA column.</p></li>
+<li><p><strong>dec_col</strong> (<em>str</em>) – Name of the DEC column.</p></li>
+<li><p><strong>cfg</strong> (<em>Any</em>) – Parsed configuration object.</p></li>
+<li><p><strong>out_dir</strong> – Output directory for HiPS tiles.</p></li>
+<li><p><strong>diag_ctx</strong> – Diagnostics context factory.</p></li>
+<li><p><strong>log_fn</strong> – Logging callback.</p></li>
+<li><p><strong>avoid_computes</strong> (<em>bool</em>) – Whether to avoid explicit <code class="docutils literal notranslate"><span class="pre">compute()</span></code> calls when possible.</p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><em>ScoreDensityHybridParams</em></a><em> | </em><em>None</em>) – Resolved score parameters (required).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -122,14 +162,50 @@
 <p>Hybrid score + density selection mode.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.score_density_hybrid.prepare_score_density_hybrid">
-<span class="sig-name descname"><span class="pre">prepare_score_density_hybrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><span class="pre">ScoreDensityHybridParams</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#prepare_score_density_hybrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.prepare_score_density_hybrid" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">prepare_score_density_hybrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#prepare_score_density_hybrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.prepare_score_density_hybrid" title="Link to this definition"></a></dt>
 <dd><p>Restrict to a score window using pre-computed params.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ddf</strong> (<em>Any</em>) – Dask-like collection with <code class="docutils literal notranslate"><span class="pre">__score__</span></code> already attached.</p></li>
+<li><p><strong>cfg</strong> (<em>Any</em>) – Parsed configuration object.</p></li>
+<li><p><strong>diag_ctx</strong> – Diagnostics context factory.</p></li>
+<li><p><strong>log_fn</strong> – Logging callback.</p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><em>ScoreDensityHybridParams</em></a>) – Resolved score parameters.</p></li>
+<li><p><strong>persist_ddfs</strong> (<em>bool</em>) – Whether to persist the filtered DDF.</p></li>
+<li><p><strong>avoid_computes</strong> (<em>bool</em>) – Whether to avoid explicit <code class="docutils literal notranslate"><span class="pre">compute()</span></code> calls when possible.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dask-like collection filtered to the score window with unique IDs attached.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.score_density_hybrid.run_score_density_hybrid_selection">
-<span class="sig-name descname"><span class="pre">run_score_density_hybrid_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remainder_ddf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densmaps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_cols</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><span class="pre">ScoreDensityHybridParams</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#run_score_density_hybrid_selection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.run_score_density_hybrid_selection" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">run_score_density_hybrid_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remainder_ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densmaps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/score_density_hybrid/pipeline.html#run_score_density_hybrid_selection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.score_density_hybrid.run_score_density_hybrid_selection" title="Link to this definition"></a></dt>
 <dd><p>Execute the score_density_hybrid selection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>remainder_ddf</strong> (<em>Any</em>) – Dask-like collection after pre-filtering.</p></li>
+<li><p><strong>densmaps</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>ndarray</em><em>]</em>) – Mapping depth -&gt; densmap counts.</p></li>
+<li><p><strong>keep_cols</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Ordered list of columns to keep in tiles.</p></li>
+<li><p><strong>ra_col</strong> (<em>str</em>) – Name of the RA column.</p></li>
+<li><p><strong>dec_col</strong> (<em>str</em>) – Name of the DEC column.</p></li>
+<li><p><strong>cfg</strong> (<em>Any</em>) – Parsed configuration object.</p></li>
+<li><p><strong>out_dir</strong> – Output directory for HiPS tiles.</p></li>
+<li><p><strong>diag_ctx</strong> – Diagnostics context factory.</p></li>
+<li><p><strong>log_fn</strong> – Logging callback.</p></li>
+<li><p><strong>avoid_computes</strong> (<em>bool</em>) – Whether to avoid explicit <code class="docutils literal notranslate"><span class="pre">compute()</span></code> calls when possible.</p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.ScoreDensityHybridParams" title="hipscatalog_gen.pipeline.params.ScoreDensityHybridParams"><em>ScoreDensityHybridParams</em></a><em> | </em><em>None</em>) – Resolved score parameters (required).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -138,10 +214,7 @@
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="hipscatalog_gen.selection.html" class="btn btn-neutral float-left" title="hipscatalog_gen.selection package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="hipscatalog_gen.score_global.html" class="btn btn-neutral float-right" title="hipscatalog_gen.score_global package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 

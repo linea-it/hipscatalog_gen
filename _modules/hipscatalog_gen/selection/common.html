@@ -45,7 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -75,7 +75,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.selection.common</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Shared selection utilities for HEALPix-aware slicing.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
 
@@ -89,7 +91,7 @@
 
 
 <div class="viewcode-block" id="targets_per_tile">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.common.targets_per_tile">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/selection/hipscatalog_gen.selection.targets_per_tile.html#hipscatalog_gen.selection.common.targets_per_tile">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">targets_per_tile</span><span class="p">(</span><span class="n">counts_depth</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">depth_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bias</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Distribute depth_total across active tiles with optional density bias.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">depth_total</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
@@ -123,7 +125,7 @@
 
 
 <div class="viewcode-block" id="reduce_topk_by_group_dask">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.common.reduce_topk_by_group_dask">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/selection/hipscatalog_gen.selection.reduce_topk_by_group_dask.html#hipscatalog_gen.selection.common.reduce_topk_by_group_dask">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">reduce_topk_by_group_dask</span><span class="p">(</span>
     <span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">group_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -143,6 +145,7 @@
     <span class="n">k_map</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">k_per_group</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_take_topk</span><span class="p">(</span><span class="n">group</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Select the top-k rows for a single group.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">group</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">group</span>
         <span class="n">g_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="n">group_col</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -176,7 +179,7 @@
 
 
 <div class="viewcode-block" id="add_ipix_column">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.common.add_ipix_column">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/selection/hipscatalog_gen.selection.add_ipix_column.html#hipscatalog_gen.selection.common.add_ipix_column">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">add_ipix_column</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">ra_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dec_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Attach __ipix__ for a given depth.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>

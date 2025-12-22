@@ -1,0 +1,567 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hipscatalog_gen.utils &mdash; hipscatalog-gen 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=d07363f3"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hipscatalog-gen
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference/index.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks.html">Notebooks</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hipscatalog-gen</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../hipscatalog_gen.html">hipscatalog_gen</a></li>
+      <li class="breadcrumb-item active">hipscatalog_gen.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hipscatalog_gen.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Shared utilities reused across the hipscatalog-gen pipeline.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dask.dataframe</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dask</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute</span> <span class="k">as</span> <span class="n">dask_compute</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;_mkdirs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_write_text&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_detect_hats_catalog_root&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_now_str&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_ts&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_fmt_dur&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_stats_counts&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_log_depth_stats&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_ID_RE&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_HEALPIX_INDEX_RE&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_score_deps&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_resolve_col_name&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_get_dask_base&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_get_meta_df&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;_validate_and_normalize_radec&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Filesystem and simple logging helpers</span>
+<span class="c1"># =============================================================================</span>
+
+
+<div class="viewcode-block" id="_mkdirs">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._mkdirs.html#hipscatalog_gen.utils._mkdirs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_mkdirs</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create directory and parents if they do not exist.&quot;&quot;&quot;</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_write_text">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._write_text.html#hipscatalog_gen.utils._write_text">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_text</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write UTF-8 text to file.&quot;&quot;&quot;</span>
+    <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="_detect_hats_catalog_root">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._detect_hats_catalog_root.html#hipscatalog_gen.utils._detect_hats_catalog_root">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_detect_hats_catalog_root</span><span class="p">(</span><span class="n">paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Best-effort detection of a HATS catalog root directory.</span>
+
+<span class="sd">    Strategy:</span>
+<span class="sd">        For each path, walk up its parents looking for</span>
+<span class="sd">        &#39;collection.properties&#39; or &#39;hats.properties&#39;. The first match is</span>
+<span class="sd">        returned as the catalog root.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        paths: List of input paths (files or directories).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Catalog root path if found, otherwise None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">marker_names</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;collection.properties&quot;</span><span class="p">,</span> <span class="s2">&quot;hats.properties&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+
+        <span class="c1"># If this is a file, scan its parents; if it&#39;s a directory, include it.</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cur</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span> <span class="k">if</span> <span class="n">cur</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="k">else</span> <span class="p">[</span><span class="n">cur</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">cur</span><span class="o">.</span><span class="n">parents</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">marker_names</span><span class="p">:</span>
+                <span class="n">candidate</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">name</span>
+                <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="n">root</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="_now_str">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._now_str.html#hipscatalog_gen.utils._now_str">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_now_str</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return current UTC time in HiPS-friendly ISO 8601 format.</span>
+
+<span class="sd">    Format is YYYY-mm-ddTHH:MMZ, always in UTC.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%MZ&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">gmtime</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="_ts">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._ts.html#hipscatalog_gen.utils._ts">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_ts</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return local timestamp string for logging.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="_fmt_dur">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._fmt_dur.html#hipscatalog_gen.utils._fmt_dur">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_fmt_dur</span><span class="p">(</span><span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a duration in seconds as HH:MM:SS.mmm.&quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">((</span><span class="n">seconds</span> <span class="o">-</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">))</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">rem</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="mi">3600</span><span class="p">)</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">rem</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">h</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">m</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">ms</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Small numeric and logging utilities</span>
+<span class="c1"># =============================================================================</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_stats_counts</span><span class="p">(</span><span class="n">counts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return (total_rows, non_empty_pixels) for a densmap vector.&quot;&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="n">nonempty</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">counts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">total</span><span class="p">,</span> <span class="n">nonempty</span>
+
+
+<div class="viewcode-block" id="_log_depth_stats">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._log_depth_stats.html#hipscatalog_gen.utils._log_depth_stats">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_log_depth_stats</span><span class="p">(</span>
+    <span class="n">_log_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">phase</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">candidates_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">selected_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">written</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">remainder_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log a compact one-line summary for a depth and pipeline phase.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        _log_fn: Logger callable receiving (message, always_flag).</span>
+<span class="sd">        depth: HiPS depth (order).</span>
+<span class="sd">        phase: Phase label (&quot;start&quot;, &quot;candidates&quot;, &quot;selected&quot;, etc.).</span>
+<span class="sd">        counts: Optional densmap counts array.</span>
+<span class="sd">        candidates_len: Optional number of candidate rows.</span>
+<span class="sd">        selected_len: Optional number of selected rows.</span>
+<span class="sd">        written: Optional mapping tile_index -&gt; rows_written.</span>
+<span class="sd">        remainder_len: Optional number of remainder rows.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">counts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tot</span><span class="p">,</span> <span class="n">nz</span> <span class="o">=</span> <span class="n">_stats_counts</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;input_rows=</span><span class="si">{</span><span class="n">tot</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;non_empty_pixels=</span><span class="si">{</span><span class="n">nz</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">candidates_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;candidates=</span><span class="si">{</span><span class="n">candidates_len</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">selected_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;selected=</span><span class="si">{</span><span class="n">selected_len</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">written</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rows_written</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">written</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span> <span class="k">if</span> <span class="n">written</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">tiles_written</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">written</span><span class="p">))</span> <span class="k">if</span> <span class="n">written</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;tiles_written=</span><span class="si">{</span><span class="n">tiles_written</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;rows_written=</span><span class="si">{</span><span class="n">rows_written</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">remainder_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;remainder=</span><span class="si">{</span><span class="n">remainder_len</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">_log_fn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">: &quot;</span> <span class="o">+</span> <span class="s2">&quot;; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">),</span> <span class="kc">True</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Dask/LSDB base resolution</span>
+<span class="c1"># =============================================================================</span>
+
+
+<div class="viewcode-block" id="_get_dask_base">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._get_dask_base.html#hipscatalog_gen.utils._get_dask_base">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_dask_base</span><span class="p">(</span>
+    <span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">require_groupby</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">require_map_partitions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">require_to_delayed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prefer public Dask-like interfaces; fall back to LSDB ._ddf only when needed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ddf_like: Dask-like object or LSDB catalog.</span>
+<span class="sd">        require_groupby: Require a ``groupby`` attribute.</span>
+<span class="sd">        require_map_partitions: Require a ``map_partitions`` attribute.</span>
+<span class="sd">        require_to_delayed: Require a ``to_delayed`` attribute.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The same object if it already satisfies the required interface, otherwise</span>
+<span class="sd">        its underlying Dask DataFrame when dealing with LSDB catalogs.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        TypeError: If the object (or its LSDB base) does not expose the required methods.</span>
+<span class="sd">        TypeError: If an LSDB catalog lacks the ``_ddf`` attribute.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_has_required</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check that obj exposes all required dask-like methods.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">require_groupby</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;groupby&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">require_map_partitions</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;map_partitions&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">require_to_delayed</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;to_delayed&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1"># If nothing explicitly required, accept any of the common dask-like methods.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">require_groupby</span> <span class="ow">or</span> <span class="n">require_map_partitions</span> <span class="ow">or</span> <span class="n">require_to_delayed</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;groupby&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;map_partitions&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;to_delayed&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">lsdb.catalog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Catalog</span> <span class="k">as</span> <span class="n">LsdbCatalog</span>  <span class="c1"># type: ignore</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover - lsdb optional</span>
+        <span class="n">LsdbCatalog</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">if</span> <span class="n">_has_required</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ddf_like</span>
+
+    <span class="c1"># For LSDB catalogs without public Dask-like methods, fall back to the underlying Dask DataFrame.</span>
+    <span class="k">if</span> <span class="n">LsdbCatalog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="n">LsdbCatalog</span><span class="p">):</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">&quot;_ddf&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;LSDB catalog missing _ddf attribute; cannot extract Dask base.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_has_required</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">base</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;LSDB catalog _ddf does not expose required dask-like methods.&quot;</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Object is not Dask-like (missing groupby/map_partitions/to_delayed).&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Score dependency extraction and column resolution</span>
+<span class="c1"># =============================================================================</span>
+
+<span class="n">_ID_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[A-Za-z_]\w*&quot;</span><span class="p">)</span>
+<span class="n">_HEALPIX_INDEX_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;_healpix_(\d+)$&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="_score_deps">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._score_deps.html#hipscatalog_gen.utils._score_deps">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_score_deps</span><span class="p">(</span><span class="n">score_expr</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">available</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return column names referenced in a score expression.</span>
+
+<span class="sd">    Only identifiers that exist in `available` are kept.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        score_expr: Score expression string.</span>
+<span class="sd">        available: List of available column names.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of column names used in the expression.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">score_expr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_ID_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">score_expr</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">available</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="_resolve_col_name">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._resolve_col_name.html#hipscatalog_gen.utils._resolve_col_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_col_name</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ddf</span><span class="p">:</span> <span class="n">dd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">header</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve a column spec that can be a name or 1-based index.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        spec: Column name or 1-based index as string.</span>
+<span class="sd">        ddf: Dask DataFrame used to resolve columns.</span>
+<span class="sd">        header: Whether input has a header row.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Resolved column name.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        KeyError: If the column is not found.</span>
+<span class="sd">        IndexError: If a numeric index is out of range.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">header</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">spec</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ddf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Column &#39;</span><span class="si">{</span><span class="n">spec</span><span class="si">}</span><span class="s2">&#39; not found in input.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">spec</span>
+
+    <span class="c1"># header == False → allow numeric indices (1-based)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">idx_1based</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">idx_1based</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ddf</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Column index </span><span class="si">{</span><span class="n">idx_1based</span><span class="si">}</span><span class="s2"> out of range (1..</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cols</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">spec</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ddf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Column &#39;</span><span class="si">{</span><span class="n">spec</span><span class="si">}</span><span class="s2">&#39; not found (header=False).&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+        <span class="k">return</span> <span class="n">spec</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Metadata extraction for Dask/LSDB collections</span>
+<span class="c1"># =============================================================================</span>
+
+
+<div class="viewcode-block" id="_get_meta_df">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._get_meta_df.html#hipscatalog_gen.utils._get_meta_df">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_meta_df</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an empty DataFrame with same columns/dtypes as a collection.</span>
+
+<span class="sd">    Supports plain Dask DataFrames and LSDB catalogs.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ddf_like: Dask-like collection or LSDB catalog.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Empty pandas.DataFrame with the same schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">_get_dask_base</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_as_pandas_df</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert meta-like objects (including NestedFrame) to pandas.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">obj</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;to_pandas&quot;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">candidate</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">candidate</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s2">&quot;_meta&quot;</span><span class="p">):</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">_meta</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">meta_pdf</span> <span class="o">=</span> <span class="n">_as_pandas_df</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">meta_pdf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">meta_pdf</span>
+
+    <span class="c1"># Fallback: try .head(0)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">head0</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">meta_pdf</span> <span class="o">=</span> <span class="n">_as_pandas_df</span><span class="p">(</span><span class="n">head0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">meta_pdf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">meta_pdf</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># Last resort: empty DataFrame</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># RA/DEC validation and normalization</span>
+<span class="c1"># =============================================================================</span>
+
+
+<div class="viewcode-block" id="_validate_and_normalize_radec">
+<a class="viewcode-back" href="../../reference/generated/utils/hipscatalog_gen.utils._validate_and_normalize_radec.html#hipscatalog_gen.utils._validate_and_normalize_radec">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_and_normalize_radec</span><span class="p">(</span>
+    <span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">ra_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dec_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">log_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate RA/DEC ranges and normalize RA into [0, 360] if needed.</span>
+
+<span class="sd">    Supports both plain Dask DataFrames and LSDB catalogs.</span>
+
+<span class="sd">    Rules:</span>
+<span class="sd">        * DEC must be within [-90, +90] degrees (up to a small epsilon).</span>
+<span class="sd">        * RA must be either:</span>
+<span class="sd">            - [0, 360] degrees      → kept as is, or</span>
+<span class="sd">            - [-180, 180] degrees   → shifted to [0, 360] via (RA + 360) % 360.</span>
+<span class="sd">        * Any other range raises ValueError.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ddf_like: Dask-like collection or LSDB catalog.</span>
+<span class="sd">        ra_col: RA column name.</span>
+<span class="sd">        dec_col: DEC column name.</span>
+<span class="sd">        log_fn: Logger callable receiving (message, always_flag).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The same collection, possibly with RA normalized.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If RA/DEC ranges are unsupported or non-finite.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Convert to numeric with coercion so non-numeric values become NaN.</span>
+    <span class="n">ra_num</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">[</span><span class="n">ra_col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
+    <span class="n">dec_num</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">[</span><span class="n">dec_col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
+
+    <span class="n">ra_min</span><span class="p">,</span> <span class="n">ra_max</span><span class="p">,</span> <span class="n">dec_min</span><span class="p">,</span> <span class="n">dec_max</span> <span class="o">=</span> <span class="n">dask_compute</span><span class="p">(</span>
+        <span class="n">ra_num</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+        <span class="n">ra_num</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+        <span class="n">dec_num</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+        <span class="n">dec_num</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+    <span class="p">)</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;[RA/DEC check] RA in [</span><span class="si">{</span><span class="n">ra_min</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">ra_max</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">], &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;DEC in [</span><span class="si">{</span><span class="n">dec_min</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dec_max</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">] (assuming degrees)&quot;</span>
+    <span class="p">)</span>
+    <span class="n">log_fn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Require finite values</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ra_min</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ra_max</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">dec_min</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">dec_max</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;RA/DEC contain non-finite values or could not be converted to numeric. &quot;</span>
+            <span class="s2">&quot;This pipeline currently supports only RA/DEC in degrees.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">eps</span> <span class="o">=</span> <span class="mf">1e-6</span>
+
+    <span class="c1"># DEC in [-90, +90]</span>
+    <span class="k">if</span> <span class="n">dec_min</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">90.0</span> <span class="o">-</span> <span class="n">eps</span> <span class="ow">or</span> <span class="n">dec_max</span> <span class="o">&gt;</span> <span class="mf">90.0</span> <span class="o">+</span> <span class="n">eps</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Unsupported DEC range: [</span><span class="si">{</span><span class="n">dec_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">dec_max</span><span class="si">}</span><span class="s2">]. &quot;</span>
+            <span class="s2">&quot;This pipeline currently supports only DEC in [-90, +90] degrees.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># RA logic:</span>
+    <span class="c1">#   * [0, 360]   → keep as is</span>
+    <span class="c1">#   * [-180,180] → convert to [0, 360]</span>
+    <span class="k">if</span> <span class="p">(</span><span class="mf">0.0</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">ra_min</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mf">360.0</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="mf">0.0</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">ra_max</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mf">360.0</span> <span class="o">+</span> <span class="n">eps</span><span class="p">):</span>
+        <span class="n">log_fn</span><span class="p">(</span><span class="s2">&quot;[RA/DEC check] Detected RA in [0, 360] degrees; keeping values as they are.&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ddf_like</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">-</span><span class="mf">180.0</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">ra_min</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mf">180.0</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="o">-</span><span class="mf">180.0</span> <span class="o">-</span> <span class="n">eps</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">ra_max</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mf">180.0</span> <span class="o">+</span> <span class="n">eps</span><span class="p">):</span>
+        <span class="n">log_fn</span><span class="p">(</span><span class="s2">&quot;[RA/DEC check] Detected RA in [-180, 180] degrees; converting to [0, 360].&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_shift_ra_partition</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Shift RA from [-180, 180] to [0, 360] for one partition.&quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pdf</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">pdf</span><span class="p">[</span><span class="n">ra_col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="p">(</span><span class="n">vals</span> <span class="o">+</span> <span class="mf">360.0</span><span class="p">)</span> <span class="o">%</span> <span class="mf">360.0</span>
+            <span class="n">pdf</span> <span class="o">=</span> <span class="n">pdf</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">pdf</span><span class="p">[</span><span class="n">ra_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">vals</span>
+            <span class="k">return</span> <span class="n">pdf</span>
+
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">)</span>
+        <span class="n">ddf_like</span> <span class="o">=</span> <span class="n">ddf_like</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span><span class="n">_shift_ra_partition</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ddf_like</span>
+
+    <span class="c1"># Any other RA range is considered unsupported (likely wrong units)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Unsupported RA range: [</span><span class="si">{</span><span class="n">ra_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">ra_max</span><span class="si">}</span><span class="s2">]. &quot;</span>
+        <span class="s2">&quot;This pipeline currently supports only RA in degrees, with RA either in &quot;</span>
+        <span class="s2">&quot;[0, 360] or [-180, 180] and DEC in [-90, +90]. &quot;</span>
+        <span class="s2">&quot;Please convert your coordinates to degrees before running the pipeline.&quot;</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

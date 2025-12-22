@@ -45,7 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -75,7 +75,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.pipeline.structure</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Pipeline data structures and execution harness.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -91,7 +93,7 @@
 
 
 <div class="viewcode-block" id="PipelineStage">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineStage.html#hipscatalog_gen.pipeline.structure.PipelineStage">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PipelineStage</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a single ordered pipeline step.&quot;&quot;&quot;</span>
@@ -103,7 +105,7 @@
 
 
 <div class="viewcode-block" id="PipelineContext">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PipelineContext</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Shared state passed between pipeline stages.&quot;&quot;&quot;</span>
@@ -131,7 +133,7 @@
     <span class="n">telemetry</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PipelineContext.with_updates">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.with_updates">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext.with_updates">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a new context with updated fields.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
@@ -140,9 +142,17 @@
 
 
 <div class="viewcode-block" id="run_stages">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.run_stages">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.run_stages.html#hipscatalog_gen.pipeline.structure.run_stages">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_stages</span><span class="p">(</span><span class="n">stages</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">PipelineStage</span><span class="p">],</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute ordered pipeline stages, threading a context object.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute ordered pipeline stages, threading a context object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        stages: Ordered sequence of ``PipelineStage`` objects.</span>
+<span class="sd">        ctx: Initial pipeline context.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Final context returned after the last stage.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="n">stages</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">,</span> <span class="s2">&quot;stage&quot;</span><span class="p">):</span>

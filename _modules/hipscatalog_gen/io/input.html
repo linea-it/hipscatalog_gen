@@ -45,7 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api/index.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
 
@@ -75,7 +75,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.io.input</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span></span><span class="sd">&quot;&quot;&quot;Input readers for Parquet/CSV/TSV and HATS/LSDB catalogs.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -101,6 +103,8 @@
 <span class="c1"># =============================================================================</span>
 
 
+<div class="viewcode-block" id="_build_input_ddf">
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.input._build_input_ddf.html#hipscatalog_gen.io.input._build_input_ddf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_input_ddf</span><span class="p">(</span><span class="n">paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the main input collection for the pipeline.</span>
 
@@ -289,7 +293,8 @@
             <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 
     <span class="n">ddf</span> <span class="o">=</span> <span class="n">ddf0</span><span class="p">[</span><span class="n">keep_cols_out_2</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">ddf</span><span class="p">,</span> <span class="n">RA_NAME</span><span class="p">,</span> <span class="n">DEC_NAME</span><span class="p">,</span> <span class="n">keep_cols_out_2</span>
+    <span class="k">return</span> <span class="n">ddf</span><span class="p">,</span> <span class="n">RA_NAME</span><span class="p">,</span> <span class="n">DEC_NAME</span><span class="p">,</span> <span class="n">keep_cols_out_2</span></div>
+
 
 
 <span class="c1"># =============================================================================</span>
@@ -298,7 +303,7 @@
 
 
 <div class="viewcode-block" id="compute_column_report_sample">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.input.compute_column_report_sample">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.input.compute_column_report_sample.html#hipscatalog_gen.io.input.compute_column_report_sample">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_column_report_sample</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">sample_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200_000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a small column summary from a sample.</span>
 
@@ -370,7 +375,7 @@
 
 
 <div class="viewcode-block" id="compute_column_report_global">
-<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.input.compute_column_report_global">[docs]</a>
+<a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.input.compute_column_report_global.html#hipscatalog_gen.io.input.compute_column_report_global">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_column_report_global</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a column summary using global Dask-based statistics.</span>
 
