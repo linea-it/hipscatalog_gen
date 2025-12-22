@@ -1,3 +1,5 @@
+"""Registry of selection modes and helpers to resolve them by name."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -67,7 +69,17 @@ MODE_REGISTRY: Dict[str, SelectionMode] = {
 
 
 def get_selection_mode(name: str) -> SelectionMode:
-    """Return a selection mode entry, raising on unsupported names."""
+    """Return a selection mode entry, raising on unsupported names.
+
+    Args:
+        name: Selection mode identifier (e.g., ``mag_global``).
+
+    Returns:
+        ``SelectionMode`` instance with validators and handlers.
+
+    Raises:
+        ValueError: If the name is not registered.
+    """
     key = (name or "").lower()
     if key not in MODE_REGISTRY:
         opts = ", ".join(f"{k} ({v.description})" for k, v in sorted(MODE_REGISTRY.items()))

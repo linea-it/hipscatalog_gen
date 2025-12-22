@@ -1,3 +1,5 @@
+"""Integration-style tests for mag_global selection run."""
+
 from __future__ import annotations
 
 from contextlib import nullcontext
@@ -26,13 +28,14 @@ def log_capture():
     logs: list[str] = []
 
     def _log_fn(msg: str, always: bool = False, **_: dict) -> None:
+        """Capture a log message into the local list."""
         logs.append(msg)
 
     return logs, _log_fn
 
 
 def _cfg(mag_min: float, mag_max: float, **overrides) -> SimpleNamespace:
-    """Builds a minimal config namespace for mag_global selection."""
+    """Build a minimal config namespace for mag_global selection."""
     algo_defaults = dict(
         mag_min=mag_min,
         mag_max=mag_max,
@@ -54,7 +57,7 @@ def _cfg(mag_min: float, mag_max: float, **overrides) -> SimpleNamespace:
 
 
 def _densmaps_for_depths(depths: list[int]) -> dict[int, np.ndarray]:
-    """Creates simple densmap arrays with positive counts per depth."""
+    """Create simple densmap arrays with positive counts per depth."""
     result: dict[int, np.ndarray] = {}
     for depth in depths:
         nside = 1 << depth
@@ -64,7 +67,7 @@ def _densmaps_for_depths(depths: list[int]) -> dict[int, np.ndarray]:
 
 
 def _read_data_rows(tsv_path: Path) -> int:
-    """Counts data rows in a TSV tile (ignoring the completeness and header lines)."""
+    """Count data rows in a TSV tile (ignoring the completeness and header lines)."""
     with tsv_path.open("r", encoding="utf-8") as f:
         lines = f.read().splitlines()
     return max(0, len(lines) - 2)
@@ -115,7 +118,7 @@ def test_run_selection_writes_tiles_per_depth(monkeypatch, tmp_path, diag_ctx, l
     densmaps = _densmaps_for_depths([1, 2])
 
     def fake_assign_targets(**kwargs):
-        # Force deterministic magnitude slices: [17, 19) and [19, 22].
+        """Force deterministic magnitude slices: [17, 19) and [19, 22]."""
         return np.array([17.0, 19.0, 22.0], dtype="float64")
 
     monkeypatch.setattr(pipeline, "assign_level_edges", lambda **_: (fake_assign_targets(), None))
@@ -163,7 +166,7 @@ def test_run_selection_skips_empty_depth(monkeypatch, tmp_path, diag_ctx, log_ca
     densmaps = _densmaps_for_depths([1, 2])
 
     def fake_assign_targets(**kwargs):
-        # Define slices [18, 19) (empty) and [19, 22] (has data).
+        """Define slices [18, 19) (empty) and [19, 22] (has data)."""
         return np.array([18.0, 19.0, 22.0], dtype="float64")
 
     monkeypatch.setattr(pipeline, "assign_level_edges", lambda **_: (fake_assign_targets(), None))
@@ -234,6 +237,7 @@ def test_run_selection_passes_order_desc(monkeypatch, tmp_path, diag_ctx, log_ca
     calls: list[bool] = []
 
     def fake_write_tiles_with_allsky(**kwargs):
+        """Mock tile writing and record order_desc flag usage."""
         calls.append(kwargs.get("order_desc"))
         # mimic return signature: (written_per_ipix, allsky_df)
         return {0: len(pdf)}, None
@@ -417,6 +421,59 @@ def test_run_selection_tie_column_applied_before_ra_dec(tmp_path, diag_ctx, log_
     assert snr_vals == sorted(snr_vals)  # tie broken by SNR before RA/DEC
 
 
+def test_run_selection_requires_params_when_not_provided(diag_ctx, log_capture):
+    """run_mag_global_selection raises when params and mag_min/mag_max are absent."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0], "__mag__": [18.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = SimpleNamespace(algorithm=SimpleNamespace(level_limit=1, mag_hist_nbins=4))
+    densmaps = _densmaps_for_depths([1])
+
+    with pytest.raises(RuntimeError):
+        run_mag_global_selection(
+            remainder_ddf=ddf,
+            densmaps=densmaps,
+            keep_cols=["RA", "DEC", "__mag__"],
+            ra_col="RA",
+            dec_col="DEC",
+            cfg=cfg,
+            out_dir=Path("/tmp/should_not_write"),
+            diag_ctx=diag_ctx,
+            log_fn=log_fn,
+        )
+
+
+def test_run_selection_histogram_zero_cdf(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """Histogram with zero counts still proceeds (cdf zero branch)."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [0.0, 1.0], "DEC": [0.0, 1.0], "__mag__": [50.0, 51.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=0.0, mag_max=1.0, level_limit=1)
+    densmaps = _densmaps_for_depths([1])
+
+    captured_edges: list[np.ndarray] = []
+
+    def fake_select_by_value_slices(**kwargs):
+        captured_edges.append(kwargs["level_edges"])
+        return None
+
+    monkeypatch.setattr(pipeline, "select_by_value_slices", fake_select_by_value_slices)
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    assert captured_edges and captured_edges[0].size > 0
+
+
 def test_run_selection_allsky_only_depths_1_2(tmp_path, diag_ctx, log_capture, monkeypatch):
     """Tests that Allsky is written only for depths 1 and 2 even when deeper levels exist."""
     _, log_fn = log_capture
@@ -539,3 +596,64 @@ def test_run_selection_smoke_with_sample_parquet(tmp_path, diag_ctx, log_capture
 
     # When all mags are equal, only the last depth slice gets data.
     assert (tmp_path / "Norder2").exists()
+
+
+def test_run_selection_uses_fractional_k_targets(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """k_* targets are converted to fixed counts using active densmap tiles."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [0.0, 1.0],
+            "DEC": [0.0, 1.0],
+            "__mag__": [18.0, 19.0],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=1, k_1=0.5)
+    densmaps = {1: np.array([1, 2], dtype="int64")}
+
+    captured_fixed: dict[int, float] | None = None
+
+    def fake_assign_level_edges(**kwargs):
+        nonlocal captured_fixed
+        captured_fixed = kwargs.get("fixed_targets")
+        return np.array([17.0, 20.0], dtype="float64"), None
+
+    monkeypatch.setattr(pipeline, "assign_level_edges", fake_assign_level_edges)
+
+    run_mag_global_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__mag__"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    assert captured_fixed == {1: 1.0}
+    assert any("mag_global" in msg for msg in logs)
+
+
+def test_run_selection_rejects_both_n_and_k(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """Setting n_* and k_* simultaneously raises."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0], "__mag__": [0.5]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_min=0.0, mag_max=1.0, level_limit=1, n_1=1, k_1=0.5)
+    densmaps = _densmaps_for_depths([1])
+
+    with pytest.raises(ValueError):
+        run_mag_global_selection(
+            remainder_ddf=ddf,
+            densmaps=densmaps,
+            keep_cols=["RA", "DEC", "__mag__"],
+            ra_col="RA",
+            dec_col="DEC",
+            cfg=cfg,
+            out_dir=tmp_path,
+            diag_ctx=diag_ctx,
+            log_fn=log_fn,
+        )

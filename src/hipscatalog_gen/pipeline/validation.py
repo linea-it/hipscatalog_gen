@@ -1,3 +1,5 @@
+"""Validation helpers for configuration blocks across selection modes."""
+
 from __future__ import annotations
 
 from typing import Any

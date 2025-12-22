@@ -55,9 +55,13 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     """Run the full HiPS catalog generation pipeline.
 
     Args:
-        cfg: Parsed configuration object with input, algorithm, cluster,
-            and output options.
-        json_logs: When True, also emit JSONL logs to process.jsonl.
+        cfg: Parsed configuration object with input, algorithm, cluster, and output options.
+        json_logs: Whether to also emit structured JSON lines to ``process.jsonl``.
+
+    Raises:
+        ValueError: If ``output.out_dir`` already exists without ``output.overwrite`` set.
+        ValueError: If ``level_limit`` is outside the supported range [4, 11].
+        ValueError: If the configured ``selection_mode`` is unsupported.
     """
     out_dir = Path(cfg.output.out_dir)
     t0 = time.time()
@@ -115,6 +119,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     )
 
     def _stage_prepare_input(context: PipelineContext) -> PipelineContext:
+        """Load inputs, validate RA/DEC, and set partitioning flags."""
         ddf, RA_NAME, DEC_NAME, keep_cols, is_hats, paths = build_and_prepare_input(
             context.cfg, context.diag_ctx, context.log_fn, context.persist_ddfs
         )
@@ -128,6 +133,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         )
 
     def _stage_count_input(context: PipelineContext) -> PipelineContext:
+        """Compute total rows after RA/DEC validation."""
         if context.ddf is None:
             raise RuntimeError("Pipeline context missing input DDF.")
         input_total = compute_input_total(
@@ -136,6 +142,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         return context.with_updates(input_total=input_total)
 
     def _stage_prepare_selection(context: PipelineContext) -> PipelineContext:
+        """Prepare remainder DDF for tile writing after selection normalization."""
         if context.ddf is None:
             raise RuntimeError("Pipeline context missing input DDF.")
         if context.selection_params is None:
@@ -152,6 +159,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         return context.with_updates(remainder_ddf=remainder_ddf)
 
     def _stage_densmaps(context: PipelineContext) -> PipelineContext:
+        """Compute density maps and write FITS outputs."""
         if context.remainder_ddf is None or context.RA_NAME is None or context.DEC_NAME is None:
             raise RuntimeError("Pipeline context missing selection inputs for densmap computation.")
         densmaps = compute_and_write_densmaps(
@@ -165,6 +173,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         return context.with_updates(densmaps=densmaps)
 
     def _stage_static_products(context: PipelineContext) -> PipelineContext:
+        """Write static artifacts (arguments, metadata, densmap files)."""
         if (
             context.keep_cols is None
             or context.RA_NAME is None
@@ -186,6 +195,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         return context
 
     def _stage_run_selection(context: PipelineContext) -> PipelineContext:
+        """Run the configured selection mode and write tiles."""
         if (
             context.remainder_ddf is None
             or context.keep_cols is None
@@ -209,6 +219,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         return context
 
     def _stage_counts(context: PipelineContext) -> PipelineContext:
+        """Write per-depth count summaries and store telemetry."""
         if context.input_total is None:
             raise RuntimeError("Pipeline context missing input totals.")
         total_written, counts_payload = write_counts_summaries(
@@ -219,6 +230,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         return context.with_updates(total_written=total_written, telemetry=telemetry)
 
     def _stage_properties(context: PipelineContext) -> PipelineContext:
+        """Write HiPS properties using the computed totals."""
         if context.total_written is None:
             raise RuntimeError("Pipeline context missing written counts.")
         write_properties(
@@ -231,6 +243,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         return context
 
     def _stage_normalize_selection(context: PipelineContext) -> PipelineContext:
+        """Validate configuration and normalize selection parameters."""
         if context.ddf is None:
             raise RuntimeError("Pipeline context missing input DDF.")
         mode_entry.validate_fn(context.cfg)
@@ -257,6 +270,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     ]
 
     def _run_core_pipeline() -> None:
+        """Execute the ordered pipeline stages with telemetry updates."""
         final_ctx = run_stages(pipeline_stages, ctx)
         telemetry = dict(final_ctx.telemetry)
         telemetry["selection_mode"] = selection_mode

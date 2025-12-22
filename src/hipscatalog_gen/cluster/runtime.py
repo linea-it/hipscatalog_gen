@@ -1,3 +1,5 @@
+"""Dask cluster setup and teardown utilities."""
+
 from __future__ import annotations
 
 from contextlib import nullcontext, suppress
@@ -48,15 +50,8 @@ def setup_cluster(
 ) -> Tuple[ClusterRuntime, Callable[[str], ContextManager[Any]]]:
     """Create and configure the Dask cluster and diagnostics context.
 
-    Cluster selection rules:
-
-    - ``mode="local"`` uses ``LocalCluster``.
-    - ``mode="slurm"`` uses ``SLURMCluster`` (when available).
-    - Logs dashboard URL and memory/compute policy.
-    - Wires diagnostics mode for performance reports.
-
     Args:
-        cfg: Cluster configuration.
+        cfg: Cluster configuration (local or SLURM) with worker counts and memory limits.
         report_dir: Directory where per-step diagnostics reports are written.
         log_fn: Logging callback ``(message, always)``.
 
@@ -64,9 +59,12 @@ def setup_cluster(
         Tuple[ClusterRuntime, Callable[[str], ContextManager[Any]]]: A pair
         ``(runtime, diag_ctx_factory)``, where:
 
-        - ``runtime``: ClusterRuntime with cluster/client and flags.
-        - ``diag_ctx_factory``: function ``label -> context manager`` used as
+        - ``runtime``: ``ClusterRuntime`` with cluster/client handles and flags.
+        - ``diag_ctx_factory``: callable ``label -> context manager`` used as
           ``with diag_ctx_factory("step_name"):`` around pipeline steps.
+
+    Raises:
+        AssertionError: If ``mode='slurm'`` is set but ``dask-jobqueue`` is not available.
     """
     # ------------------------------------------------------------------
     # Cluster creation (local or SLURM)

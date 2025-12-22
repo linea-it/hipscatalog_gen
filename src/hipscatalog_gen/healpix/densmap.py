@@ -1,3 +1,5 @@
+"""HEALPix pixel computations and density map aggregation."""
+
 from __future__ import annotations
 
 from typing import Any, List, cast
@@ -74,6 +76,7 @@ def densmap_for_depth_delayed(ddf: Any, ra_col: str, dec_col: str, depth: int):
             base_order = int(m.group(1))
 
     def _part_hist(pdf: pd.DataFrame) -> np.ndarray:
+        """Return histogram counts for one partition at the requested depth."""
         if pdf is None or len(pdf) == 0:
             return np.zeros(npix, dtype=np.int64)
 
@@ -101,6 +104,7 @@ def densmap_for_depth_delayed(ddf: Any, ra_col: str, dec_col: str, depth: int):
         return _delayed(lambda: np.zeros(npix, dtype=np.int64))()
 
     def _sum_vecs(vecs: List[np.ndarray]) -> np.ndarray:
+        """Sum partition histograms into a single numpy vector."""
         arr = np.sum(vecs, axis=0, dtype=np.int64)
         # Ensure ndarray[int64] for the type checker
         return cast(NDArray[np.int64], np.asarray(arr, dtype=np.int64))

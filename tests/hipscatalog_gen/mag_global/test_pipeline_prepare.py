@@ -1,12 +1,16 @@
+"""Unit tests for mag_global prepare/normalize steps."""
+
 from __future__ import annotations
 
 from contextlib import nullcontext
 from types import SimpleNamespace
 
+import numpy as np
 import pandas as pd
 import pytest
 from dask import dataframe as dd
 from hipscatalog_gen.mag_global.pipeline import normalize_mag_global, prepare_mag_global
+from hipscatalog_gen.pipeline.params import MagGlobalParams
 
 
 @pytest.fixture
@@ -21,6 +25,7 @@ def log_capture():
     logs: list[str] = []
 
     def _log_fn(msg: str, always: bool = False, **_: dict) -> None:
+        """Capture log message into the local list for assertions."""
         logs.append(msg)
 
     return logs, _log_fn
@@ -191,6 +196,169 @@ def test_normalize_rejects_unknown_adaptive_mode(diag_ctx, log_capture):
         normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
 
 
+def test_normalize_rejects_nonfinite_global_range(diag_ctx, log_capture):
+    """Non-finite global min/max are rejected when keep_invalid_values=False."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [float("nan"), float("inf")]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_keep_invalid_values=False)
+
+    with pytest.raises(ValueError):
+        normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+
+
+def test_normalize_rejects_missing_mag_and_flux(diag_ctx, log_capture):
+    """Missing both mag_column and flux_column raises."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"OTHER": [1.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg()  # no mag/flux configured
+
+    with pytest.raises(ValueError):
+        normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+
+
+def test_normalize_keep_invalid_maps_to_sentinel(diag_ctx, log_capture):
+    """keep_invalid_values maps NaN/Inf to a sentinel inside the resolved window."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [float("nan"), float("inf"), -float("inf"), 1.5]})
+    ddf = dd.from_pandas(pdf, npartitions=2)
+    cfg = _cfg(mag_column="MAG", mag_keep_invalid_values=True)
+
+    ddf_norm, params = normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+    result = ddf_norm.compute()
+
+    assert params.sentinel is not None
+    assert result["__mag__"].isna().sum() == 0
+    assert params.mag_min <= params.sentinel <= params.mag_max
+    assert any("keep_invalid_values=True" in msg for msg in logs)
+
+
+def test_normalize_handles_empty_partition_mag(diag_ctx, log_capture):
+    """Empty partitions in mag path are tolerated and filled with __mag__."""
+    _, log_fn = log_capture
+    empty = pd.DataFrame({"MAG": []})
+    non_empty = pd.DataFrame({"MAG": [1.0, 2.0]})
+    ddf = dd.from_delayed(
+        [
+            dd.from_pandas(empty, npartitions=1).to_delayed()[0],
+            dd.from_pandas(non_empty, npartitions=1).to_delayed()[0],
+        ],
+        meta={"MAG": "f8"},
+    )
+    cfg = _cfg(mag_column="MAG")
+
+    ddf_norm, params = normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+    assert params.mag_min == 1.0 and params.mag_max == 2.0
+    assert "__mag__" in ddf_norm.columns
+
+
+def test_normalize_handles_empty_partition_flux(diag_ctx, log_capture):
+    """Empty partitions in flux path are tolerated."""
+    _, log_fn = log_capture
+    empty = pd.DataFrame({"FLUX": []})
+    non_empty = pd.DataFrame({"FLUX": [1.0, 10.0]})
+    ddf = dd.from_delayed(
+        [
+            dd.from_pandas(empty, npartitions=1).to_delayed()[0],
+            dd.from_pandas(non_empty, npartitions=1).to_delayed()[0],
+        ],
+        meta={"FLUX": "f8"},
+    )
+    cfg = _cfg(flux_column="FLUX", mag_offset=25.0)
+
+    ddf_norm, _ = normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+    assert "__mag__" in ddf_norm.columns
+
+
+def test_normalize_minmax_none_raises(monkeypatch, diag_ctx, log_capture):
+    """Guard against dask min/max returning None."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [1.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG")
+
+    monkeypatch.setattr("hipscatalog_gen.mag_global.pipeline.dask_compute", lambda *_, **__: (None, None))
+
+    with pytest.raises(ValueError):
+        normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+
+
+def test_normalize_hist_peak_histogram_empty(diag_ctx, log_capture):
+    """Histogram path raises when no rows fall into the histogram window."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [100.0, 101.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_adaptive_range="hist_peak")
+
+    with pytest.raises(ValueError):
+        normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+
+
+def test_normalize_hist_peak_mocked_empty_histogram(monkeypatch, diag_ctx, log_capture):
+    """_histogram_peak raises when histogram reports zero total."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [1.0, 2.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_adaptive_range="hist_peak", mag_max=5.0)
+
+    def fake_histogram_ddf(**kwargs):
+        return np.zeros(4, dtype="int64"), np.array([0, 1, 2, 3, 4], dtype="float64"), 0
+
+    monkeypatch.setattr("hipscatalog_gen.mag_global.pipeline.compute_histogram_ddf", fake_histogram_ddf)
+
+    with pytest.raises(ValueError):
+        normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+
+
+def test_normalize_keep_invalid_hist_peak_not_allowed(diag_ctx, log_capture):
+    """keep_invalid_values=True with hist_peak raises."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [1.0, 2.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_keep_invalid_values=True, mag_adaptive_range="hist_peak")
+
+    with pytest.raises(ValueError):
+        normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+
+
+def test_normalize_keep_invalid_all_nan_inf_raises(diag_ctx, log_capture):
+    """keep_invalid_values=True fails when all values are NaN/Inf."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [float("nan"), float("inf")]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_keep_invalid_values=True)
+
+    with pytest.raises(ValueError):
+        normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+
+
+def test_normalize_keep_invalid_finite_scan_returns_none(monkeypatch, diag_ctx, log_capture):
+    """_finite_min_max returning None triggers guard."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [float("nan")]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_keep_invalid_values=True)
+
+    monkeypatch.setattr("hipscatalog_gen.mag_global.pipeline._finite_min_max", lambda *_: (None, None))
+
+    with pytest.raises(ValueError):
+        normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+
+
+def test_normalize_keep_invalid_order_desc_false_expands_range(diag_ctx, log_capture):
+    """Order ascending with keep_invalid_values expands mag_max to include sentinel."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [1.0, 2.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_keep_invalid_values=True, order_desc=False, mg_order_desc=False)
+
+    _, params = normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+    assert params.sentinel is not None
+    assert params.mag_max >= params.sentinel
+    assert any("keep_invalid_values=True" in msg for msg in logs)
+
+
 def test_normalize_complete_with_single_bound(diag_ctx, log_capture):
     """complete mode fills the missing bound with global min/max."""
     _, log_fn = log_capture
@@ -211,3 +379,71 @@ def test_normalize_complete_with_single_bound(diag_ctx, log_capture):
     _, params_full = normalize_mag_global(ddf, cfg_full, diag_ctx, log_fn)
     assert params_full.mag_min == 1.0
     assert params_full.mag_max == 3.0
+
+
+def test_normalize_hist_peak_with_mag_max_only(diag_ctx, log_capture):
+    """hist_peak path deriving mag_min from histogram when only mag_max is given."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [10.0, 11.0, 12.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_adaptive_range="hist_peak", mag_max=20.0)
+
+    _, params = normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+    assert params.mag_min < params.mag_max <= 20.0
+    assert any("mag_max provided" in msg for msg in logs)
+
+
+def test_normalize_hist_peak_with_explicit_bounds_skips_histogram(diag_ctx, log_capture):
+    """hist_peak with both bounds bypasses histogram computation."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [1.0, 2.0, 3.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_adaptive_range="hist_peak", mag_min=0.0, mag_max=5.0)
+
+    _, params = normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+    assert params.mag_min == 0.0
+    assert params.mag_max == 5.0
+    assert any("explicit mag_min/mag_max" in msg for msg in logs)
+
+
+def test_normalize_hist_peak_without_bounds(diag_ctx, log_capture):
+    """hist_peak path with no bounds uses clipped min and histogram-derived max."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [-1.0, 0.0, 0.5]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_adaptive_range="hist_peak")
+
+    _, params = normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+    assert params.mag_min >= -2.0
+    assert params.mag_min < params.mag_max
+    assert any("no bounds provided" in msg for msg in logs)
+
+
+def test_normalize_raises_when_resolved_bounds_inverted(diag_ctx, log_capture):
+    """Explicit mag_min/mag_max that invert after validation raise at the final check."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"MAG": [1.0, 2.0, 3.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(mag_column="MAG", mag_min=5.0, mag_max=5.0, mag_adaptive_range="complete")
+
+    with pytest.raises(ValueError):
+        normalize_mag_global(ddf, cfg, diag_ctx, log_fn)
+
+
+def test_prepare_passes_empty_partitions(diag_ctx, log_capture):
+    """prepare_mag_global returns empty partitions untouched."""
+    _, log_fn = log_capture
+    empty = pd.DataFrame({"__mag__": []})
+    ddf = dd.from_delayed(
+        [
+            dd.from_pandas(empty, npartitions=1).to_delayed()[0],
+            dd.from_pandas(pd.DataFrame({"__mag__": [1.0, 2.0]}), npartitions=1).to_delayed()[0],
+        ],
+        meta={"__mag__": "f8"},
+    )
+    cfg = _cfg(mag_column="MAG")
+    params = MagGlobalParams(mag_min=0.0, mag_max=2.0, sentinel=None)
+
+    ddf_sel = prepare_mag_global(ddf, cfg, diag_ctx, log_fn, params)
+    result = ddf_sel.compute()
+    assert set(result["__mag__"].tolist()) == {1.0, 2.0}

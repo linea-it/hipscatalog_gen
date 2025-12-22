@@ -1,3 +1,5 @@
+"""Shared selection utilities for HEALPix-aware slicing."""
+
 from __future__ import annotations
 
 from typing import Any, Dict
@@ -61,6 +63,7 @@ def reduce_topk_by_group_dask(
     k_map = {int(k): int(v) for k, v in k_per_group.items()}
 
     def _take_topk(group: pd.DataFrame) -> pd.DataFrame:
+        """Select the top-k rows for a single group."""
         if group.empty:
             return group
         g_id = int(group[group_col].iloc[0])

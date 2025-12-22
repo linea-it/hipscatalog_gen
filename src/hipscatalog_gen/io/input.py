@@ -1,3 +1,5 @@
+"""Input readers for Parquet/CSV/TSV and HATS/LSDB catalogs."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple, cast

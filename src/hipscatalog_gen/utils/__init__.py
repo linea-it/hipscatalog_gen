@@ -1,3 +1,5 @@
+"""Shared utilities reused across the hipscatalog-gen pipeline."""
+
 from __future__ import annotations
 
 import re
@@ -162,7 +164,22 @@ def _get_dask_base(
     require_map_partitions: bool = False,
     require_to_delayed: bool = False,
 ) -> Any:
-    """Prefer public Dask-like interfaces; fall back to LSDB ._ddf only when needed."""
+    """Prefer public Dask-like interfaces; fall back to LSDB ._ddf only when needed.
+
+    Args:
+        ddf_like: Dask-like object or LSDB catalog.
+        require_groupby: Require a ``groupby`` attribute.
+        require_map_partitions: Require a ``map_partitions`` attribute.
+        require_to_delayed: Require a ``to_delayed`` attribute.
+
+    Returns:
+        The same object if it already satisfies the required interface, otherwise
+        its underlying Dask DataFrame when dealing with LSDB catalogs.
+
+    Raises:
+        TypeError: If the object (or its LSDB base) does not expose the required methods.
+        TypeError: If an LSDB catalog lacks the ``_ddf`` attribute.
+    """
 
     def _has_required(obj: Any) -> bool:
         """Check that obj exposes all required dask-like methods."""
@@ -327,7 +344,7 @@ def _validate_and_normalize_radec(
         * RA must be either:
             - [0, 360] degrees      → kept as is, or
             - [-180, 180] degrees   → shifted to [0, 360] via (RA + 360) % 360.
-        Any other range raises ValueError.
+        * Any other range raises ValueError.
 
     Args:
         ddf_like: Dask-like collection or LSDB catalog.
@@ -385,6 +402,7 @@ def _validate_and_normalize_radec(
         log_fn("[RA/DEC check] Detected RA in [-180, 180] degrees; converting to [0, 360].", True)
 
         def _shift_ra_partition(pdf: pd.DataFrame) -> pd.DataFrame:
+            """Shift RA from [-180, 180] to [0, 360] for one partition."""
             if pdf.empty:
                 return pdf
             vals = pd.to_numeric(pdf[ra_col], errors="coerce")

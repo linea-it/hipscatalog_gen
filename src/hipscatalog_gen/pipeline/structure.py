@@ -1,3 +1,5 @@
+"""Pipeline data structures and execution harness."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
@@ -54,7 +56,15 @@ class PipelineContext:
 
 
 def run_stages(stages: Sequence[PipelineStage], ctx: PipelineContext) -> PipelineContext:
-    """Execute ordered pipeline stages, threading a context object."""
+    """Execute ordered pipeline stages, threading a context object.
+
+    Args:
+        stages: Ordered sequence of ``PipelineStage`` objects.
+        ctx: Initial pipeline context.
+
+    Returns:
+        Final context returned after the last stage.
+    """
     for stage in stages:
         if ctx.log_ctx is not None:
             if hasattr(ctx.log_ctx, "stage"):

@@ -39,9 +39,11 @@ repos:
         args: ['--maxkb=500']
 
       - id: end-of-file-fixer
+        exclude: ^docs/reference/generated/
       - id: trailing-whitespace
         name: Fix trailing whitespace
         description: Remove trailing whitespace from files.
+        exclude: ^docs/reference/generated/
 
   # Verify that pyproject.toml is well formed
   - repo: https://github.com/abravalheri/validate-pyproject
@@ -94,23 +96,11 @@ repos:
     hooks:
       - id: sphinx-build
         name: Build documentation with Sphinx
-        entry: sphinx-build
+        entry: bash -c 'SPHINX_AUTOSUMMARY=0 sphinx-build -M html ./docs ./_readthedocs -T -E -d ./docs/_build/doctrees'
         language: system
         always_run: true
         exclude_types: [file, symlink]
-        args:
-          [
-            "-M",
-            "html",
-            "./docs",
-            "./_readthedocs",
-            "-T",
-            "-E",
-            "-d",
-            "./docs/_build/doctrees",
-            "-D",
-            "exclude_patterns=notebooks/*,_build",
-          ]
+        pass_filenames: false
 
   # Run unit tests and generate coverage report
   - repo: local

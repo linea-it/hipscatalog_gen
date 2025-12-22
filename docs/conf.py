@@ -6,10 +6,46 @@
 
 import os
 import sys
+from importlib import import_module
 from importlib.metadata import version
+from unittest.mock import MagicMock
 
-# Make project package importable for autodoc
+# Make project package importable for autodoc (src layout)
+sys.path.insert(0, os.path.abspath("../src"))
 sys.path.insert(0, os.path.abspath(".."))
+
+# ---------------------------------------------------------------------------
+# Mocks/autosummary toggles:
+# - We mock heavy/optional dependencies so autodoc/autosummary can import
+#   modules without requiring full runtime deps (dask/healpy/lsdb/etc.).
+# - Pre-commit sets SPHINX_AUTOSUMMARY=0 to avoid generating stubs in hooks;
+#   normal builds keep autosummary enabled by default.
+# ---------------------------------------------------------------------------
+MOCK_MODULES = [
+    "dask",
+    "dask.array",
+    "dask.dataframe",
+    "dask.delayed",
+    "dask.distributed",
+    "dask_jobqueue",
+    "lsdb",
+    "lsdb.catalog",
+    "healpy",
+    "mocpy",
+    "astropy",
+    "astropy.io",
+    "astropy.io.fits",
+    "astropy.io.votable",
+    "astropy.table",
+    "numpy",
+    "pandas",
+]
+
+for _mod in MOCK_MODULES:
+    try:
+        import_module(_mod)
+    except Exception:
+        sys.modules[_mod] = MagicMock()
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -26,6 +62,7 @@ version = ".".join(release.split(".")[:2])
 
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
@@ -54,3 +91,15 @@ html_show_sourcelink = False
 add_module_names = False
 
 html_theme = "sphinx_rtd_theme"
+
+# Generate autosummary stubs unless disabled via env (useful for pre-commit).
+autosummary_generate = os.environ.get("SPHINX_AUTOSUMMARY", "1") != "0"
+autodoc_member_order = "bysource"
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": False,
+    "show-inheritance": True,
+}
+autodoc_typehints = "description"
+# Keep autodoc_mock_imports aligned with manual mocks above for safety.
+autodoc_mock_imports = MOCK_MODULES

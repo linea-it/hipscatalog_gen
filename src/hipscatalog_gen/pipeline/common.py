@@ -1,3 +1,5 @@
+"""Shared pipeline steps for input handling, densmaps, and outputs."""
+
 from __future__ import annotations
 
 import glob
@@ -133,7 +135,22 @@ def build_and_prepare_input(
     log_fn,
     persist_ddfs: bool,
 ) -> Tuple[Any, str, str, List[str], bool, List[str]]:
-    """Load inputs, validate RA/DEC, repartition, and persist when needed."""
+    """Load inputs, validate RA/DEC, repartition, and persist when needed.
+
+    Args:
+        cfg: Parsed configuration object.
+        diag_ctx: Diagnostics context factory (label -> context manager).
+        log_fn: Logging callback.
+        persist_ddfs: Whether to persist the input collection in memory.
+
+    Returns:
+        Tuple containing ``(ddf, RA_NAME, DEC_NAME, keep_cols, is_hats, paths)`` where:
+            - ddf: Dask-like collection ready for downstream stages.
+            - RA_NAME / DEC_NAME: Resolved column names for coordinates.
+            - keep_cols: Ordered list of columns to keep.
+            - is_hats: True when the input is an LSDB/HATS catalog.
+            - paths: List of resolved input paths.
+    """
     paths = _collect_input_paths(cfg, log_fn)
     _warn_if_hats_mismatch(paths, cfg, log_fn)
 
@@ -169,7 +186,19 @@ def compute_and_write_densmaps(
     out_dir: Path,
     diag_ctx,
 ) -> Dict[int, np.ndarray]:
-    """Compute density maps for all depths and write them to disk."""
+    """Compute density maps for all depths and write them to disk.
+
+    Args:
+        ddf_sel: Dask-like collection with RA/DEC columns.
+        ra_col: Name of the RA column (degrees).
+        dec_col: Name of the DEC column (degrees).
+        level_limit: Maximum HiPS order to compute.
+        out_dir: Output directory where FITS files are written.
+        diag_ctx: Diagnostics context factory (label -> context manager).
+
+    Returns:
+        Mapping of depth -> numpy array with counts per HEALPix pixel.
+    """
     depths = list(range(0, level_limit + 1))
     densmaps: Dict[int, np.ndarray] = {}
 
@@ -186,7 +215,17 @@ def compute_and_write_densmaps(
 
 
 def compute_input_total(ddf: Any, diag_ctx, log_fn, avoid_computes: bool) -> int:
-    """Compute total number of input rows (post RA/DEC validation)."""
+    """Compute total number of input rows (post RA/DEC validation).
+
+    Args:
+        ddf: Dask-like collection with validated RA/DEC.
+        diag_ctx: Diagnostics context factory (label -> context manager).
+        log_fn: Logging callback.
+        avoid_computes: Whether to avoid explicit ``compute()`` when possible.
+
+    Returns:
+        Total number of rows as an integer.
+    """
     log_fn(
         f"[input] Counting total number of rows (avoid_computes={avoid_computes}).",
         always=True,
@@ -224,7 +263,18 @@ def write_common_static_products(
     paths: List[str],
     ddf: Any,
 ) -> None:
-    """Write MOC, metadata.xml, and arguments echo."""
+    """Write MOC, metadata.xml, and arguments echo.
+
+    Args:
+        out_dir: Destination HiPS root directory.
+        cfg: Parsed configuration object.
+        densmaps: Mapping depth -> densmap counts.
+        keep_cols: Ordered list of columns retained in outputs.
+        ra_col: Name of the RA column.
+        dec_col: Name of the DEC column.
+        paths: Resolved input paths.
+        ddf: Dask-like collection used to infer column dtypes.
+    """
     moc_order = getattr(cfg.algorithm, "moc_order", cfg.algorithm.level_limit)
     dens_lc = densmaps[moc_order]
     write_moc(out_dir, moc_order, dens_lc)
@@ -390,6 +440,7 @@ def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, lo
     """Compute counts for later cross-checks and return (total written, counts dict)."""
 
     def _count_rows(tile_path: Path) -> int:
+        """Count rows for one tile file (ignoring header lines)."""
         with tile_path.open("r", encoding="utf-8") as f:
             # Skip completeness + header lines.
             next(f, None)
