@@ -127,10 +127,12 @@ def select_by_value_slices(
                 log_fn(
                     f"[DEPTH {depth}] {label}: no rows in slice [{v_lo:.6f}, {v_hi:.6f}] → skipping.",
                     always=True,
+                    depth=depth,
                 )
                 log_fn(
                     f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
                     always=True,
+                    depth=depth,
                 )
                 continue
 
@@ -177,6 +179,7 @@ def select_by_value_slices(
         log_fn(
             f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
             always=True,
+            depth=depth,
         )
 
 

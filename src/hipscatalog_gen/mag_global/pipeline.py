@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from dask import compute as dask_compute
 
+from ..pipeline.common import maybe_persist_ddf
+from ..pipeline.params import MagGlobalParams
 from ..selection.levels import assign_level_edges
 from ..selection.score import (
     _finite_min_max,
@@ -16,20 +18,20 @@ from ..selection.score import (
 from ..selection.slicing import select_by_value_slices
 from ..utils import _get_meta_df
 
-__all__ = ["prepare_mag_global", "run_mag_global_selection"]
+__all__ = ["normalize_mag_global", "prepare_mag_global", "run_mag_global_selection"]
 
 MAG_CONV = np.log(10.0) * 0.4
 
 
-def prepare_mag_global(
+def normalize_mag_global(
     ddf: Any,
     cfg: Any,
     diag_ctx,
     log_fn,
     persist_ddfs: bool = False,
     avoid_computes: bool = True,
-):
-    """Add __mag__ column and restrict to the configured magnitude window."""
+) -> tuple[Any, MagGlobalParams]:
+    """Add __mag__ column and compute selection window without mutating cfg."""
     algo = cfg.algorithm
     mag_col_cfg = getattr(algo, "mag_column", None)
     flux_col_cfg = getattr(algo, "flux_column", None)
@@ -110,6 +112,7 @@ def prepare_mag_global(
     mag_max_global_raw = float(mag_max_global_raw)
 
     keep_invalid = bool(getattr(algo, "mag_keep_invalid_values", False))
+    sentinel_mag: float | None = None
     range_mode = str(getattr(algo, "mag_adaptive_range", "complete")).lower()
     order_desc = bool(getattr(algo, "mg_order_desc", getattr(algo, "order_desc", False)))
     if (not keep_invalid) and (not np.isfinite(mag_min_global_raw) or not np.isfinite(mag_max_global_raw)):
@@ -284,10 +287,24 @@ def prepare_mag_global(
             f"algorithm.mag_max ({mag_max}) for mag_global selection."
         )
 
-    algo.mag_min = mag_min
-    algo.mag_max = mag_max
+    sentinel_val = sentinel_mag if keep_invalid else None
+    params = MagGlobalParams(mag_min=mag_min, mag_max=mag_max, sentinel=sentinel_val)
+    return ddf, params
 
-    meta_sel = meta_with_mag.copy()
+
+def prepare_mag_global(
+    ddf: Any,
+    cfg: Any,
+    diag_ctx,
+    log_fn,
+    params: MagGlobalParams,
+    persist_ddfs: bool = False,
+    avoid_computes: bool = True,
+):
+    """Restrict to the configured magnitude window using pre-computed params."""
+    mag_col_internal = "__mag__"
+    meta_sel = _get_meta_df(ddf).copy()
+    meta_sel["__mag__"] = pd.Series([], dtype="float64")
 
     def _filter_mag_window(
         pdf: pd.DataFrame,
@@ -302,23 +319,22 @@ def prepare_mag_global(
 
     ddf_sel = ddf.map_partitions(
         _filter_mag_window,
-        mag_min,
-        mag_max,
+        params.mag_min,
+        params.mag_max,
         meta=meta_sel,
     )
 
     should_persist = persist_ddfs or (not avoid_computes)
-    if should_persist and hasattr(ddf_sel, "persist"):
-        reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
-        log_fn(f"[mag_global] Persisting filtered DDF in memory ({reason}).", always=True)
-        with diag_ctx("dask_mag_persist_filtered"):
-            ddf_sel = ddf_sel.persist()
-            try:
-                from dask.distributed import wait
-            except Exception:
-                wait = None  # type: ignore[assignment]
-            if wait is not None:
-                wait(ddf_sel)
+    reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
+    ddf_sel = maybe_persist_ddf(
+        ddf_sel,
+        should_persist=should_persist,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+        log_prefix="mag_global",
+        diag_label="dask_mag_persist_filtered",
+        reason=reason,
+    )
 
     return ddf_sel
 
@@ -334,15 +350,18 @@ def run_mag_global_selection(
     diag_ctx,
     log_fn,
     avoid_computes: bool = True,
+    params: MagGlobalParams | None = None,
 ) -> None:
     """Execute the mag_global selection path and write tiles."""
     algo = cfg.algorithm
     mag_col_internal = "__mag__"
-    if algo.mag_min is None or algo.mag_max is None:
-        raise RuntimeError("mag_global: internal error — mag_min/mag_max should have been set earlier.")
+    if params is None:
+        if getattr(algo, "mag_min", None) is None or getattr(algo, "mag_max", None) is None:
+            raise RuntimeError("mag_global: selection parameters were not provided.")
+        params = MagGlobalParams(mag_min=float(algo.mag_min), mag_max=float(algo.mag_max))
 
-    mag_min = float(algo.mag_min)
-    mag_max = float(algo.mag_max)
+    mag_min = float(params.mag_min)
+    mag_max = float(params.mag_max)
     depths_sel = list(range(1, cfg.algorithm.level_limit + 1))
     tie_col = getattr(cfg.algorithm, "mag_tie_column", None) or getattr(cfg.algorithm, "tie_column", None)
 

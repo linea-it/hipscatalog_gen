@@ -5,6 +5,8 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas as pd
 
+from ..pipeline.common import maybe_persist_ddf
+from ..pipeline.params import ScoreGlobalParams
 from ..selection.score import (
     _finite_min_max,
     _map_invalid_to_sentinel,
@@ -16,18 +18,18 @@ from ..selection.score import (
 from ..selection.slicing import select_by_score_slices
 from ..utils import _get_meta_df
 
-__all__ = ["prepare_score_global", "run_score_global_selection"]
+__all__ = ["normalize_score_global", "prepare_score_global", "run_score_global_selection"]
 
 
-def prepare_score_global(
+def normalize_score_global(
     ddf: Any,
     cfg: Any,
     diag_ctx,
     log_fn,
     persist_ddfs: bool = False,
     avoid_computes: bool = True,
-):
-    """Add __score__ column (from an expression) and restrict to a score window."""
+) -> tuple[Any, ScoreGlobalParams]:
+    """Add __score__ column and compute score window without mutating cfg."""
     algo = cfg.algorithm
     score_expr = getattr(algo, "score_column", None)
     if not score_expr:
@@ -54,6 +56,7 @@ def prepare_score_global(
         )
     order_desc = bool(getattr(cfg.algorithm, "sg_order_desc", getattr(cfg.algorithm, "order_desc", False)))
 
+    sentinel: float | None = None
     if keep_invalid:
         fin_min, fin_max = _finite_min_max(ddf, score_col_internal)
         if fin_min is None or fin_max is None:
@@ -90,8 +93,21 @@ def prepare_score_global(
             label="score_global",
         )
 
-    algo.score_min = score_min
-    algo.score_max = score_max
+    params = ScoreGlobalParams(score_min=score_min, score_max=score_max, sentinel=sentinel)
+    return ddf, params
+
+
+def prepare_score_global(
+    ddf: Any,
+    cfg: Any,
+    diag_ctx,
+    log_fn,
+    params: ScoreGlobalParams,
+    persist_ddfs: bool = False,
+    avoid_computes: bool = True,
+):
+    """Restrict to a score window using pre-computed params."""
+    score_col_internal = "__score__"
 
     meta_sel = _get_meta_df(ddf).copy()
     meta_sel["__score__"] = pd.Series([], dtype="float64")
@@ -109,23 +125,22 @@ def prepare_score_global(
 
     ddf_sel = ddf.map_partitions(
         _filter_score_window,
-        score_min,
-        score_max,
+        params.score_min,
+        params.score_max,
         meta=meta_sel,
     )
 
     should_persist = persist_ddfs or (not avoid_computes)
-    if should_persist and hasattr(ddf_sel, "persist"):
-        reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
-        log_fn(f"[score_global] Persisting filtered DDF in memory ({reason}).", always=True)
-        with diag_ctx("dask_score_persist_filtered"):
-            ddf_sel = ddf_sel.persist()
-            try:
-                from dask.distributed import wait
-            except Exception:
-                wait = None  # type: ignore[assignment]
-            if wait is not None:
-                wait(ddf_sel)
+    reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
+    ddf_sel = maybe_persist_ddf(
+        ddf_sel,
+        should_persist=should_persist,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+        log_prefix="score_global",
+        diag_label="dask_score_persist_filtered",
+        reason=reason,
+    )
     return ddf_sel
 
 
@@ -140,15 +155,16 @@ def run_score_global_selection(
     diag_ctx,
     log_fn,
     avoid_computes: bool = True,
+    params: ScoreGlobalParams | None = None,
 ) -> None:
     """Execute the score_global selection path and write tiles."""
     algo = cfg.algorithm
     score_col_internal = "__score__"
-    if algo.score_min is None or algo.score_max is None:
-        raise RuntimeError("score_global: internal error — score_min/score_max should have been set earlier.")
+    if params is None:
+        raise RuntimeError("score_global: selection parameters were not provided.")
 
-    score_min = float(algo.score_min)
-    score_max = float(algo.score_max)
+    score_min = float(params.score_min)
+    score_max = float(params.score_max)
     depths_sel = list(range(1, cfg.algorithm.level_limit + 1))
     order_desc = bool(getattr(cfg.algorithm, "sg_order_desc", getattr(cfg.algorithm, "order_desc", False)))
     tie_col = getattr(cfg.algorithm, "score_tie_column", None) or getattr(cfg.algorithm, "tie_column", None)

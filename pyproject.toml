@@ -1,8 +1,9 @@
 [project]
 name = "hipscatalog-gen"
+version = "0.1.0"
 license = "MIT"
 license-files = ["LICENSE"]
-readme = "README.md"
+readme = { file = "README.md", content-type = "text/markdown" }
 authors = [
     { name = "Luigi Lucas de Carvalho Silva", email = "luigi.silva@linea.org.br" }
 ]
@@ -12,8 +13,12 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
-dynamic = ["version"]
 requires-python = ">=3.10"
 
 # ==== RUNTIME (apenas o que seus módulos importam) ====
@@ -22,7 +27,6 @@ dependencies = [
   "pandas>=2.1,<3.0",
   "pyarrow>=14,<23",
   "dask>=2024.8.0,<2026.0",
-  "dask-jobqueue>=0.8,<1.0",
   "distributed>=2024.8.0,<2026.0",
   "astropy>=6,<8",
   "healpy>=1.17,<2.0",
@@ -37,6 +41,9 @@ dependencies = [
 hipscatalog-gen = "hipscatalog_gen.cli:main"
 
 [project.urls]
+"Homepage" = "https://github.com/linea-it/hipscatalog_gen"
+"Documentation" = "https://github.com/linea-it/hipscatalog_gen"
+"Bug Tracker" = "https://github.com/linea-it/hipscatalog_gen/issues"
 "Source Code" = "https://github.com/linea-it/hipscatalog-gen"
 
 # ==== EXTRAS (infra opcional) ====
@@ -64,11 +71,8 @@ docs = [
 ]
 
 [build-system]
-requires = ["setuptools>=62", "setuptools_scm>=6.2"]
+requires = ["setuptools>=62"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]
-write_to = "src/hipscatalog_gen/_version.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "src", "docs"]
@@ -93,7 +97,7 @@ ignore = [
 "src/hipscatalog_gen/selection.py" = ["SIM102","SIM108"]
 
 [tool.setuptools.package-data]
-hipscatalog_gen = ["py.typed"]
+hipscatalog_gen = ["py.typed", "assets/telemetry.schema.json"]
 
 [tool.coverage.run]
 omit = ["src/hipscatalog_gen/_version.py"]

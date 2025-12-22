@@ -25,7 +25,7 @@ def log_capture():
     """Collects log messages emitted by the pipeline."""
     logs: list[str] = []
 
-    def _log_fn(msg: str, always: bool = False) -> None:
+    def _log_fn(msg: str, always: bool = False, **_: dict) -> None:
         logs.append(msg)
 
     return logs, _log_fn

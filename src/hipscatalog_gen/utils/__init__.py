@@ -110,7 +110,7 @@ def _stats_counts(counts: np.ndarray) -> tuple[int, int]:
 
 
 def _log_depth_stats(
-    _log_fn: Callable[[str, bool], None],
+    _log_fn: Callable[..., None],
     depth: int,
     phase: str,
     counts: Optional[np.ndarray] = None,
@@ -148,7 +148,7 @@ def _log_depth_stats(
     if remainder_len is not None:
         parts.append(f"remainder={remainder_len}")
 
-    _log_fn(f"[DEPTH {depth}] {phase}: " + "; ".join(parts), True)
+    _log_fn(f"[DEPTH {depth}] {phase}: " + "; ".join(parts), True, depth=depth)
 
 
 # =============================================================================

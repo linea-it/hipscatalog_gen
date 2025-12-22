@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://linea-it.github.io/hipscatalog_gen/telemetry.schema.json",
+  "title": "hipscatalog-gen telemetry",
+  "type": "object",
+  "required": ["schema_version", "selection_mode", "level_limit", "moc_order", "input_rows", "output_rows", "total_duration_s", "stages", "counts"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version of the telemetry schema."
+    },
+    "selection_mode": {
+      "type": "string",
+      "description": "Selection mode used in the run."
+    },
+    "level_limit": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "moc_order": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "input_rows": {
+      "type": ["integer", "null"],
+      "description": "Total rows after input validation."
+    },
+    "output_rows": {
+      "type": ["integer", "null"],
+      "description": "Total rows written across all depths."
+    },
+    "total_duration_s": {
+      "type": "number",
+      "minimum": 0
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "duration_s": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": ["duration_s"],
+        "additionalProperties": true
+      }
+    },
+    "counts": {
+      "type": "object",
+      "required": ["input", "output"],
+      "properties": {
+        "input": {
+          "type": "object",
+          "required": ["total"],
+          "properties": {
+            "total": { "type": ["integer", "null"] }
+          },
+          "additionalProperties": true
+        },
+        "output": {
+          "type": "object",
+          "required": ["total"],
+          "properties": {
+            "total": { "type": ["integer", "null"] },
+            "depth_totals": {
+              "type": "object",
+              "additionalProperties": { "type": "integer" }
+            },
+            "depths": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": { "type": "integer" }
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

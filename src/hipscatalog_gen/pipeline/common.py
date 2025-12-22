@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import glob
-import json
 import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -32,6 +31,7 @@ __all__ = [
     "log_epilogue",
     "log_prologue",
     "write_tiles_with_allsky",
+    "maybe_persist_ddf",
 ]
 
 
@@ -46,8 +46,10 @@ def log_prologue(cfg: Any, out_dir: Path, log_fn) -> None:
     log_fn(base, always=True)
 
 
-def log_epilogue(out_dir: Path, log_lines: List[str], t0: float, log_fn) -> None:
-    """Emit closing log lines and persist process.log."""
+def log_epilogue(
+    out_dir: Path, log_lines: List[str], t0: float, log_fn, write_process_log: bool = True
+) -> None:
+    """Emit closing log lines and optionally persist process.log."""
     import time
 
     elapsed_raw = time.time() - t0
@@ -58,11 +60,41 @@ def log_epilogue(out_dir: Path, log_lines: List[str], t0: float, log_fn) -> None
         always=True,
     )
 
-    try:
-        with (out_dir / "process.log").open("a", encoding="utf-8") as f:
-            f.write("\n".join(log_lines) + "\n")
-    except Exception as e:
-        log_fn(f"ERROR writing process.log: {type(e).__name__}: {e}", always=True)
+    if write_process_log:
+        try:
+            with (out_dir / "process.log").open("a", encoding="utf-8") as f:
+                f.write("\n".join(log_lines) + "\n")
+        except Exception as e:
+            log_fn(f"ERROR writing process.log: {type(e).__name__}: {e}", always=True)
+
+
+def maybe_persist_ddf(
+    ddf_like: Any,
+    should_persist: bool,
+    diag_ctx,
+    log_fn,
+    *,
+    log_prefix: str,
+    diag_label: str | None = None,
+    reason: str | None = None,
+):
+    """Persist a Dask collection when requested, logging and awaiting completion."""
+    if (not should_persist) or (not hasattr(ddf_like, "persist")):
+        return ddf_like
+
+    diag_name = diag_label or f"dask_{log_prefix}_persist"
+    reason_text = reason or "persisting intermediate"
+    log_fn(f"[{log_prefix}] Persisting DDF in memory ({reason_text}).", always=True)
+
+    with diag_ctx(diag_name):
+        persisted = ddf_like.persist()
+        try:
+            from dask.distributed import wait
+        except Exception:
+            wait = None  # type: ignore[assignment]
+        if wait is not None:
+            wait(persisted)
+    return persisted
 
 
 def _collect_input_paths(cfg: Any, log_fn) -> List[str]:
@@ -354,8 +386,8 @@ def write_tiles_with_allsky(
     return written_per_ipix, allsky_df
 
 
-def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, log_fn) -> int:
-    """Persist input/output counts for later cross-checks and return total written rows."""
+def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, log_fn) -> tuple[int, dict]:
+    """Compute counts for later cross-checks and return (total written, counts dict)."""
 
     def _count_rows(tile_path: Path) -> int:
         with tile_path.open("r", encoding="utf-8") as f:
@@ -397,15 +429,6 @@ def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, lo
     }
     input_counts = {"total": int(input_total)}
 
-    output_path = out_dir / "output_counts.json"
-    input_path = out_dir / "input_counts.json"
+    log_fn("[counts] Computed output/input counts.", always=True)
 
-    output_path.write_text(json.dumps(output_counts, indent=2), encoding="utf-8")
-    input_path.write_text(json.dumps(input_counts, indent=2), encoding="utf-8")
-
-    log_fn(
-        f"[counts] Wrote output counts to {output_path} and input counts to {input_path}.",
-        always=True,
-    )
-
-    return int(total_all_depths)
+    return int(total_all_depths), {"output": output_counts, "input": input_counts}

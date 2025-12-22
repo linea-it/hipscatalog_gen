@@ -1,0 +1,28 @@
+include LICENSE
+include README.md
+include pyproject.toml
+include CHANGELOG.md
+include docs/telemetry.schema.json
+
+# Package assets (schema)
+recursive-include src/hipscatalog_gen/assets *.json
+
+# Minimal examples/docs for sdist
+recursive-exclude examples/configs *
+include examples/configs/config.template.yaml
+recursive-include docs/notebooks simple-pipeline-run*.ipynb
+
+# Excludes
+recursive-exclude outputs *
+recursive-exclude htmlcov *
+exclude .coverage
+recursive-exclude *.log *
+recursive-exclude *.tmp *
+recursive-exclude *.cache *
+recursive-exclude .pytest_cache *
+recursive-exclude .github *
+recursive-exclude benchmarks *
+recursive-exclude examples/notebooks *
+recursive-exclude examples/scripts *
+recursive-exclude notebooks *
+recursive-exclude tests *

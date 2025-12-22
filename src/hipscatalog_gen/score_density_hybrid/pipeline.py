@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 
 from ..io.output import build_header_line_from_keep
-from ..pipeline.common import write_tiles_with_allsky
+from ..pipeline.common import maybe_persist_ddf, write_tiles_with_allsky
+from ..pipeline.params import ScoreDensityHybridParams
 from ..selection.common import add_ipix_column, reduce_topk_by_group_dask, targets_per_tile
 from ..selection.levels import assign_level_edges
 from ..selection.score import (
@@ -21,12 +22,93 @@ from ..selection.score import (
 from ..selection.slicing import select_by_score_slices
 from ..utils import _fmt_dur, _get_meta_df, _log_depth_stats
 
-__all__ = ["prepare_score_density_hybrid", "run_score_density_hybrid_selection"]
+__all__ = [
+    "normalize_score_density_hybrid",
+    "prepare_score_density_hybrid",
+    "run_score_density_hybrid_selection",
+]
 
 
 # =============================================================================
 # Helpers
 # =============================================================================
+
+
+def normalize_score_density_hybrid(
+    ddf: Any,
+    cfg: Any,
+    diag_ctx,
+    log_fn,
+    persist_ddfs: bool = False,
+    avoid_computes: bool = True,
+) -> tuple[Any, ScoreDensityHybridParams]:
+    """Add __score__ column and compute window without mutating cfg."""
+    algo = cfg.algorithm
+    score_expr = getattr(algo, "sdh_score_column", getattr(algo, "score_column", None))
+    if not score_expr:
+        raise ValueError("score_density_hybrid selection requires algorithm.sdh_score_column/score_column.")
+
+    score_expr = str(score_expr)
+    score_range_mode = str(getattr(algo, "sdh_score_adaptive_range", "complete") or "complete").lower()
+    if score_range_mode not in ("complete", "hist_peak"):
+        raise ValueError("algorithm.sdh_score_adaptive_range must be 'complete' or 'hist_peak'.")
+
+    score_hist_nbins = int(getattr(algo, "sdh_score_hist_nbins", getattr(algo, "score_hist_nbins", 2048)))
+    if score_hist_nbins <= 0:
+        raise ValueError("algorithm.sdh_score_hist_nbins must be a positive integer.")
+
+    ddf = add_score_column(ddf, score_expr, output_col="__score__")
+
+    score_col_internal = "__score__"
+    score_min_cfg = getattr(algo, "sdh_score_min", getattr(algo, "score_min", None))
+    score_max_cfg = getattr(algo, "sdh_score_max", getattr(algo, "score_max", None))
+    keep_invalid = bool(getattr(algo, "sdh_keep_invalid_values", False))
+    if keep_invalid and score_range_mode != "complete":
+        raise ValueError(
+            "score_density_hybrid: keep_invalid_values=True is only supported with "
+            "score_adaptive_range=complete."
+        )
+    order_desc = bool(getattr(cfg.algorithm, "sdh_order_desc", getattr(cfg.algorithm, "order_desc", False)))
+
+    sentinel: float | None = None
+    if keep_invalid:
+        fin_min, fin_max = _finite_min_max(ddf, score_col_internal)
+        if fin_min is None or fin_max is None:
+            raise ValueError("score_density_hybrid: all score values are NaN/Inf; nothing to select.")
+        sentinel = _sentinel_for_order(fin_min, fin_max, order_desc)
+        ddf = _map_invalid_to_sentinel(
+            ddf,
+            score_col_internal,
+            sentinel=sentinel,
+            meta=_get_meta_df(ddf),
+        )
+        score_min = float(score_min_cfg) if score_min_cfg is not None else float(fin_min)
+        score_max = float(score_max_cfg) if score_max_cfg is not None else float(fin_max)
+        if not order_desc:
+            score_max = max(score_max, sentinel)
+        else:
+            score_min = min(score_min, sentinel)
+        log_fn(
+            f"[score_density_hybrid] keep_invalid_values=True → mapping NaN/Inf to sentinel {sentinel} "
+            f"and using range [{score_min}, {score_max}] (order_desc={order_desc}).",
+            always=True,
+        )
+    else:
+        score_min, score_max = resolve_value_range(
+            ddf=ddf,
+            value_col=score_col_internal,
+            range_mode=score_range_mode,
+            min_cfg=score_min_cfg,
+            max_cfg=score_max_cfg,
+            hist_nbins=score_hist_nbins,
+            compute_hist_fn=compute_score_histogram_ddf,
+            diag_ctx=diag_ctx,
+            log_fn=log_fn,
+            label="score_density_hybrid",
+        )
+
+    params = ScoreDensityHybridParams(score_min=score_min, score_max=score_max, sentinel=sentinel)
+    return ddf, params
 
 
 def _filter_score_window(pdf: pd.DataFrame, score_min_val: float, score_max_val: float) -> pd.DataFrame:
@@ -145,82 +227,18 @@ def prepare_score_density_hybrid(
     cfg: Any,
     diag_ctx,
     log_fn,
+    params: ScoreDensityHybridParams,
     persist_ddfs: bool = False,
     avoid_computes: bool = True,
 ):
-    """Add __score__ column (from an expression) and restrict to a score window."""
-    algo = cfg.algorithm
-    score_expr = getattr(algo, "sdh_score_column", None)
-    if not score_expr:
-        raise ValueError("score_density_hybrid selection requires algorithm.sdh_score_column to be set.")
-
-    score_expr = str(score_expr)
-    score_range_mode = str(getattr(algo, "sdh_score_adaptive_range", "complete") or "complete").lower()
-    if score_range_mode not in ("complete", "hist_peak"):
-        raise ValueError("algorithm.sdh_score_adaptive_range must be 'complete' or 'hist_peak'.")
-
-    score_hist_nbins = int(getattr(algo, "sdh_score_hist_nbins", getattr(algo, "score_hist_nbins", 2048)))
-    if score_hist_nbins <= 0:
-        raise ValueError("algorithm.sdh_score_hist_nbins must be a positive integer.")
-
-    ddf = add_score_column(ddf, score_expr, output_col="__score__")
-
-    score_col_internal = "__score__"
-    score_min_cfg = getattr(algo, "sdh_score_min", None)
-    score_max_cfg = getattr(algo, "sdh_score_max", None)
-    keep_invalid = bool(getattr(algo, "sdh_keep_invalid_values", False))
-    if keep_invalid and score_range_mode != "complete":
-        raise ValueError(
-            "score_density_hybrid: keep_invalid_values=True is only supported with "
-            "sdh_score_adaptive_range=complete."
-        )
-    order_desc = bool(getattr(algo, "sdh_order_desc", getattr(algo, "order_desc", False)))
-
-    if keep_invalid:
-        fin_min, fin_max = _finite_min_max(ddf, score_col_internal)
-        if fin_min is None or fin_max is None:
-            raise ValueError("score_density_hybrid: all score values are NaN/Inf; nothing to select.")
-        sentinel = _sentinel_for_order(fin_min, fin_max, order_desc)
-        ddf = _map_invalid_to_sentinel(
-            ddf,
-            score_col_internal,
-            sentinel=sentinel,
-            meta=_get_meta_df(ddf),
-        )
-        score_min = float(score_min_cfg) if score_min_cfg is not None else float(fin_min)
-        score_max = float(score_max_cfg) if score_max_cfg is not None else float(fin_max)
-        if not order_desc:
-            score_max = max(score_max, sentinel)
-        else:
-            score_min = min(score_min, sentinel)
-        log_fn(
-            f"[score_density_hybrid] keep_invalid_values=True → mapping NaN/Inf to sentinel {sentinel} "
-            f"and using range [{score_min}, {score_max}] (order_desc={order_desc}).",
-            always=True,
-        )
-    else:
-        score_min, score_max = resolve_value_range(
-            ddf=ddf,
-            value_col=score_col_internal,
-            range_mode=score_range_mode,
-            min_cfg=score_min_cfg,
-            max_cfg=score_max_cfg,
-            hist_nbins=score_hist_nbins,
-            compute_hist_fn=compute_score_histogram_ddf,
-            diag_ctx=diag_ctx,
-            log_fn=log_fn,
-            label="score_density_hybrid",
-        )
-
-    algo.sdh_score_min = score_min
-    algo.sdh_score_max = score_max
+    """Restrict to a score window using pre-computed params."""
 
     meta_sel = _get_meta_df(ddf).copy()
     meta_sel["__score__"] = pd.Series([], dtype="float64")
     ddf_sel = ddf.map_partitions(
         _filter_score_window,
-        score_min,
-        score_max,
+        params.score_min,
+        params.score_max,
         meta=meta_sel,
     )
 
@@ -229,17 +247,16 @@ def prepare_score_density_hybrid(
     ddf_sel = ddf_sel.map_partitions(_attach_unique_id, meta=meta_with_id, partition_info=True)
 
     should_persist = persist_ddfs or (not avoid_computes)
-    if should_persist and hasattr(ddf_sel, "persist"):
-        reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
-        log_fn(f"[score_density_hybrid] Persisting filtered DDF in memory ({reason}).", always=True)
-        with diag_ctx("dask_sdh_persist_filtered"):
-            ddf_sel = ddf_sel.persist()
-            try:
-                from dask.distributed import wait
-            except Exception:
-                wait = None  # type: ignore[assignment]
-            if wait is not None:
-                wait(ddf_sel)
+    reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
+    ddf_sel = maybe_persist_ddf(
+        ddf_sel,
+        should_persist=should_persist,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+        log_prefix="score_density_hybrid",
+        diag_label="dask_sdh_persist_filtered",
+        reason=reason,
+    )
 
     return ddf_sel
 
@@ -255,17 +272,16 @@ def run_score_density_hybrid_selection(
     diag_ctx,
     log_fn,
     avoid_computes: bool = True,
+    params: ScoreDensityHybridParams | None = None,
 ) -> None:
     """Execute the score_density_hybrid selection."""
     algo = cfg.algorithm
     score_col_internal = "__score__"
-    if algo.sdh_score_min is None or algo.sdh_score_max is None:
-        raise RuntimeError(
-            "score_density_hybrid: internal error — sdh_score_min/sdh_score_max should have been set earlier."
-        )
+    if params is None:
+        raise RuntimeError("score_density_hybrid: selection parameters were not provided.")
 
-    score_min = float(algo.sdh_score_min)
-    score_max = float(algo.sdh_score_max)
+    score_min = float(params.score_min)
+    score_max = float(params.score_max)
     depths_sel = list(range(1, cfg.algorithm.level_limit + 1))
 
     header_line = build_header_line_from_keep(keep_cols)

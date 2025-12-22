@@ -90,7 +90,25 @@ The pipeline can be executed either as a Python library or from the command line
 
 ### Run from the command line
 
+List available selection modes:
+
+    python -m hipscatalog_gen.cli --list-modes
+
+Run with a config file:
+
     python -m hipscatalog_gen.cli --config config.yaml
+
+Validate a config without running:
+
+    python -m hipscatalog_gen.cli --check-config config.yaml
+
+Enable JSON logs (process.jsonl) via CLI flag (when running the pipeline):
+
+    python -m hipscatalog_gen.cli --config config.yaml --json-logs
+
+Summarize an existing telemetry.json:
+
+    python -m hipscatalog_gen.cli --telemetry /path/to/telemetry.json
 
 ## Output Structure
 
@@ -101,7 +119,8 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - densmap_o<depth>.fits   → Density maps for all depths up to level_limit.
 - Moc.fits / Moc.json     → Multi-Order Coverage maps.
 - properties / metadata.xml → HiPS metadata descriptors.
-- process.log / arguments  → Run logs and configuration snapshot.
+- process.log / arguments  → Run logs and configuration snapshot (optional process.jsonl when `--json-logs`).
+- telemetry.json          → Run summary with per-stage durations and input/output counts (replaces legacy input/output count files).
 - Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.
 
 -------------------------------------------------------------------------------
