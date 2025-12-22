@@ -5,8 +5,6 @@ import sys
 from typing import List, Optional
 
 from .config import load_config
-from .pipeline.main import run_pipeline
-from .pipeline.modes import MODE_REGISTRY
 
 __all__ = ["main"]
 
@@ -41,6 +39,11 @@ def main(argv: Optional[List[str]] = None) -> None:
         metavar="CONFIG",
         help="Validate a YAML configuration file and exit without running the pipeline.",
     )
+    group.add_argument(
+        "--telemetry",
+        metavar="FILE",
+        help="Print a summary from an existing telemetry.json file and exit.",
+    )
 
     parser.add_argument(
         "--json-logs",
@@ -48,15 +51,11 @@ def main(argv: Optional[List[str]] = None) -> None:
         help="Also emit structured JSONL logs to process.jsonl (when running the pipeline).",
     )
 
-    parser.add_argument(
-        "--telemetry",
-        metavar="FILE",
-        help="Print a summary from an existing telemetry.json file and exit.",
-    )
-
     args = parser.parse_args(argv)
 
     if getattr(args, "list_modes", False):
+        from .pipeline.modes import MODE_REGISTRY
+
         for name, entry in sorted(MODE_REGISTRY.items()):
             print(f"{name}: {entry.description}")
         return
@@ -104,6 +103,10 @@ def main(argv: Optional[List[str]] = None) -> None:
         for name, dur in top:
             print(f"  - {name}: {dur}s")
         return
+
+    # Import the pipeline lazily so that lightweight commands (list/check/telemetry)
+    # do not pull heavier dependencies like dask.
+    from .pipeline.main import run_pipeline
 
     cfg = load_config(args.config)
     run_pipeline(cfg, json_logs=bool(getattr(args, "json_logs", False)))
