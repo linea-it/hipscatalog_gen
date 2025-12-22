@@ -10,7 +10,7 @@ from dask import compute as dask_compute
 from lsdb.catalog import Catalog as LsdbCatalog
 
 from ..config import Config
-from ..utils import _ID_RE, _resolve_col_name, _score_deps
+from ..utils import _ID_RE, _get_dask_base, _get_meta_df, _resolve_col_name, _score_deps
 
 __all__ = [
     "_build_input_ddf",
@@ -140,8 +140,12 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
                 keep_cols_out.append(c)
                 seen.add(c)
 
-        # Sub-select via LSDB API; returns a new Catalog.
-        ddf = cast(Any, cat0)[keep_cols_out]
+        # Sub-select via LSDB API; returns a new Catalog. Convert to a Dask DF-friendly
+        # object to keep meta valid for future Dask releases.
+        ddf_sel = cast(Any, cat0)[keep_cols_out]
+        ddf_base = _get_dask_base(ddf_sel, require_map_partitions=True)
+        meta = _get_meta_df(ddf_base)
+        ddf = ddf_base.map_partitions(lambda pdf: pdf, meta=meta)
         return ddf, RA_NAME, DEC_NAME, keep_cols_out
 
     # ------------------------------------------------------------------

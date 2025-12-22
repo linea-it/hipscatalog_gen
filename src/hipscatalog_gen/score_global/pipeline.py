@@ -38,7 +38,7 @@ def prepare_score_global(
     if score_range_mode not in ("complete", "hist_peak"):
         raise ValueError("algorithm.score_adaptive_range must be 'complete' or 'hist_peak'.")
 
-    score_hist_nbins = int(getattr(algo, "score_hist_nbins", getattr(algo, "mag_hist_nbins", 512)))
+    score_hist_nbins = int(getattr(algo, "score_hist_nbins", getattr(algo, "mag_hist_nbins", 2048)))
     if score_hist_nbins <= 0:
         raise ValueError("algorithm.score_hist_nbins must be a positive integer.")
 

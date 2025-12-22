@@ -61,8 +61,8 @@ class AlgoOpts:
     mag_min: Optional[float] = None
     mag_max: Optional[float] = None
     mag_adaptive_range: str = "complete"
-    mag_hist_nbins: int = 512
-    mag_keep_invalid_values: bool = False  # map NaN/Inf/|mag|>=99 to sentinel when True (complete mode only)
+    mag_hist_nbins: int = 2048
+    mag_keep_invalid_values: bool = False  # map NaN/Inf to sentinel when True (complete mode only)
     mag_tie_column: Optional[str] = None  # optional tie-breaker for mag_global
     n_1: Optional[int] = None
     n_2: Optional[int] = None
@@ -76,7 +76,7 @@ class AlgoOpts:
     score_min: Optional[float] = None
     score_max: Optional[float] = None
     score_adaptive_range: str = "complete"
-    score_hist_nbins: int = 512
+    score_hist_nbins: int = 2048
     score_keep_invalid_values: bool = False  # keep NaN/Inf with sentinel (complete mode only)
     score_tie_column: Optional[str] = None  # optional tie-breaker for score_global
     score_n_1: Optional[int] = None
@@ -92,7 +92,7 @@ class AlgoOpts:
     sdh_score_min: Optional[float] = None
     sdh_score_max: Optional[float] = None
     sdh_score_adaptive_range: str = "complete"
-    sdh_score_hist_nbins: int = 512
+    sdh_score_hist_nbins: int = 2048
     sdh_keep_invalid_values: bool = False  # keep NaN/Inf with sentinel (complete mode only)
     sdh_tie_column: Optional[str] = None  # optional tie-breaker for score_density_hybrid
     sdh_n_1: Optional[int] = None
@@ -215,7 +215,7 @@ moc_order              [optional, default=level_limit] int
     HiPS order used for the MOC.
 selection_defaults     [optional] dict
     Shared defaults for all modes. Recognized keys:
-      - hist_nbins        (int, default 512)
+      - hist_nbins        (int, default 2048)
       - adaptive_range    (\"complete\" | \"hist_peak\", default \"complete\")
       - order_desc        (bool, default False)
       - density_bias_n1/n2/n3 (float, default 1.0 for SDH)
@@ -227,7 +227,7 @@ mag_global.flux_column       [required if mag_column absent] str
 mag_global.mag_offset        [required when flux_column is set] float
 mag_global.mag_min/max       [optional] float
 mag_global.adaptive_range    [optional, default=selection_defaults.adaptive_range or \"complete\"]
-mag_global.hist_nbins        [optional, default=selection_defaults.hist_nbins or 512]
+mag_global.hist_nbins        [optional, default=selection_defaults.hist_nbins or 2048]
 mag_global.k_1/k_2/k_3       [optional] int, \"per active tile\" aliases for n_*
 mag_global.n_1/n_2/n_3       [optional] int (must be provided in order)
 mag_global.order_desc        [optional, default=selection_defaults.order_desc or False]
@@ -237,7 +237,7 @@ score_global block
 score_global.score_column    [required] str (column or expression)
 score_global.score_min/max   [optional] float
 score_global.adaptive_range  [optional, default=selection_defaults.adaptive_range or \"complete\"]
-score_global.hist_nbins      [optional, default=selection_defaults.hist_nbins or 512]
+score_global.hist_nbins      [optional, default=selection_defaults.hist_nbins or 2048]
 score_global.k_1/k_2/k_3     [optional] int, \"per active tile\" aliases for n_*
 score_global.n_1/n_2/n_3     [optional] int (must be provided in order)
 score_global.order_desc      [optional, default=selection_defaults.order_desc or False]
@@ -247,7 +247,7 @@ score_density_hybrid block
 score_density_hybrid.score_column   [required] str (column or expression)
 score_density_hybrid.score_min/max  [optional] float
 score_density_hybrid.adaptive_range [optional, default=selection_defaults.adaptive_range or \"complete\"]
-score_density_hybrid.hist_nbins     [optional, default=selection_defaults.hist_nbins or 512]
+score_density_hybrid.hist_nbins     [optional, default=selection_defaults.hist_nbins or 2048]
 score_density_hybrid.k_1/k_2/k_3    [optional] int, \"per active tile\" aliases for n_*
 score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)
 score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]
@@ -364,7 +364,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         return vals
 
     def _hist_nbins(block: Mapping[str, Any]) -> int:
-        return int(block.get("hist_nbins", defaults.get("hist_nbins", 512)))
+        return int(block.get("hist_nbins", defaults.get("hist_nbins", 2048)))
 
     def _keep_invalid(block: Mapping[str, Any]) -> bool:
         return bool(block.get("keep_invalid_values", defaults.get("keep_invalid_values", False)))
@@ -561,7 +561,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         score_range_mode = str(getattr(algo, "score_adaptive_range", "complete") or "complete").lower()
         if score_range_mode not in ("complete", "hist_peak"):
             raise ValueError("algorithm.score_adaptive_range must be either 'complete' or 'hist_peak'.")
-        if int(getattr(algo, "score_hist_nbins", 512)) <= 0:
+        if int(getattr(algo, "score_hist_nbins", 2048)) <= 0:
             raise ValueError("algorithm.score_hist_nbins must be a positive integer.")
     if str(algo.selection_mode).lower() == "score_density_hybrid":
         if not getattr(algo, "sdh_score_column", None):
@@ -572,7 +572,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         if score_range_mode not in ("complete", "hist_peak"):
             raise ValueError("algorithm.sdh_score_adaptive_range must be either 'complete' or 'hist_peak'.")
         algo.sdh_score_adaptive_range = score_range_mode
-        if int(getattr(algo, "sdh_score_hist_nbins", 512)) <= 0:
+        if int(getattr(algo, "sdh_score_hist_nbins", 2048)) <= 0:
             raise ValueError("algorithm.sdh_score_hist_nbins must be a positive integer.")
         for name in ("sdh_density_bias_n1", "sdh_density_bias_n2", "sdh_density_bias_n3"):
             val = float(getattr(algo, name, 0.0))

@@ -7,7 +7,12 @@ import pandas as pd
 from dask import compute as dask_compute
 
 from ..selection.levels import assign_level_edges
-from ..selection.score import _finite_min_max, _map_invalid_to_sentinel, compute_histogram_ddf
+from ..selection.score import (
+    _finite_min_max,
+    _map_invalid_to_sentinel,
+    _sentinel_for_order,
+    compute_histogram_ddf,
+)
 from ..selection.slicing import select_by_value_slices
 from ..utils import _get_meta_df
 
@@ -106,6 +111,7 @@ def prepare_mag_global(
 
     keep_invalid = bool(getattr(algo, "mag_keep_invalid_values", False))
     range_mode = str(getattr(algo, "mag_adaptive_range", "complete")).lower()
+    order_desc = bool(getattr(algo, "mg_order_desc", getattr(algo, "order_desc", False)))
     if (not keep_invalid) and (not np.isfinite(mag_min_global_raw) or not np.isfinite(mag_max_global_raw)):
         raise ValueError(
             "mag_global selection: global magnitude min/max are not finite. "
@@ -161,24 +167,26 @@ def prepare_mag_global(
         return float(np.round(peak_center, 2)), bin_left, bin_right
 
     if keep_invalid:
-        # Complete-mode only: map invalids to sentinel 99.0 and expand range to include it.
+        # Complete-mode only: map NaN/Inf to an integer sentinel just outside the finite range.
         fin_min, fin_max = _finite_min_max(ddf, "__mag__")
         if fin_min is None or fin_max is None:
             raise ValueError("mag_global: all magnitude values are NaN/Inf; nothing to select.")
-        sentinel_mag = 99.0
+        sentinel_mag = _sentinel_for_order(fin_min, fin_max, order_desc)
         mag_min = float(mag_min_cfg) if mag_min_cfg is not None else float(fin_min)
         mag_max = float(mag_max_cfg) if mag_max_cfg is not None else float(fin_max)
-        mag_max = max(mag_max, sentinel_mag)
+        if not order_desc:
+            mag_max = max(mag_max, sentinel_mag)
+        else:
+            mag_min = min(mag_min, sentinel_mag)
 
         ddf = _map_invalid_to_sentinel(
             ddf,
             "__mag__",
             sentinel=sentinel_mag,
-            extra_mask_fn=lambda arr: (np.abs(arr) >= 99.0),
             meta=meta_with_mag,
         )
         log_fn(
-            f"[mag_global] keep_invalid_values=True → mapping NaN/Inf/|mag|>=99 to {sentinel_mag} "
+            f"[mag_global] keep_invalid_values=True → mapping NaN/Inf to sentinel {sentinel_mag} "
             f"and using range [{mag_min}, {mag_max}].",
             always=True,
         )

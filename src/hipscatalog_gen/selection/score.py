@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any, Callable, List, Tuple
 
 import numpy as np
@@ -106,7 +107,7 @@ def _quantile_from_histogram(
     bin_edges: np.ndarray,
     q: float,
 ) -> float:
-    """Invert a 1D histogram CDF into a threshold."""
+    """Invert a 1D histogram CDF into a threshold with intra-bin interpolation."""
     if not len(cdf):
         return float(bin_edges[0])
 
@@ -119,7 +120,28 @@ def _quantile_from_histogram(
 
     idx = int(np.searchsorted(cdf, q, side="left"))
     idx = max(0, min(idx, len(cdf) - 1))
-    return float(bin_edges[idx])
+
+    cdf_left = float(cdf[idx - 1]) if idx > 0 else 0.0
+    cdf_right = float(cdf[idx])
+    edge_left = float(bin_edges[idx])
+    edge_right = float(bin_edges[idx + 1])
+
+    if cdf_right <= cdf_left:
+        # Flat region (empty bin) — advance to the next increase if present.
+        j = idx + 1
+        while j < len(cdf) and float(cdf[j]) <= cdf_left:
+            j += 1
+        if j >= len(cdf):
+            return float(bin_edges[-1])
+        cdf_right = float(cdf[j])
+        edge_right = float(bin_edges[j + 1])
+
+    if cdf_right <= cdf_left:
+        return edge_right
+
+    frac = (q - cdf_left) / (cdf_right - cdf_left)
+    frac = float(np.clip(frac, 0.0, 1.0))
+    return edge_left + frac * (edge_right - edge_left)
 
 
 def _finite_min_max(ddf_like: Any, value_col: str) -> tuple[float | None, float | None]:
@@ -148,13 +170,16 @@ def _finite_min_max(ddf_like: Any, value_col: str) -> tuple[float | None, float 
 
 
 def _sentinel_for_order(min_val: float, max_val: float, order_desc: bool) -> float:
-    """Return a sentinel outside [min_val, max_val] to push invalids to the last slice."""
-    span = max(abs(min_val), abs(max_val), 1.0)
-    magnitude = int(np.ceil(np.log10(span + 1.0)))
-    base = 10 ** (magnitude + 1) - 1  # e.g., 999, 9999, ...
+    """Return a sentinel just outside the finite range, aligned to an integer."""
     if order_desc:
-        return -float(base)
-    return float(base)
+        sentinel = math.floor(min_val)
+        if sentinel >= min_val:
+            sentinel -= 1
+    else:
+        sentinel = math.ceil(max_val)
+        if sentinel <= max_val:
+            sentinel += 1
+    return float(sentinel)
 
 
 def _map_invalid_to_sentinel(

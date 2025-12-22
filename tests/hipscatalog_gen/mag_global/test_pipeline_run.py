@@ -484,7 +484,7 @@ def test_assign_targets_rescales_fixed_counts(log_capture):
         label="mag_global",
     )
 
-    assert level_edges.tolist() == [10.0, 20.0, 30.0]
+    assert level_edges.tolist() == [10.0, 21.666666666666668, 30.0]
     assert any("Rescaling" in msg for msg in logs)
 
 
@@ -510,7 +510,7 @@ def test_assign_targets_all_fixed_no_free_bins(log_capture):
         label="mag_global",
     )
 
-    assert level_edges.tolist() == [0.0, 1.0, 2.0]
+    assert level_edges.tolist() == [0.0, 1.1666666666666665, 2.0]
     assert not any("Rescaling" in msg for msg in logs)
 
 

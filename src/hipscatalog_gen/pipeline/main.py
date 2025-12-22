@@ -26,6 +26,7 @@ from typing import List
 
 from ..cluster.runtime import setup_cluster, shutdown_cluster
 from ..config import Config
+from ..io.output import write_properties
 from ..mag_global.pipeline import prepare_mag_global, run_mag_global_selection
 from ..score_density_hybrid.pipeline import prepare_score_density_hybrid, run_score_density_hybrid_selection
 from ..score_global.pipeline import prepare_score_global, run_score_global_selection
@@ -188,7 +189,14 @@ def run_pipeline(cfg: Config) -> None:
         else:
             raise RuntimeError("Unexpected selection_mode dispatch failure.")
 
-        write_counts_summaries(out_dir, cfg.algorithm.level_limit, input_total, _log)
+        total_written = write_counts_summaries(out_dir, cfg.algorithm.level_limit, input_total, _log)
+        write_properties(
+            out_dir,
+            cfg.output,
+            cfg.algorithm.level_limit,
+            total_written,
+            tile_format="tsv",
+        )
 
     try:
         if diagnostics_mode == "global":

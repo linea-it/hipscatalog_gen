@@ -79,6 +79,12 @@ def assign_level_edges(
         level_edges[i] = _quantile_from_histogram(cdf_hist, score_edges_hist, q)
 
     level_edges = np.maximum.accumulate(level_edges)
+
+    # Enforce strictly increasing edges (except final clamp) to avoid zero-width slices.
+    for i in range(1, len(level_edges)):
+        if level_edges[i] <= level_edges[i - 1]:
+            level_edges[i] = min(score_max, np.nextafter(level_edges[i - 1], np.inf))
+
     level_edges[0] = score_min
     level_edges[-1] = score_max
     return level_edges, T

@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from dask import compute as dask_compute
+from dask import delayed as dask_delayed
 from lsdb.catalog import Catalog as LsdbCatalog
 
 from ..healpix.densmap import densmap_for_depth_delayed
@@ -19,7 +20,6 @@ from ..io.output import (
     write_densmap_fits,
     write_metadata_xml,
     write_moc,
-    write_properties,
 )
 from ..utils import _detect_hats_catalog_root, _fmt_dur, _get_dask_base, _validate_and_normalize_radec
 
@@ -161,10 +161,17 @@ def compute_input_total(ddf: Any, diag_ctx, log_fn, avoid_computes: bool) -> int
     )
 
     with diag_ctx("dask_input_total"):
-        base_ddf = _get_dask_base(ddf)
+        base_ddf = _get_dask_base(ddf, require_to_delayed=True)
 
-        if hasattr(base_ddf, "map_partitions"):
-            total = dask_compute(base_ddf.map_partitions(len).sum())[0]
+        if hasattr(base_ddf, "to_delayed"):
+            parts = base_ddf.to_delayed()
+            delayed_lengths = [dask_delayed(lambda pdf: len(pdf) if pdf is not None else 0)(p) for p in parts]
+            total = dask_compute(dask_delayed(sum)(delayed_lengths))[0]
+        elif hasattr(base_ddf, "map_partitions"):
+            meta_len = pd.Series([], dtype="int64")
+            total = dask_compute(
+                base_ddf.map_partitions(lambda pdf: pd.Series([len(pdf)], dtype="int64"), meta=meta_len).sum()
+            )[0]
         elif hasattr(base_ddf, "__len__"):
             total = len(base_ddf)
         else:
@@ -185,7 +192,7 @@ def write_common_static_products(
     paths: List[str],
     ddf: Any,
 ) -> None:
-    """Write MOC, metadata.xml, properties, and arguments echo."""
+    """Write MOC, metadata.xml, and arguments echo."""
     moc_order = getattr(cfg.algorithm, "moc_order", cfg.algorithm.level_limit)
     dens_lc = densmaps[moc_order]
     write_moc(out_dir, moc_order, dens_lc)
@@ -197,15 +204,6 @@ def write_common_static_products(
     ra_idx = keep_cols.index(ra_col)
     dec_idx = keep_cols.index(dec_col)
     write_metadata_xml(out_dir, cols, ra_idx, dec_idx)
-
-    n_src_total = int(densmaps[0].sum())
-    write_properties(
-        out_dir,
-        cfg.output,
-        cfg.algorithm.level_limit,
-        n_src_total,
-        tile_format="tsv",
-    )
 
     arg_text = textwrap.dedent(
         f"""
@@ -356,8 +354,8 @@ def write_tiles_with_allsky(
     return written_per_ipix, allsky_df
 
 
-def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, log_fn) -> None:
-    """Persist input/output counts for later cross-checks."""
+def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, log_fn) -> int:
+    """Persist input/output counts for later cross-checks and return total written rows."""
 
     def _count_rows(tile_path: Path) -> int:
         with tile_path.open("r", encoding="utf-8") as f:
@@ -409,3 +407,5 @@ def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, lo
         f"[counts] Wrote output counts to {output_path} and input counts to {input_path}.",
         always=True,
     )
+
+    return int(total_all_depths)

@@ -84,7 +84,7 @@ def reduce_topk_by_group_dask(
     meta = _get_meta_df(ddf_like)
     cols_all = list(meta.columns)
 
-    base = _get_dask_base(ddf_like)
+    base = _get_dask_base(ddf_like, require_groupby=True)
     if hasattr(base, "groupby"):
         cols_all = list(meta.columns)
         return base.groupby(group_col, group_keys=False)[cols_all].apply(_take_topk, meta=meta)
