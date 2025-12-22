@@ -96,7 +96,7 @@ algorithm:
   level_limit: 11             # HiPS max depth (4..11)
   # moc_order: 11             # Optional MOC order (defaults to level_limit)
   selection_defaults:
-  hist_nbins: 2048
+    hist_nbins: 2048
     adaptive_range: "complete"
     order_desc: false
     keep_invalid_values: false     # map NaN/Inf to sentinel only when adaptive_range=complete

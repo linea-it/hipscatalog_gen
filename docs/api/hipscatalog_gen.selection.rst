@@ -1,11 +1,11 @@
 hipscatalog\_gen.selection package
-=================================
+==================================
 
 Submodules
 ----------
 
 hipscatalog\_gen.selection.levels module
----------------------------------------
+----------------------------------------
 
 .. automodule:: hipscatalog_gen.selection.levels
    :members:
@@ -13,7 +13,7 @@ hipscatalog\_gen.selection.levels module
    :show-inheritance:
 
 hipscatalog\_gen.selection.common module
----------------------------------------
+----------------------------------------
 
 .. automodule:: hipscatalog_gen.selection.common
    :members:
@@ -21,7 +21,7 @@ hipscatalog\_gen.selection.common module
    :show-inheritance:
 
 hipscatalog\_gen.selection.slicing module
-----------------------------------------
+-----------------------------------------
 
 .. automodule:: hipscatalog_gen.selection.slicing
    :members:
@@ -29,7 +29,7 @@ hipscatalog\_gen.selection.slicing module
    :show-inheritance:
 
 hipscatalog\_gen.selection.score module
---------------------------------------
+---------------------------------------
 
 .. automodule:: hipscatalog_gen.selection.score
    :members:

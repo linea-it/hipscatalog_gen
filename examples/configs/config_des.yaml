@@ -95,12 +95,11 @@ algorithm:
   level_limit: 11             # HiPS max depth (4..11)
   # moc_order: 11             # Optional MOC order (defaults to level_limit)
   selection_defaults:
-  hist_nbins: 2048
+    hist_nbins: 2048
     adaptive_range: "complete"
     order_desc: false
     keep_invalid_values: false     # map NaN/Inf to sentinel only when adaptive_range=complete
     tie_column: null               # optional tie-breaker; falls back to RA/DEC when null
-    keep_invalid_values: false     # map NaN/Inf to sentinel only when adaptive_range=complete
 
   # ==============================
   # mag_global block
@@ -123,7 +122,6 @@ algorithm:
     order_desc: false             # false → lower magnitudes/scores are better; true → higher are better (inherits algorithm.order_desc if omitted)
     keep_invalid_values: false    # if true (complete mode only), map NaN/Inf to a sentinel and include them in the last slice
     tie_column: null              # optional tie-breaker; falls back to RA/DEC when null
-    keep_invalid_values: false    # if true (complete mode only), map NaN/Inf to a sentinel and include them in the last slice
 
   # ==============================
   # score_global block
@@ -143,7 +141,6 @@ algorithm:
     order_desc: false             # false → lower scores are better; true → higher scores are better (inherits algorithm.order_desc if omitted)
     keep_invalid_values: false    # if true (complete mode only), map NaN/Inf to sentinel and include in last slice
     tie_column: null              # optional tie-breaker; falls back to RA/DEC when null
-    keep_invalid_values: false    # if true (complete mode only), map NaN/Inf to sentinel and include in last slice
 
   # ==============================
   # score_density_hybrid block
@@ -166,7 +163,6 @@ algorithm:
     order_desc: false             # false → lower scores are better; true → higher scores are better (inherits algorithm.order_desc if omitted)
     keep_invalid_values: false    # if true (complete mode only), map NaN/Inf to sentinel and include in last slice
     tie_column: null              # optional tie-breaker; falls back to RA/DEC when null
-    keep_invalid_values: false    # if true (complete mode only), map NaN/Inf to sentinel and include in last slice
 
 
 # -----------------------------------------------------------------------------
