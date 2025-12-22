@@ -1,17 +1,8 @@
 {
-    "benchmarks.mem_list": {
-        "code": "def mem_list():\n    \"\"\"Memory computations are prefixed with 'mem' or 'peakmem'.\"\"\"\n    return example_benchmarks.memory_computation()",
-        "name": "benchmarks.mem_list",
-        "param_names": [],
-        "params": [],
-        "type": "memory",
-        "unit": "bytes",
-        "version": "a31e7e31a99db6599fc29032ea5a3cb9782922117f13e122a69c2745a93c3d32"
-    },
-    "benchmarks.time_computation": {
-        "code": "def time_computation():\n    \"\"\"Time computations are prefixed with 'time'.\"\"\"\n    example_benchmarks.runtime_computation()",
+    "benchmark_config.ConfigBenchmark.time_load_and_validate_config": {
+        "code": "class ConfigBenchmark:\n    def time_load_and_validate_config(self):\n        \"\"\"Time loading + validation of a minimal config.\"\"\"\n        cfg = load_config(self.cfg_path)\n        validate_common_cfg(cfg)\n\n    def setup(self):\n        \"\"\"Prepare a temporary config file.\"\"\"\n        self._tmp = tempfile.TemporaryDirectory()\n        self.cfg_path = Path(self._tmp.name) / \"bench.yaml\"\n        self.cfg_path.write_text(_MINIMAL_CFG, encoding=\"utf-8\")",
         "min_run_count": 2,
-        "name": "benchmarks.time_computation",
+        "name": "benchmark_config.ConfigBenchmark.time_load_and_validate_config",
         "number": 0,
         "param_names": [],
         "params": [],
@@ -20,7 +11,7 @@
         "sample_time": 0.01,
         "type": "time",
         "unit": "seconds",
-        "version": "089635b7375b19f5c790c7337625b200db3327a27d63c756ac5dbb4c1fc25b62",
+        "version": "40665a96bd122cd5ce3e03bf55a5b4eae720c69ad09f9639ba193bf170a23f96",
         "warmup_time": -1
     },
     "version": 2
