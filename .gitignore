@@ -150,5 +150,5 @@ _html/
 
 # Project initialization script
 .initialize_new_project.sh
-config.yaml
+/config*.yaml
 outputs/

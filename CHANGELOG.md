@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0
 
 - First publishable release of `hipscatalog-gen`.
 - Three selection modes: `mag_global`, `score_global`, `score_density_hybrid`, each with normalize/prepare/run stages via a mode registry.
