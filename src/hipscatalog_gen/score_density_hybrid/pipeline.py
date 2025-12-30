@@ -278,6 +278,18 @@ def prepare_score_density_hybrid(
     meta_with_id["__sdh_id__"] = pd.Series([], dtype="int64")
     ddf_sel = ddf_sel.map_partitions(_attach_unique_id, meta=meta_with_id, partition_info=True)
 
+    def _ensure_id(pdf: pd.DataFrame) -> pd.DataFrame:
+        """Guarantee __sdh_id__ exists even if upstream meta inference drops it."""
+        if "__sdh_id__" in pdf.columns:
+            return pdf
+        pdf = pdf.copy()
+        pdf["__sdh_id__"] = (
+            pd.Series([], dtype="int64") if pdf.empty else pd.Series(np.arange(len(pdf), dtype="int64"))
+        )
+        return pdf
+
+    ddf_sel = ddf_sel.map_partitions(_ensure_id, meta=meta_with_id)
+
     should_persist = persist_ddfs or (not avoid_computes)
     reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
     ddf_sel = maybe_persist_ddf(
