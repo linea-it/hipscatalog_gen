@@ -309,7 +309,7 @@ def _get_meta_df(ddf_like: Any) -> pd.DataFrame:
                 if isinstance(candidate, pd.DataFrame):
                     return candidate
             except Exception:
-                pass
+                return None
         return None
 
     if hasattr(base, "_meta"):
@@ -325,7 +325,7 @@ def _get_meta_df(ddf_like: Any) -> pd.DataFrame:
         if meta_pdf is not None:
             return meta_pdf
     except Exception:
-        pass
+        return pd.DataFrame()
 
     # Last resort: empty DataFrame
     return pd.DataFrame()

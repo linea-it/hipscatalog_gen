@@ -80,9 +80,14 @@ addopts = "--doctest-modules --doctest-glob=*.rst"
 [tool.ruff]
 line-length = 110
 target-version = "py311"
+extend-exclude = [
+  "docs/notebooks",
+  "examples/notebooks",
+  "benchmarks/asv.conf.json",
+]
 
 [tool.ruff.lint]
-select = ["E","W","F","N","UP","B","SIM","I","D101","D102","D103","D106","D206","D207","D208","D300","D417","D419","NPY201"]
+select = ["E","W","F","N","UP","B","SIM","I","S","D101","D102","D103","D106","D206","D207","D208","D300","D417","D419","NPY201"]
 ignore = [
   "UP006","UP007","SIM114","B028","SIM117","UP015","UP028",
   "UP035",
@@ -94,6 +99,7 @@ ignore = [
 "src/hipscatalog_gen/io_input.py" = ["SIM108"]
 "src/hipscatalog_gen/pipeline.py" = ["SIM105","SIM108","F841"]
 "src/hipscatalog_gen/selection.py" = ["SIM102","SIM108"]
+"tests/**/*" = ["S101","S108"]
 
 [tool.mypy]
 python_version = "3.11"
