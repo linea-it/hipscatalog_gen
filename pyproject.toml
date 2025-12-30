@@ -114,4 +114,4 @@ hipscatalog_gen = ["py.typed", "assets/telemetry.schema.json"]
 omit = ["src/hipscatalog_gen/_version.py"]
 
 [tool.coverage.report]
-fail_under = 80
+fail_under = 95

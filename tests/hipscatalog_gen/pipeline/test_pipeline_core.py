@@ -341,14 +341,21 @@ def test_log_epilogue_handles_write_error(monkeypatch, tmp_path, log_capture):
     cfg = _cfg_pipeline(tmp_path)
     pipeline_common.log_prologue(cfg, tmp_path, log_fn)
 
+    orig_open = Path.open
+
     def fake_open(self, *args, **kwargs):
         if self.name == "process.log":
             raise OSError("fail")
-        return Path.open(self, *args, **kwargs)
+        return orig_open(self, *args, **kwargs)
 
     monkeypatch.setattr(pipeline_common.Path, "open", fake_open)
     pipeline_common.log_epilogue(tmp_path, ["x"], 0.0, log_fn, write_process_log=True)
     assert any("ERROR writing process.log" in m for m in logs)
+    # Non-process.log path exercises happy branch.
+    other = tmp_path / "other.log"
+    with other.open("w", encoding="utf-8") as fh:
+        fh.write("ok")
+    assert fake_open(other) is not None
 
 
 def test_common_maybe_persist_ddf(diag_ctx, log_capture):

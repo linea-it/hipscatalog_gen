@@ -436,6 +436,8 @@ def test_resolve_value_range_invalids(monkeypatch, diag_ctx, log_capture):
     def hist_nan(*_args, **_kwargs):
         return np.array([1], dtype="int64"), np.array([np.nan, np.nan], dtype="float64"), 1
 
+    assert hist_nan() is not None
+
     with pytest.raises(ValueError):
         selection_score.resolve_value_range(
             dd.from_pandas(pd.DataFrame({"SCORE": [1.0]}), npartitions=1),
@@ -453,6 +455,8 @@ def test_resolve_value_range_invalids(monkeypatch, diag_ctx, log_capture):
     def hist_empty(*_args, **_kwargs):
         return np.zeros(2, dtype="int64"), np.array([0.0, 1.0, 2.0], dtype="float64"), 0
 
+    assert hist_empty() is not None
+
     with pytest.raises(ValueError):
         selection_score.resolve_value_range(
             ddf,
@@ -469,6 +473,8 @@ def test_resolve_value_range_invalids(monkeypatch, diag_ctx, log_capture):
 
     def hist_inverted(*_args, **_kwargs):
         return np.array([1], dtype="int64"), np.array([0.0, 1.0], dtype="float64"), 1
+
+    assert hist_inverted() is not None
 
     with pytest.raises(ValueError):
         selection_score.resolve_value_range(

@@ -89,6 +89,7 @@ def test_get_dask_base_regular_and_missing(monkeypatch):
             return self
 
     obj = WithMap()
+    assert obj.map_partitions() is obj
     assert utils._get_dask_base(obj) is obj
     assert utils._get_dask_base(obj, require_map_partitions=True) is obj
 
@@ -123,6 +124,7 @@ def test_get_dask_base_regular_and_missing(monkeypatch):
         def to_delayed(self):
             return "ok"
 
+    assert WithToDelayed().to_delayed() == "ok"
     assert utils._get_dask_base(WithToDelayed(), require_to_delayed=True) is not None
 
     catalog_bad_methods = FakeCatalog(base=object())
