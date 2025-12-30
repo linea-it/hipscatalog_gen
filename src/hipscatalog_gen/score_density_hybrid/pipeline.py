@@ -276,23 +276,18 @@ def prepare_score_density_hybrid(
 
     meta_with_id = meta_sel.copy()
     meta_with_id["__sdh_id__"] = pd.Series([], dtype="int64")
-    ddf_sel = ddf_sel.map_partitions(_attach_unique_id, meta=meta_with_id, partition_info=True)
 
-    def _ensure_id(pdf: pd.DataFrame, partition_info=None) -> pd.DataFrame:
-        """Guarantee __sdh_id__ exists; regenerate using partition number if missing."""
-        if "__sdh_id__" not in pdf.columns:
-            part_no = int(partition_info["number"]) if partition_info and "number" in partition_info else 0
-            base = np.int64(part_no) << 32
-            seq = np.arange(len(pdf), dtype="int64")
-            pdf = pdf.copy()
-            pdf["__sdh_id__"] = base + seq
-
-        # Reorder to expected columns to satisfy metadata checks.
+    def _attach_id_safe(pdf: pd.DataFrame, partition_info=None) -> pd.DataFrame:
+        """Attach __sdh_id__ deterministically using partition number."""
+        part_no = int(partition_info["number"]) if partition_info and "number" in partition_info else 0
+        base = np.int64(part_no) << 32
+        seq = np.arange(len(pdf), dtype="int64")
+        pdf = pdf.copy()
+        pdf["__sdh_id__"] = base + seq
         return pdf[meta_with_id.columns]
 
-    # Some older/newer dask versions drop the column unexpectedly; enforce metadata to keep __sdh_id__.
     ddf_sel = ddf_sel.map_partitions(
-        _ensure_id, meta=meta_with_id, partition_info=True, enforce_metadata=True
+        _attach_id_safe, meta=meta_with_id, partition_info=True, enforce_metadata=True
     )
 
     should_persist = persist_ddfs or (not avoid_computes)
