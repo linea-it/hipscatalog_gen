@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Tuple, cast
 
 import dask.dataframe as dd
 import lsdb
@@ -47,8 +47,8 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
 
     fmt = cfg.input.format.lower()
     # Single declaration for the whole function (avoid no-redef)
-    mag_col_cfg: Optional[str] = None
-    flux_col_cfg: Optional[str] = None
+    mag_col_cfg: str | None = None
+    flux_col_cfg: str | None = None
     score_global_expr = getattr(cfg.algorithm, "score_column", None) or ""
     sdh_score_expr = getattr(cfg.algorithm, "sdh_score_column", None) or ""
     selection_mode = getattr(cfg.algorithm, "selection_mode", "mag_global").lower()
@@ -71,7 +71,7 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     if fmt == "hats":
         if len(paths) != 1:
             raise ValueError(
-                "For input.format='hats', please specify exactly one HATS catalog " "path in input.paths."
+                "For input.format='hats', please specify exactly one HATS catalog path in input.paths."
             )
 
         hats_path = paths[0]

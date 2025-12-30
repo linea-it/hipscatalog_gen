@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 import dask.dataframe as dd
 import numpy as np
@@ -46,7 +46,7 @@ def _write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def _detect_hats_catalog_root(paths: List[str]) -> Optional[Path]:
+def _detect_hats_catalog_root(paths: List[str]) -> Path | None:
     """Best-effort detection of a HATS catalog root directory.
 
     Strategy:
@@ -115,11 +115,11 @@ def _log_depth_stats(
     _log_fn: Callable[..., None],
     depth: int,
     phase: str,
-    counts: Optional[np.ndarray] = None,
-    candidates_len: Optional[int] = None,
-    selected_len: Optional[int] = None,
-    written: Optional[Dict[int, int]] = None,
-    remainder_len: Optional[int] = None,
+    counts: np.ndarray | None = None,
+    candidates_len: int | None = None,
+    selected_len: int | None = None,
+    written: Dict[int, int] | None = None,
+    remainder_len: int | None = None,
 ) -> None:
     """Log a compact one-line summary for a depth and pipeline phase.
 

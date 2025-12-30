@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -92,7 +92,7 @@ def finalize_write_tiles(
     selected: pd.DataFrame,
     order_desc: bool,
     allsky_collect: bool = False,
-) -> tuple[Dict[int, int], Optional[pd.DataFrame]]:
+) -> tuple[Dict[int, int], pd.DataFrame | None]:
     """Write one TSV per HEALPix cell and build optional Allsky dataframe.
 
     The function:
@@ -176,7 +176,7 @@ def finalize_write_tiles(
         if allsky_collect and n_written > 0:
             allsky_rows.extend(g_tile.values.tolist())
 
-    allsky_df: Optional[pd.DataFrame] = None
+    allsky_df: pd.DataFrame | None = None
     if allsky_collect and allsky_rows:
         allsky_df = pd.DataFrame(allsky_rows, columns=tile_cols)
 
@@ -265,7 +265,7 @@ def write_arguments(out_dir: Path, args_text: str) -> None:
 
 def write_metadata_xml(
     out_dir: Path,
-    columns: List[tuple[str, str, Optional[str]]],
+    columns: List[tuple[str, str, str | None]],
     ra_idx: int,
     dec_idx: int,
 ) -> None:
@@ -342,7 +342,7 @@ def write_moc(out_dir: Path, moc_order: int, dens_counts: np.ndarray) -> None:
         nside = 1 << order
 
         moc = None
-        last_err: Optional[Exception] = None
+        last_err: Exception | None = None
         candidates = [
             lambda: MOC.from_healpix_cells(order, ipix_list, True),
             lambda: MOC.from_healpix_cells(order, ipix_list),

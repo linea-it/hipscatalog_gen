@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping
 
 import yaml  # type: ignore[import-untyped]
 
@@ -53,56 +53,56 @@ class AlgoOpts:
     level_limit: int  # maximum HiPS order (NorderL)
     moc_order: int  # HiPS order for the MOC
     order_desc: bool = False  # global default for ordering (False → ascending/lower is better)
-    tie_column: Optional[str] = None  # optional tie-breaker (falls back to RA/DEC)
+    tie_column: str | None = None  # optional tie-breaker (falls back to RA/DEC)
     mg_order_desc: bool = False  # per-mode override
 
     # mag_global mode (precedence: mag_column or flux_column+offset)
-    mag_column: Optional[str] = None
-    flux_column: Optional[str] = None
-    mag_offset: Optional[float] = None
-    mag_min: Optional[float] = None
-    mag_max: Optional[float] = None
+    mag_column: str | None = None
+    flux_column: str | None = None
+    mag_offset: float | None = None
+    mag_min: float | None = None
+    mag_max: float | None = None
     mag_adaptive_range: str = "complete"
     mag_hist_nbins: int = 2048
     mag_keep_invalid_values: bool = False  # map NaN/Inf to sentinel when True (complete mode only)
-    mag_tie_column: Optional[str] = None  # optional tie-breaker for mag_global
-    n_1: Optional[int] = None
-    n_2: Optional[int] = None
-    n_3: Optional[int] = None
-    k_1: Optional[int] = None  # optional “per active tile” alias for n_1
-    k_2: Optional[int] = None  # optional “per active tile” alias for n_2
-    k_3: Optional[int] = None  # optional “per active tile” alias for n_3
+    mag_tie_column: str | None = None  # optional tie-breaker for mag_global
+    n_1: int | None = None
+    n_2: int | None = None
+    n_3: int | None = None
+    k_1: int | None = None  # optional “per active tile” alias for n_1
+    k_2: int | None = None  # optional “per active tile” alias for n_2
+    k_3: int | None = None  # optional “per active tile” alias for n_3
 
     # score_global mode
-    score_column: Optional[str] = None
-    score_min: Optional[float] = None
-    score_max: Optional[float] = None
+    score_column: str | None = None
+    score_min: float | None = None
+    score_max: float | None = None
     score_adaptive_range: str = "complete"
     score_hist_nbins: int = 2048
     score_keep_invalid_values: bool = False  # keep NaN/Inf with sentinel (complete mode only)
-    score_tie_column: Optional[str] = None  # optional tie-breaker for score_global
-    score_n_1: Optional[int] = None
-    score_n_2: Optional[int] = None
-    score_n_3: Optional[int] = None
-    score_k_1: Optional[int] = None  # optional “per active tile” alias for score_n_1
-    score_k_2: Optional[int] = None  # optional “per active tile” alias for score_n_2
-    score_k_3: Optional[int] = None  # optional “per active tile” alias for score_n_3
+    score_tie_column: str | None = None  # optional tie-breaker for score_global
+    score_n_1: int | None = None
+    score_n_2: int | None = None
+    score_n_3: int | None = None
+    score_k_1: int | None = None  # optional “per active tile” alias for score_n_1
+    score_k_2: int | None = None  # optional “per active tile” alias for score_n_2
+    score_k_3: int | None = None  # optional “per active tile” alias for score_n_3
     sg_order_desc: bool = False  # per-mode override
 
     # score_density_hybrid mode
-    sdh_score_column: Optional[str] = None
-    sdh_score_min: Optional[float] = None
-    sdh_score_max: Optional[float] = None
+    sdh_score_column: str | None = None
+    sdh_score_min: float | None = None
+    sdh_score_max: float | None = None
     sdh_score_adaptive_range: str = "complete"
     sdh_score_hist_nbins: int = 2048
     sdh_keep_invalid_values: bool = False  # keep NaN/Inf with sentinel (complete mode only)
-    sdh_tie_column: Optional[str] = None  # optional tie-breaker for score_density_hybrid
-    sdh_n_1: Optional[int] = None
-    sdh_n_2: Optional[int] = None
-    sdh_n_3: Optional[int] = None
-    sdh_k_1: Optional[int] = None  # optional “per active tile” alias for sdh_n_1
-    sdh_k_2: Optional[int] = None  # optional “per active tile” alias for sdh_n_2
-    sdh_k_3: Optional[int] = None  # optional “per active tile” alias for sdh_n_3
+    sdh_tie_column: str | None = None  # optional tie-breaker for score_density_hybrid
+    sdh_n_1: int | None = None
+    sdh_n_2: int | None = None
+    sdh_n_3: int | None = None
+    sdh_k_1: int | None = None  # optional “per active tile” alias for sdh_n_1
+    sdh_k_2: int | None = None  # optional “per active tile” alias for sdh_n_2
+    sdh_k_3: int | None = None  # optional “per active tile” alias for sdh_n_3
     sdh_density_bias_n1: float = 1.0
     sdh_density_bias_n2: float = 1.0
     sdh_density_bias_n3: float = 1.0
@@ -115,7 +115,7 @@ class ColumnsCfg:
 
     ra: str  # RA column name (or index for ASCII without header)
     dec: str  # DEC column name
-    keep: Optional[List[str]] = None  # optional explicit list of columns to keep
+    keep: List[str] | None = None  # optional explicit list of columns to keep
 
 
 @dataclass
@@ -125,7 +125,7 @@ class InputCfg:
     paths: List[str]  # list of glob patterns for files
     format: str  # "parquet" | "csv" | "tsv"
     header: bool  # header row present for CSV/TSV
-    ascii_format: Optional[str] = None  # optional hint ("CSV" or "TSV")
+    ascii_format: str | None = None  # optional hint ("CSV" or "TSV")
 
 
 @dataclass
@@ -136,7 +136,7 @@ class ClusterCfg:
     n_workers: int
     threads_per_worker: int
     memory_per_worker: str  # e.g. "8GB"
-    slurm: Optional[Dict] = None
+    slurm: Dict | None = None
     low_memory_mode: bool = True
     persist_ddfs: bool = False
     avoid_computes_wherever_possible: bool = True
@@ -150,8 +150,8 @@ class OutputCfg:
     out_dir: str
     cat_name: str
     target: str
-    creator_did: Optional[str] = None
-    obs_title: Optional[str] = None
+    creator_did: str | None = None
+    obs_title: str | None = None
     overwrite: bool = False
 
 
@@ -347,7 +347,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
     score_cfg = algo.get("score_global", {}) or {}
     sdh_cfg = algo.get("score_density_hybrid", {}) or {}
 
-    def _to_int_or_none(x, name: str) -> Optional[int]:
+    def _to_int_or_none(x, name: str) -> int | None:
         """Convert to int when set, enforcing non-negative inputs."""
         if x is None:
             return None
@@ -359,7 +359,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             raise ValueError(f"algorithm.{name} must be non-negative, got {v}.")
         return v
 
-    def _require_order(vals: List[Optional[int]], names: List[str]) -> List[Optional[int]]:
+    def _require_order(vals: List[int | None], names: List[str]) -> List[int | None]:
         """Ensure values are provided in order without gaps."""
         for idx, val in enumerate(vals):
             if val is not None and any(v is None for v in vals[:idx]):
@@ -375,7 +375,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         """Resolve keep_invalid_values flag with per-mode override."""
         return bool(block.get("keep_invalid_values", defaults.get("keep_invalid_values", False)))
 
-    def _tie_col(block: Mapping[str, Any]) -> Optional[str]:
+    def _tie_col(block: Mapping[str, Any]) -> str | None:
         """Resolve tie-breaker column with per-mode override."""
         return block.get("tie_column", defaults.get("tie_column", None))
 
@@ -419,19 +419,19 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         ["score_density_hybrid.k_1", "score_density_hybrid.k_2", "score_density_hybrid.k_3"],
     )
 
-    n_1, n_2, n_3 = (_to_int_or_none(v, f"mag_global.n_{i+1}") for i, v in enumerate(n_vals))
-    k_1, k_2, k_3 = (_to_int_or_none(v, f"mag_global.k_{i+1}") for i, v in enumerate(k_vals))
+    n_1, n_2, n_3 = (_to_int_or_none(v, f"mag_global.n_{i + 1}") for i, v in enumerate(n_vals))
+    k_1, k_2, k_3 = (_to_int_or_none(v, f"mag_global.k_{i + 1}") for i, v in enumerate(k_vals))
     score_n_1, score_n_2, score_n_3 = (
-        _to_int_or_none(v, f"score_global.n_{i+1}") for i, v in enumerate(sg_vals)
+        _to_int_or_none(v, f"score_global.n_{i + 1}") for i, v in enumerate(sg_vals)
     )
     score_k_1, score_k_2, score_k_3 = (
-        _to_int_or_none(v, f"score_global.k_{i+1}") for i, v in enumerate(sg_k_vals)
+        _to_int_or_none(v, f"score_global.k_{i + 1}") for i, v in enumerate(sg_k_vals)
     )
     sdh_n_1, sdh_n_2, sdh_n_3 = (
-        _to_int_or_none(v, f"score_density_hybrid.n_{i+1}") for i, v in enumerate(sdh_vals)
+        _to_int_or_none(v, f"score_density_hybrid.n_{i + 1}") for i, v in enumerate(sdh_vals)
     )
     sdh_k_1, sdh_k_2, sdh_k_3 = (
-        _to_int_or_none(v, f"score_density_hybrid.k_{i+1}") for i, v in enumerate(sdh_k_vals)
+        _to_int_or_none(v, f"score_density_hybrid.k_{i + 1}") for i, v in enumerate(sdh_k_vals)
     )
 
     cfg = Config(

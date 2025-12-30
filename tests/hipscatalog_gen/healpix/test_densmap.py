@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from dask import dataframe as dd
+
 from hipscatalog_gen.healpix import densmap
 
 

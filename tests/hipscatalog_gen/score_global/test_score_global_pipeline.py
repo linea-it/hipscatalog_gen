@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from dask import dataframe as dd
+
 from hipscatalog_gen.score_global.pipeline import (
     normalize_score_global,
     prepare_score_global,

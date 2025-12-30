@@ -6,6 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+
 from hipscatalog_gen.cluster import runtime
 from hipscatalog_gen.config import ClusterCfg
 

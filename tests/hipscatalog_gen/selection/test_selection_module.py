@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from dask import dataframe as dd
+
 from hipscatalog_gen.selection import common as selection_common
 from hipscatalog_gen.selection import levels as selection_levels
 from hipscatalog_gen.selection import score as selection_score

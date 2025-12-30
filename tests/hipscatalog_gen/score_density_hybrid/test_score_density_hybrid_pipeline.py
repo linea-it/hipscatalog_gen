@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from dask import dataframe as dd
+
 from hipscatalog_gen.score_density_hybrid import pipeline as sdh_pipeline
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import glob
 import textwrap
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -40,7 +40,7 @@ __all__ = [
 def log_prologue(cfg: Any, out_dir: Path, log_fn) -> None:
     """Emit the initial pipeline log lines."""
     log_fn(
-        f"START HiPS catalog pipeline: " f"cat_name={cfg.output.cat_name} out_dir={out_dir}",
+        f"START HiPS catalog pipeline: cat_name={cfg.output.cat_name} out_dir={out_dir}",
         always=True,
     )
     sel_mode = (getattr(cfg.algorithm, "selection_mode", "") or "").lower()
@@ -58,7 +58,7 @@ def log_epilogue(
     elapsed = _fmt_dur(elapsed_raw)
 
     log_fn(
-        f"END HiPS catalog pipeline. Elapsed {elapsed} " f"({elapsed_raw:.3f} s)",
+        f"END HiPS catalog pipeline. Elapsed {elapsed} ({elapsed_raw:.3f} s)",
         always=True,
     )
 
@@ -280,9 +280,7 @@ def write_common_static_products(
     write_moc(out_dir, moc_order, dens_lc)
 
     dtypes_map = ddf.dtypes.to_dict()
-    cols: List[Tuple[str, str, Optional[str]]] = [
-        (c, str(dtypes_map.get(c, "object")), None) for c in keep_cols
-    ]
+    cols: List[Tuple[str, str, str | None]] = [(c, str(dtypes_map.get(c, "object")), None) for c in keep_cols]
     ra_idx = keep_cols.index(ra_col)
     dec_idx = keep_cols.index(dec_col)
     write_metadata_xml(out_dir, cols, ra_idx, dec_idx)

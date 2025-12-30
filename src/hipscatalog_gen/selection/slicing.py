@@ -92,7 +92,7 @@ def select_by_value_slices(
     log_fn(
         f"[selection] {label} mode: per-depth slices:\n"
         + "\n".join(
-            f"  depth {d}: [{level_edges[i]:.6f}, {level_edges[i+1]:.6f}"
+            f"  depth {d}: [{level_edges[i]:.6f}, {level_edges[i + 1]:.6f}"
             f"{')' if d != depths_list[-1] else ']'}"
             for i, d in enumerate(depths_list)
         ),

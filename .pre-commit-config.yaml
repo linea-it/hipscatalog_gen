@@ -23,7 +23,7 @@ repos:
 
   # Prevents committing directly to branches named 'main' and 'master'.
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v6.0.0
     hooks:
       - id: no-commit-to-branch
         name: Prevent main branch commits
@@ -55,14 +55,14 @@ repos:
 
   # Verify that GitHub workflows are well formed
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.0
+    rev: 0.36.0
     hooks:
       - id: check-github-workflows
         args: ["--verbose"]
 
   # Lint code using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.2.1
+    rev: v0.14.10
     hooks:
       - id: ruff
         name: Lint code using ruff; sort and organize imports
@@ -71,7 +71,7 @@ repos:
 
   # Format code using ruff
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.2.1
+    rev: v0.14.10
     hooks:
       - id: ruff-format
         name: Format code using ruff
