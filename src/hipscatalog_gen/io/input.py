@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Tuple, cast
 
 import dask.dataframe as dd
 import lsdb
@@ -42,12 +42,13 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
             dec_name: Resolved DEC column name.
             keep_cols: Final ordered list of columns to keep (tile header order).
     """
-    assert len(paths) > 0, "No input files matched."
+    if not paths:
+        raise ValueError("No input files matched.")
 
     fmt = cfg.input.format.lower()
     # Single declaration for the whole function (avoid no-redef)
-    mag_col_cfg: Optional[str] = None
-    flux_col_cfg: Optional[str] = None
+    mag_col_cfg: str | None = None
+    flux_col_cfg: str | None = None
     score_global_expr = getattr(cfg.algorithm, "score_column", None) or ""
     sdh_score_expr = getattr(cfg.algorithm, "sdh_score_column", None) or ""
     selection_mode = getattr(cfg.algorithm, "selection_mode", "mag_global").lower()
@@ -70,7 +71,7 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     if fmt == "hats":
         if len(paths) != 1:
             raise ValueError(
-                "For input.format='hats', please specify exactly one HATS catalog " "path in input.paths."
+                "For input.format='hats', please specify exactly one HATS catalog path in input.paths."
             )
 
         hats_path = paths[0]
@@ -342,7 +343,8 @@ def compute_column_report_global(ddf_like: Any) -> Dict:
         if field == "example":
             # At runtime this is usually a pandas Series; keep typing lenient.
             try:
-                v = value.iloc[0]  # type: ignore[attr-defined]
+                iloc = getattr(value, "iloc", None)
+                v = iloc[0] if iloc is not None else ""
             except Exception:
                 v = ""
             tmp[col]["example"] = str(v)

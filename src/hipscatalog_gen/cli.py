@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import List, Optional
+from typing import List
 
 from .config import load_config
 
 __all__ = ["main"]
 
 
-def main(argv: Optional[List[str]] = None) -> None:
+def main(argv: List[str] | None = None) -> None:
     """Entry point for the command-line interface.
 
     Args:

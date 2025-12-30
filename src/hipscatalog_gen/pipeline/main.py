@@ -135,7 +135,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     def _stage_count_input(context: PipelineContext) -> PipelineContext:
         """Compute total rows after RA/DEC validation."""
         if context.ddf is None:
-            raise RuntimeError("Pipeline context missing input DDF.")
+            raise RuntimeError("Pipeline context missing input DDF.")  # pragma: no cover
         input_total = compute_input_total(
             context.ddf, context.diag_ctx, context.log_fn, context.avoid_computes
         )
@@ -144,9 +144,9 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     def _stage_prepare_selection(context: PipelineContext) -> PipelineContext:
         """Prepare remainder DDF for tile writing after selection normalization."""
         if context.ddf is None:
-            raise RuntimeError("Pipeline context missing input DDF.")
+            raise RuntimeError("Pipeline context missing input DDF.")  # pragma: no cover
         if context.selection_params is None:
-            raise RuntimeError("Pipeline context missing selection parameters.")
+            raise RuntimeError("Pipeline context missing selection parameters.")  # pragma: no cover
         remainder_ddf = mode_entry.prepare_fn(
             context.ddf,
             context.cfg,
@@ -161,7 +161,9 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     def _stage_densmaps(context: PipelineContext) -> PipelineContext:
         """Compute density maps and write FITS outputs."""
         if context.remainder_ddf is None or context.RA_NAME is None or context.DEC_NAME is None:
-            raise RuntimeError("Pipeline context missing selection inputs for densmap computation.")
+            raise RuntimeError(
+                "Pipeline context missing selection inputs for densmap computation."
+            )  # pragma: no cover
         densmaps = compute_and_write_densmaps(
             ddf_sel=context.remainder_ddf,
             ra_col=context.RA_NAME,
@@ -181,7 +183,9 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
             or context.paths is None
             or context.ddf is None
         ):
-            raise RuntimeError("Pipeline context missing data for static product writing.")
+            raise RuntimeError(
+                "Pipeline context missing data for static product writing."
+            )  # pragma: no cover
         write_common_static_products(
             context.out_dir,
             context.cfg,
@@ -202,7 +206,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
             or context.RA_NAME is None
             or context.DEC_NAME is None
         ):
-            raise RuntimeError("Pipeline context missing selection inputs.")
+            raise RuntimeError("Pipeline context missing selection inputs.")  # pragma: no cover
         mode_entry.run_fn(
             remainder_ddf=context.remainder_ddf,
             densmaps=context.densmaps,
@@ -221,7 +225,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     def _stage_counts(context: PipelineContext) -> PipelineContext:
         """Write per-depth count summaries and store telemetry."""
         if context.input_total is None:
-            raise RuntimeError("Pipeline context missing input totals.")
+            raise RuntimeError("Pipeline context missing input totals.")  # pragma: no cover
         total_written, counts_payload = write_counts_summaries(
             context.out_dir, context.cfg.algorithm.level_limit, context.input_total, context.log_fn
         )
@@ -232,7 +236,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     def _stage_properties(context: PipelineContext) -> PipelineContext:
         """Write HiPS properties using the computed totals."""
         if context.total_written is None:
-            raise RuntimeError("Pipeline context missing written counts.")
+            raise RuntimeError("Pipeline context missing written counts.")  # pragma: no cover
         write_properties(
             context.out_dir,
             context.cfg.output,
@@ -245,7 +249,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     def _stage_normalize_selection(context: PipelineContext) -> PipelineContext:
         """Validate configuration and normalize selection parameters."""
         if context.ddf is None:
-            raise RuntimeError("Pipeline context missing input DDF.")
+            raise RuntimeError("Pipeline context missing input DDF.")  # pragma: no cover
         mode_entry.validate_fn(context.cfg)
         normalized_ddf, params = mode_entry.normalize_fn(
             context.ddf,

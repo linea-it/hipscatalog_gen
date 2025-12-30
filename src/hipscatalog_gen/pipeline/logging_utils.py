@@ -44,7 +44,7 @@ def setup_structured_logger(
         class _JsonFormatter(logging.Formatter):
             """Format log records as structured JSON lines."""
 
-            def format(self, record: logging.LogRecord) -> str:  # type: ignore[override]
+            def format(self, record: logging.LogRecord) -> str:
                 """Render a log record to JSON with timestamp, level, and context."""
                 payload = {
                     "ts": self.formatTime(record),

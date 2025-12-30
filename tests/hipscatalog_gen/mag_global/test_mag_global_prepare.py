@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from dask import dataframe as dd
+
 from hipscatalog_gen.mag_global.pipeline import normalize_mag_global, prepare_mag_global
 from hipscatalog_gen.pipeline.params import MagGlobalParams
 

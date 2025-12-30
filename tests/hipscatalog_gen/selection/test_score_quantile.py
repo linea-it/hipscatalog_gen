@@ -1,6 +1,7 @@
 """Score quantile helpers for selection (regression tests)."""
 
 import numpy as np
+
 from hipscatalog_gen.selection.score import _quantile_from_histogram
 
 

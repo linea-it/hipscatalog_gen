@@ -157,7 +157,7 @@ def _quantile_from_histogram(
         edge_right = float(bin_edges[j + 1])
 
     if cdf_right <= cdf_left:
-        return edge_right
+        return edge_right  # pragma: no cover
 
     frac = (q - cdf_left) / (cdf_right - cdf_left)
     frac = float(np.clip(frac, 0.0, 1.0))
@@ -231,14 +231,12 @@ def _map_invalid_to_sentinel(
 
 def add_score_column(ddf: Any, score_expr: str, output_col: str = "__score__") -> Any:
     """Attach a numeric score column derived from a column or expression."""
-    score_expr = str(score_expr)
+    score_expr = str(score_expr).strip()
     base_meta = _get_meta_df(ddf)
     meta_with_score = base_meta.copy()
     meta_with_score[output_col] = pd.Series([], dtype="float64")
 
-    code = compile(score_expr, "<score_expr>", "eval")
-
-    def _add(pdf: pd.DataFrame, expr: str, compiled_expr) -> pd.DataFrame:
+    def _add(pdf: pd.DataFrame, expr: str) -> pd.DataFrame:
         """Attach a numeric score column to one partition."""
         if pdf.empty:
             pdf[output_col] = pd.Series([], dtype="float64")
@@ -248,16 +246,18 @@ def add_score_column(ddf: Any, score_expr: str, output_col: str = "__score__") -
         if expr in pdf.columns:
             sc = pd.to_numeric(pdf[expr], errors="coerce")
         else:
-            env = {"__builtins__": {}, "np": np, "numpy": np}
+            # Evaluate the expression using pandas to avoid builtin eval; force Python engine
+            # so we don't rely on optional numexpr being installed.
+            env = {"np": np, "numpy": np}
             env.update({col: pdf[col] for col in pdf.columns})
-            out = eval(compiled_expr, env, {})
+            out = pd.eval(expr, local_dict=env, global_dict={}, engine="python", parser="python")
             sc = pd.to_numeric(out, errors="coerce")
 
         sc = sc.replace([np.inf, -np.inf], np.nan)
         pdf[output_col] = sc
         return pdf
 
-    return ddf.map_partitions(_add, score_expr, code, meta=meta_with_score)
+    return ddf.map_partitions(_add, score_expr, meta=meta_with_score)
 
 
 def resolve_value_range(
@@ -365,7 +365,9 @@ def resolve_value_range(
             )
             val_min = peak_center
             if val_max is None:
-                raise RuntimeError(f"{label}: max must be provided when using hist_peak for min.")
+                raise RuntimeError(
+                    f"{label}: max must be provided when using hist_peak for min."
+                )  # pragma: no cover
             if val_min > float(val_max):
                 raise ValueError(
                     f"{label}: histogram peak used as min ({val_min:.6f}) is greater than "
@@ -391,7 +393,9 @@ def resolve_value_range(
             )
             val_max = peak_center
             if val_min is None:
-                raise RuntimeError(f"{label}: min must be provided when using hist_peak for max.")
+                raise RuntimeError(
+                    f"{label}: min must be provided when using hist_peak for max."
+                )  # pragma: no cover
             if float(val_min) > val_max:
                 raise ValueError(
                     f"{label}: histogram peak used as max ({val_max:.6f}) is smaller than "
@@ -404,7 +408,7 @@ def resolve_value_range(
             )
 
     if val_min is None or val_max is None:
-        raise RuntimeError(f"{label}: min/max resolution failed.")
+        raise RuntimeError(f"{label}: min/max resolution failed.")  # pragma: no cover
 
     if not (np.isfinite(val_min) and np.isfinite(val_max)):
         raise ValueError(f"{label}: resolved min/max are not finite.")

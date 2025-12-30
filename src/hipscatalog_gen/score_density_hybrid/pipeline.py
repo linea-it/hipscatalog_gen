@@ -276,7 +276,19 @@ def prepare_score_density_hybrid(
 
     meta_with_id = meta_sel.copy()
     meta_with_id["__sdh_id__"] = pd.Series([], dtype="int64")
-    ddf_sel = ddf_sel.map_partitions(_attach_unique_id, meta=meta_with_id, partition_info=True)
+
+    def _attach_id_safe(pdf: pd.DataFrame, partition_info=None) -> pd.DataFrame:
+        """Attach __sdh_id__ deterministically using partition number."""
+        part_no = int(partition_info["number"]) if partition_info and "number" in partition_info else 0
+        base = np.int64(part_no) << 32
+        seq = np.arange(len(pdf), dtype="int64")
+        pdf = pdf.copy()
+        pdf["__sdh_id__"] = base + seq
+        return pdf[meta_with_id.columns]
+
+    ddf_sel = ddf_sel.map_partitions(
+        _attach_id_safe, meta=meta_with_id, partition_info=True, enforce_metadata=True
+    )
 
     should_persist = persist_ddfs or (not avoid_computes)
     reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
@@ -372,7 +384,7 @@ def run_score_density_hybrid_selection(
     fixed_targets_clean: Dict[int, float] = {}
     for k, v in fixed_targets_map.items():
         if v is None:
-            continue
+            continue  # pragma: no cover
         fixed_targets_clean[int(k)] = float(v)
 
     level_edges_initial, targets_per_depth_raw = assign_level_edges(

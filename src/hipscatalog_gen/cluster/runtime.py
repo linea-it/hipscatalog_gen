@@ -5,20 +5,26 @@ from __future__ import annotations
 from contextlib import nullcontext, suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, ContextManager, Tuple
+from typing import TYPE_CHECKING, Any, Callable, ContextManager, Tuple, cast
 
 import dask
 from dask.distributed import Client, LocalCluster, performance_report
 
 from ..config import ClusterCfg
 
+if TYPE_CHECKING:
+    from dask_jobqueue import SLURMCluster as DaskSLURMCluster
+
+SLURMCluster: type[Any] | None
+
 try:
     # Optional for SLURM-based clusters
-    from dask_jobqueue import SLURMCluster  # type: ignore[import]
+    from dask_jobqueue import SLURMCluster as _SLURMCluster
+
+    SLURMCluster = cast(type["DaskSLURMCluster"], _SLURMCluster)
 except Exception:  # pragma: no cover - optional dependency
     # When dask_jobqueue is not available, we keep SLURMCluster as a placeholder.
-    # mypy complains about assigning to a type here, so we silence that single check.
-    SLURMCluster = None  # type: ignore[misc,assignment]
+    SLURMCluster = None
 
 
 __all__ = [
@@ -64,7 +70,7 @@ def setup_cluster(
           ``with diag_ctx_factory("step_name"):`` around pipeline steps.
 
     Raises:
-        AssertionError: If ``mode='slurm'`` is set but ``dask-jobqueue`` is not available.
+        ImportError: If ``mode='slurm'`` is set but ``dask-jobqueue`` is not available.
     """
     # ------------------------------------------------------------------
     # Cluster creation (local or SLURM)
@@ -73,7 +79,8 @@ def setup_cluster(
     client: Client
 
     if cfg.mode == "slurm":
-        assert SLURMCluster is not None, "dask-jobqueue is required for mode='slurm'"
+        if SLURMCluster is None:
+            raise ImportError("dask-jobqueue is required for mode='slurm'")
         sl = cfg.slurm or {}
         job_directives = sl.get("job_extra_directives", sl.get("job_extra", []))
 

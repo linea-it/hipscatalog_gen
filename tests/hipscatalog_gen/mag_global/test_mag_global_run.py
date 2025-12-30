@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from dask import dataframe as dd
+
 from hipscatalog_gen.mag_global import pipeline
 from hipscatalog_gen.mag_global.pipeline import run_mag_global_selection
 from hipscatalog_gen.selection import slicing as selection_slicing
