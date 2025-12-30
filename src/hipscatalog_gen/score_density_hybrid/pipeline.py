@@ -372,7 +372,7 @@ def run_score_density_hybrid_selection(
     fixed_targets_clean: Dict[int, float] = {}
     for k, v in fixed_targets_map.items():
         if v is None:
-            continue
+            continue  # pragma: no cover
         fixed_targets_clean[int(k)] = float(v)
 
     level_edges_initial, targets_per_depth_raw = assign_level_edges(

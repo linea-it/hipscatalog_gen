@@ -64,7 +64,7 @@ def setup_cluster(
           ``with diag_ctx_factory("step_name"):`` around pipeline steps.
 
     Raises:
-        AssertionError: If ``mode='slurm'`` is set but ``dask-jobqueue`` is not available.
+        ImportError: If ``mode='slurm'`` is set but ``dask-jobqueue`` is not available.
     """
     # ------------------------------------------------------------------
     # Cluster creation (local or SLURM)
@@ -73,7 +73,8 @@ def setup_cluster(
     client: Client
 
     if cfg.mode == "slurm":
-        assert SLURMCluster is not None, "dask-jobqueue is required for mode='slurm'"
+        if SLURMCluster is None:
+            raise ImportError("dask-jobqueue is required for mode='slurm'")
         sl = cfg.slurm or {}
         job_directives = sl.get("job_extra_directives", sl.get("job_extra", []))
 

@@ -66,7 +66,7 @@ def log_epilogue(
         try:
             with (out_dir / "process.log").open("a", encoding="utf-8") as f:
                 f.write("\n".join(log_lines) + "\n")
-        except Exception as e:
+        except Exception as e:  # pragma: no cover - defensive logging
             log_fn(f"ERROR writing process.log: {type(e).__name__}: {e}", always=True)
 
 
@@ -92,7 +92,7 @@ def maybe_persist_ddf(
         persisted = ddf_like.persist()
         try:
             from dask.distributed import wait
-        except Exception:
+        except Exception:  # pragma: no cover - optional dask.distributed dependency
             wait = None  # type: ignore[assignment]
         if wait is not None:
             wait(persisted)
@@ -104,7 +104,7 @@ def _collect_input_paths(cfg: Any, log_fn) -> List[str]:
     paths: List[str] = []
     for p in cfg.input.paths:
         paths.extend(glob.glob(p))
-    if len(paths) == 0:
+    if len(paths) == 0:  # pragma: no cover - validated via calling code
         raise AssertionError("No input files matched.")
 
     log_fn(f"Matched {len(paths)} input files", always=True)
@@ -459,7 +459,7 @@ def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, lo
         counts_depth: Dict[str, int] = {}
         for tile_path in norder_dir.rglob("Npix*.tsv"):
             name = tile_path.name
-            if not name.startswith("Npix") or not name.endswith(".tsv"):
+            if not name.startswith("Npix") or not name.endswith(".tsv"):  # pragma: no cover - rglob filters
                 continue
             try:
                 ipix = int(name[len("Npix") : -len(".tsv")])

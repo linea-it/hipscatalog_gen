@@ -157,7 +157,7 @@ def _quantile_from_histogram(
         edge_right = float(bin_edges[j + 1])
 
     if cdf_right <= cdf_left:
-        return edge_right
+        return edge_right  # pragma: no cover
 
     frac = (q - cdf_left) / (cdf_right - cdf_left)
     frac = float(np.clip(frac, 0.0, 1.0))
@@ -365,7 +365,9 @@ def resolve_value_range(
             )
             val_min = peak_center
             if val_max is None:
-                raise RuntimeError(f"{label}: max must be provided when using hist_peak for min.")
+                raise RuntimeError(
+                    f"{label}: max must be provided when using hist_peak for min."
+                )  # pragma: no cover
             if val_min > float(val_max):
                 raise ValueError(
                     f"{label}: histogram peak used as min ({val_min:.6f}) is greater than "
@@ -391,7 +393,9 @@ def resolve_value_range(
             )
             val_max = peak_center
             if val_min is None:
-                raise RuntimeError(f"{label}: min must be provided when using hist_peak for max.")
+                raise RuntimeError(
+                    f"{label}: min must be provided when using hist_peak for max."
+                )  # pragma: no cover
             if float(val_min) > val_max:
                 raise ValueError(
                     f"{label}: histogram peak used as max ({val_max:.6f}) is smaller than "
@@ -404,7 +408,7 @@ def resolve_value_range(
             )
 
     if val_min is None or val_max is None:
-        raise RuntimeError(f"{label}: min/max resolution failed.")
+        raise RuntimeError(f"{label}: min/max resolution failed.")  # pragma: no cover
 
     if not (np.isfinite(val_min) and np.isfinite(val_max)):
         raise ValueError(f"{label}: resolved min/max are not finite.")

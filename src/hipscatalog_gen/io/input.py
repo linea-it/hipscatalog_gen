@@ -42,7 +42,8 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
             dec_name: Resolved DEC column name.
             keep_cols: Final ordered list of columns to keep (tile header order).
     """
-    assert len(paths) > 0, "No input files matched."
+    if not paths:
+        raise ValueError("No input files matched.")
 
     fmt = cfg.input.format.lower()
     # Single declaration for the whole function (avoid no-redef)
