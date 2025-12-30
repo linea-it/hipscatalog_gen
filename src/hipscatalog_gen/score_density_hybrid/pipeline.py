@@ -280,20 +280,19 @@ def prepare_score_density_hybrid(
 
     def _ensure_id(pdf: pd.DataFrame, partition_info=None) -> pd.DataFrame:
         """Guarantee __sdh_id__ exists; regenerate using partition number if missing."""
-        if "__sdh_id__" in pdf.columns:
-            out = pdf
-        else:
+        if "__sdh_id__" not in pdf.columns:
             part_no = int(partition_info["number"]) if partition_info and "number" in partition_info else 0
             base = np.int64(part_no) << 32
             seq = np.arange(len(pdf), dtype="int64")
-            out = pdf.copy()
-            out["__sdh_id__"] = base + seq
+            pdf = pdf.copy()
+            pdf["__sdh_id__"] = base + seq
 
         # Reorder to expected columns to satisfy metadata checks.
-        return out[meta_with_id.columns]
+        return pdf[meta_with_id.columns]
 
+    # Some older/newer dask versions drop the column unexpectedly; enforce metadata to keep __sdh_id__.
     ddf_sel = ddf_sel.map_partitions(
-        _ensure_id, meta=meta_with_id, partition_info=True, enforce_metadata=False
+        _ensure_id, meta=meta_with_id, partition_info=True, enforce_metadata=True
     )
 
     should_persist = persist_ddfs or (not avoid_computes)
