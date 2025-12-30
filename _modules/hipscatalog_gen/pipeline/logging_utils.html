@@ -126,7 +126,7 @@
         <span class="k">class</span><span class="w"> </span><span class="nc">_JsonFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Format log records as structured JSON lines.&quot;&quot;&quot;</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># type: ignore[override]</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">                </span><span class="sd">&quot;&quot;&quot;Render a log record to JSON with timestamp, level, and context.&quot;&quot;&quot;</span>
                 <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">&quot;ts&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">formatTime</span><span class="p">(</span><span class="n">record</span><span class="p">),</span>

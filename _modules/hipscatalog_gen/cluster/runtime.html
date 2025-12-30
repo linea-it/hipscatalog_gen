@@ -82,20 +82,26 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">nullcontext</span><span class="p">,</span> <span class="n">suppress</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ContextManager</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ContextManager</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">dask</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dask.distributed</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">LocalCluster</span><span class="p">,</span> <span class="n">performance_report</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..config</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClusterCfg</span>
 
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dask_jobqueue</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLURMCluster</span> <span class="k">as</span> <span class="n">DaskSLURMCluster</span>
+
+<span class="n">SLURMCluster</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+
 <span class="k">try</span><span class="p">:</span>
     <span class="c1"># Optional for SLURM-based clusters</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">dask_jobqueue</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLURMCluster</span>  <span class="c1"># type: ignore[import]</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dask_jobqueue</span><span class="w"> </span><span class="kn">import</span> <span class="n">SLURMCluster</span> <span class="k">as</span> <span class="n">_SLURMCluster</span>
+
+    <span class="n">SLURMCluster</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">[</span><span class="s2">&quot;DaskSLURMCluster&quot;</span><span class="p">],</span> <span class="n">_SLURMCluster</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional dependency</span>
     <span class="c1"># When dask_jobqueue is not available, we keep SLURMCluster as a placeholder.</span>
-    <span class="c1"># mypy complains about assigning to a type here, so we silence that single check.</span>
-    <span class="n">SLURMCluster</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[misc,assignment]</span>
+    <span class="n">SLURMCluster</span> <span class="o">=</span> <span class="kc">None</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -146,7 +152,7 @@
 <span class="sd">          ``with diag_ctx_factory(&quot;step_name&quot;):`` around pipeline steps.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        AssertionError: If ``mode=&#39;slurm&#39;`` is set but ``dask-jobqueue`` is not available.</span>
+<span class="sd">        ImportError: If ``mode=&#39;slurm&#39;`` is set but ``dask-jobqueue`` is not available.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Cluster creation (local or SLURM)</span>
@@ -155,7 +161,8 @@
     <span class="n">client</span><span class="p">:</span> <span class="n">Client</span>
 
     <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;slurm&quot;</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">SLURMCluster</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;dask-jobqueue is required for mode=&#39;slurm&#39;&quot;</span>
+        <span class="k">if</span> <span class="n">SLURMCluster</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;dask-jobqueue is required for mode=&#39;slurm&#39;&quot;</span><span class="p">)</span>
         <span class="n">sl</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">slurm</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">job_directives</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;job_extra_directives&quot;</span><span class="p">,</span> <span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;job_extra&quot;</span><span class="p">,</span> <span class="p">[]))</span>
 
