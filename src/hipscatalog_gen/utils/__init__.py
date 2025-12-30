@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, cast
 
 import dask.dataframe as dd
 import numpy as np
@@ -194,17 +194,24 @@ def _get_dask_base(
             return hasattr(obj, "groupby") or hasattr(obj, "map_partitions") or hasattr(obj, "to_delayed")
         return True
 
+    if TYPE_CHECKING:
+        from lsdb.catalog import Catalog as LsdbCatalogType
+
+    LsdbCatalog: type[Any] | None
+
     try:
-        from lsdb.catalog import Catalog as LsdbCatalog  # type: ignore
+        from lsdb.catalog import Catalog as _LsdbCatalog
+
+        LsdbCatalog = cast("type[LsdbCatalogType]", _LsdbCatalog)
     except Exception:  # pragma: no cover - lsdb optional
-        LsdbCatalog = None  # type: ignore
+        LsdbCatalog = None
 
     if _has_required(ddf_like):
         return ddf_like
 
     # For LSDB catalogs without public Dask-like methods, fall back to the underlying Dask DataFrame.
     if LsdbCatalog is not None and isinstance(ddf_like, LsdbCatalog):
-        base = getattr(ddf_like, "_ddf", None)  # type: ignore[attr-defined]
+        base = getattr(ddf_like, "_ddf", None)
         if base is None:
             raise TypeError("LSDB catalog missing _ddf attribute; cannot extract Dask base.")
         if _has_required(base):
@@ -306,7 +313,7 @@ def _get_meta_df(ddf_like: Any) -> pd.DataFrame:
         return None
 
     if hasattr(base, "_meta"):
-        meta = base._meta  # type: ignore[attr-defined]
+        meta = getattr(base, "_meta", None)
         meta_pdf = _as_pandas_df(meta)
         if meta_pdf is not None:
             return meta_pdf

@@ -5,20 +5,26 @@ from __future__ import annotations
 from contextlib import nullcontext, suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, ContextManager, Tuple
+from typing import TYPE_CHECKING, Any, Callable, ContextManager, Tuple, cast
 
 import dask
 from dask.distributed import Client, LocalCluster, performance_report
 
 from ..config import ClusterCfg
 
+if TYPE_CHECKING:
+    from dask_jobqueue import SLURMCluster as DaskSLURMCluster
+
+SLURMCluster: type[Any] | None
+
 try:
     # Optional for SLURM-based clusters
-    from dask_jobqueue import SLURMCluster  # type: ignore[import]
+    from dask_jobqueue import SLURMCluster as _SLURMCluster
+
+    SLURMCluster = cast(type["DaskSLURMCluster"], _SLURMCluster)
 except Exception:  # pragma: no cover - optional dependency
     # When dask_jobqueue is not available, we keep SLURMCluster as a placeholder.
-    # mypy complains about assigning to a type here, so we silence that single check.
-    SLURMCluster = None  # type: ignore[misc,assignment]
+    SLURMCluster = None
 
 
 __all__ = [

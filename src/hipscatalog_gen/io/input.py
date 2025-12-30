@@ -343,7 +343,8 @@ def compute_column_report_global(ddf_like: Any) -> Dict:
         if field == "example":
             # At runtime this is usually a pandas Series; keep typing lenient.
             try:
-                v = value.iloc[0]  # type: ignore[attr-defined]
+                iloc = getattr(value, "iloc", None)
+                v = iloc[0] if iloc is not None else ""
             except Exception:
                 v = ""
             tmp[col]["example"] = str(v)

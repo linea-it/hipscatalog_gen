@@ -2,7 +2,7 @@
 
 [![Template](https://img.shields.io/badge/Template-LINCC%20Frameworks%20Python%20Project%20Template-brightgreen)](https://lincc-ppt.readthedocs.io/en/latest/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)]()
+[![Python Versions](https://img.shields.io/badge/python-3.11+-blue.svg)]()
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/linea-it/hipscatalog_gen/smoke-test.yml)](https://github.com/linea-it/hipscatalog_gen/actions/workflows/smoke-test.yml)
 [![Codecov](https://codecov.io/gh/linea-it/hipscatalog_gen/branch/main/graph/badge.svg)](https://codecov.io/gh/linea-it/hipscatalog_gen)
 

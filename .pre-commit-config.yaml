@@ -85,11 +85,7 @@ repos:
         entry: mypy
         language: system
         types: [python]
-        files: ^(src|tests)/
-        args:
-          [
-            "--ignore-missing-imports", # Ignore imports without type hints
-          ]
+        files: ^src/
 
   # Make sure Sphinx can build the documentation (notebooks excluded)
   - repo: local
@@ -108,7 +104,7 @@ repos:
       - id: pytest-check
         name: Run unit tests
         description: Run unit tests with pytest.
-        entry: bash -c "if python -m pytest --co -qq; then python -m pytest --cov=./src --cov-report=html; fi"
+        entry: bash -c "if python -m pytest --co -qq; then python -m pytest --cov=./src --cov-report=html --cov-fail-under=80; fi"
         language: system
         pass_filenames: false
         always_run: true

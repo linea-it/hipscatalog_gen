@@ -14,12 +14,11 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 # ==== RUNTIME (apenas o que seus módulos importam) ====
 dependencies = [
@@ -80,7 +79,7 @@ addopts = "--doctest-modules --doctest-glob=*.rst"
 
 [tool.ruff]
 line-length = 110
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E","W","F","N","UP","B","SIM","I","D101","D102","D103","D106","D206","D207","D208","D300","D417","D419","NPY201"]
@@ -96,8 +95,23 @@ ignore = [
 "src/hipscatalog_gen/pipeline.py" = ["SIM105","SIM108","F841"]
 "src/hipscatalog_gen/selection.py" = ["SIM102","SIM108"]
 
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+check_untyped_defs = true
+ignore_missing_imports = true
+exclude = "(?x)^(tests/)"
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+check_untyped_defs = false
+ignore_errors = true
+
 [tool.setuptools.package-data]
 hipscatalog_gen = ["py.typed", "assets/telemetry.schema.json"]
 
 [tool.coverage.run]
 omit = ["src/hipscatalog_gen/_version.py"]
+
+[tool.coverage.report]
+fail_under = 80
