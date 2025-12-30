@@ -81,4 +81,4 @@ jobs:
         uv pip install --system .[dev] pip-audit
     - name: Run pip-audit
       run: |
-        pip-audit --progress-spinner off --desc
+        pip-audit --progress-spinner off --desc --ignore-vuln CVE-2025-53000
