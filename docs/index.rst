@@ -19,20 +19,24 @@ Quick start
 
 .. code-block:: console
 
-   git clone https://github.com/linea-it/hipscatalog_gen.git
-   cd hipscatalog_gen
-   conda create -n hipscatalog-gen python=3.13
-   conda activate hipscatalog-gen
-   pip install -e .[dev]
-   python -m hipscatalog_gen.cli --config config.yaml
+   python -m venv .venv    # or use conda
+   source .venv/bin/activate
+   pip install hipscatalog-gen
 
-Environment (conda)
--------------------
+   curl -O https://raw.githubusercontent.com/linea-it/hipscatalog_gen/main/examples/configs/config.template.yaml
+   cp config.template.yaml config.yaml
+
+   hipscatalog-gen --config config.yaml
+
+Developer install
+-----------------
 
 .. code-block:: console
 
    conda create -n hipscatalog-gen python=3.13
    conda activate hipscatalog-gen
+   git clone https://github.com/linea-it/hipscatalog_gen.git
+   cd hipscatalog_gen
    pip install -e .[dev]
 
 Optional: expose the env as a Jupyter kernel:
@@ -45,6 +49,7 @@ Configuration
 -------------
 
 - Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters inside the per-mode blocks under ``algorithm``. More examples live under ``examples/configs/``.
+- When installed from PyPI, fetch the template with ``curl -O https://raw.githubusercontent.com/linea-it/hipscatalog_gen/main/examples/configs/config.template.yaml``.
 
 Run the pipeline
 ----------------
@@ -63,7 +68,8 @@ CLI:
 
 .. code-block:: console
 
-   python -m hipscatalog_gen.cli --config config.yaml
+   hipscatalog-gen --config config.yaml
+   # or: python -m hipscatalog_gen.cli --config config.yaml
 
 Outputs (HiPS layout)
 ---------------------
