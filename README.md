@@ -23,26 +23,32 @@ The pipeline supports three selection modes, configured in the YAML file under a
 
 -------------------------------------------------------------------------------
 
-## Quick Start
+## Quick Start (PyPI)
 
-Recommended (conda + Python 3.13):
+Install from PyPI into a fresh environment and run with a config file:
 
-    git clone https://github.com/linea-it/hipscatalog_gen.git
-    cd hipscatalog_gen
-    conda create -n hipscatalog-gen python=3.13
-    conda activate hipscatalog-gen
-    pip install -e .[dev]
+    python -m venv .venv          # or use conda
+    source .venv/bin/activate
+    pip install hipscatalog-gen
 
-Then run:
+Fetch the example template and adapt it to your catalog:
 
-    python -m hipscatalog_gen.cli --config config.yaml
+    curl -O https://raw.githubusercontent.com/linea-it/hipscatalog_gen/main/examples/configs/config.template.yaml
+    cp config.template.yaml config.yaml
+
+Run the pipeline:
+
+    hipscatalog-gen --config config.yaml
+    # or: python -m hipscatalog_gen.cli --config config.yaml
 
 --------------------------------------------------------------------------------
 
-## Environment Setup (conda)
+## Developer Install
 
-Create an isolated environment (example with Python 3.13), then install inside it:
+For local development (editable install + tooling):
 
+    git clone https://github.com/linea-it/hipscatalog_gen.git
+    cd hipscatalog_gen
     conda create -n hipscatalog-gen python=3.13
     conda activate hipscatalog-gen
     pip install -e .[dev]
@@ -60,6 +66,10 @@ The pipeline is fully configured through a YAML file.
 A complete annotated template is provided in ./examples/configs folder as:
 
 - config.template.yaml
+
+When installed from PyPI, download the template directly:
+
+    curl -O https://raw.githubusercontent.com/linea-it/hipscatalog_gen/main/examples/configs/config.template.yaml
 
 To create your own configuration:
 
@@ -92,23 +102,24 @@ The pipeline can be executed either as a Python library or from the command line
 
 List available selection modes:
 
-    python -m hipscatalog_gen.cli --list-modes
+    hipscatalog-gen --list-modes
 
 Run with a config file:
 
-    python -m hipscatalog_gen.cli --config config.yaml
+    hipscatalog-gen --config config.yaml
+    # or: python -m hipscatalog_gen.cli --config config.yaml
 
 Validate a config without running:
 
-    python -m hipscatalog_gen.cli --check-config config.yaml
+    hipscatalog-gen --check-config config.yaml
 
 Enable JSON logs (process.jsonl) via CLI flag (when running the pipeline):
 
-    python -m hipscatalog_gen.cli --config config.yaml --json-logs
+    hipscatalog-gen --config config.yaml --json-logs
 
 Summarize an existing telemetry.json:
 
-    python -m hipscatalog_gen.cli --telemetry /path/to/telemetry.json
+    hipscatalog-gen --telemetry /path/to/telemetry.json
 
 ## Output Structure
 
