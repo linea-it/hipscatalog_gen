@@ -3,10 +3,19 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, Iterable, List
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List
 
 import numpy as np
 import pandas as pd
+
+if TYPE_CHECKING:
+    from lsdb.catalog import Catalog as LsdbCatalog
+else:  # Optional LSDB import for HATS catalogs.
+    LsdbCatalog: type[Any] | None
+    try:
+        from lsdb.catalog import Catalog as LsdbCatalog
+    except Exception:  # pragma: no cover - optional dependency
+        LsdbCatalog = None
 
 from ..io.output import build_header_line_from_keep
 from ..pipeline.common import maybe_persist_ddf, write_tiles_with_allsky
@@ -277,18 +286,71 @@ def prepare_score_density_hybrid(
     meta_with_id = meta_sel.copy()
     meta_with_id["__sdh_id__"] = pd.Series([], dtype="int64")
 
-    def _attach_id_safe(pdf: pd.DataFrame, partition_info=None) -> pd.DataFrame:
+    def _attach_id_partition(pdf: pd.DataFrame, partition_info=None) -> pd.DataFrame:
         """Attach __sdh_id__ deterministically using partition number."""
-        part_no = int(partition_info["number"]) if partition_info and "number" in partition_info else 0
+        if not isinstance(partition_info, dict) or "number" not in partition_info:
+            if pdf.empty:
+                pdf["__sdh_id__"] = pd.Series([], dtype="int64")
+                return pdf[meta_with_id.columns]
+            raise RuntimeError("score_density_hybrid: missing partition_info; cannot build unique IDs.")
+        part_no = int(partition_info["number"])
         base = np.int64(part_no) << 32
         seq = np.arange(len(pdf), dtype="int64")
         pdf = pdf.copy()
         pdf["__sdh_id__"] = base + seq
         return pdf[meta_with_id.columns]
 
-    ddf_sel = ddf_sel.map_partitions(
-        _attach_id_safe, meta=meta_with_id, partition_info=True, enforce_metadata=True
-    )
+    def _parse_pixel_order_pixel(pixel_obj) -> tuple[int | None, int | None]:
+        """Extract (order, pixel) from an LSDB pixel object or its string form."""
+        order = getattr(pixel_obj, "order", None)
+        pix = getattr(pixel_obj, "pixel", None)
+        if order is not None and pix is not None:
+            return int(order), int(pix)
+        try:
+            text = str(pixel_obj)
+            parts = text.replace(",", "").split()
+            if "Order:" in parts and "Pixel:" in parts:
+                order = int(parts[parts.index("Order:") + 1])
+                pix = int(parts[parts.index("Pixel:") + 1])
+                return order, pix
+        except Exception:
+            return None, None
+        return None, None
+
+    def _attach_id_pixel(pdf: pd.DataFrame, pixel=None) -> pd.DataFrame:
+        """Attach __sdh_id__ using (order, pixel, row_index)."""
+        if pdf.empty:
+            pdf["__sdh_id__"] = pd.Series([], dtype="int64")
+            return pdf[meta_with_id.columns]
+        order, pix = _parse_pixel_order_pixel(pixel)
+        if order is None or pix is None:
+            if pdf.empty:
+                pdf["__sdh_id__"] = pd.Series([], dtype="int64")
+                return pdf[meta_with_id.columns]
+            raise RuntimeError("score_density_hybrid: missing LSDB pixel metadata; cannot build unique IDs.")
+        base = (np.int64(order) << np.int64(58)) | (np.int64(pix) << np.int64(32))
+        seq = np.arange(len(pdf), dtype="int64")
+        pdf = pdf.copy()
+        pdf["__sdh_id__"] = base + seq
+        return pdf[meta_with_id.columns]
+
+    is_lsdb = LsdbCatalog is not None and isinstance(ddf, LsdbCatalog)
+    if is_lsdb:
+        log_fn(
+            "[score_density_hybrid] Using LSDB pixel-based IDs for stage-1 de-duplication.",
+            always=True,
+        )
+        ddf_sel = ddf_sel.map_partitions(
+            _attach_id_pixel, meta=meta_with_id, include_pixel=True, enforce_metadata=True
+        )
+    else:
+        log_fn(
+            "[score_density_hybrid] Using partition_info-based IDs for stage-1 de-duplication.",
+            always=True,
+        )
+        ddf_sel = ddf_sel.map_partitions(
+            _attach_id_partition, meta=meta_with_id, partition_info=True, enforce_metadata=True
+        )
 
     should_persist = persist_ddfs or (not avoid_computes)
     reason = "cluster.persist_ddfs=True" if persist_ddfs else "avoid_computes_wherever_possible=False"
