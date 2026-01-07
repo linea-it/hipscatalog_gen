@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Fix `score_density_hybrid` stage-1 de-duplication for LSDB catalogs by deriving unique IDs from pixel metadata and partition context.
+- Add tests for unique ID generation in Dask and LSDB paths.
+- Pin `sphinx-rtd-theme>=3.0,<4` to avoid Sphinx 7+ theme incompatibility; update docs for mag_global hist_peak clipping.
+
 ## 0.1.0
 
 - First publishable release of `hipscatalog-gen`.

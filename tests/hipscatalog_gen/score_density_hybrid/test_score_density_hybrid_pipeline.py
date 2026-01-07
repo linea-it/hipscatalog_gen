@@ -182,6 +182,101 @@ def test_prepare_filters_and_attaches_ids(monkeypatch, diag_ctx, log_capture):
     assert captured["diag_label"] == "dask_sdh_persist_filtered"
 
 
+def test_prepare_ids_unique_dask(diag_ctx, log_capture):
+    """Dask path attaches unique ids across partitions."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "__score__": [0.1, 0.2, 0.3, 0.4],
+            "RA": [0.0, 1.0, 2.0, 3.0],
+            "DEC": [0.0, 1.0, 2.0, 3.0],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=2)
+    cfg = _cfg()
+    params = SimpleNamespace(score_min=0.0, score_max=1.0, sentinel=None)
+
+    ddf_sel = sdh_pipeline.prepare_score_density_hybrid(
+        ddf,
+        cfg,
+        diag_ctx,
+        log_fn,
+        params,
+        persist_ddfs=False,
+        avoid_computes=True,
+    )
+    result = ddf_sel.compute()
+    assert result["__sdh_id__"].nunique() == len(result)
+    dropped = sdh_pipeline._drop_selected_ids(result, ids=result["__sdh_id__"].iloc[:2])
+    assert len(dropped) == len(result) - 2
+    assert not set(result["__sdh_id__"].iloc[:2]).intersection(set(dropped["__sdh_id__"]))
+
+
+def test_prepare_ids_unique_lsdb(monkeypatch, diag_ctx, log_capture):
+    """LSDB path attaches unique ids using pixel metadata."""
+    _, log_fn = log_capture
+
+    class FakePixel:
+        def __init__(self, order: int, pixel: int) -> None:
+            self.order = order
+            self.pixel = pixel
+
+        def __str__(self) -> str:
+            return f"Order: {self.order}, Pixel: {self.pixel}"
+
+    class FakeLsdbCatalog:
+        """Minimal LSDB-like catalog with include_pixel support."""
+
+        def __init__(self, parts: list[pd.DataFrame], pixels: list[FakePixel]) -> None:
+            self._parts = parts
+            self._pixels = pixels
+            self._ddf = None
+
+        def map_partitions(self, func, *args, meta=None, include_pixel=False, **kwargs):
+            out_parts = []
+            for pdf, pix in zip(self._parts, self._pixels, strict=True):
+                if include_pixel:
+                    out = func(pdf.copy(), pix, *args, **kwargs)
+                else:
+                    out = func(pdf.copy(), *args, **kwargs)
+                out_parts.append(out)
+            new = FakeLsdbCatalog(out_parts, self._pixels)
+            return new
+
+        def head(self, n=5):
+            return self.compute().head(n)
+
+        def to_delayed(self):
+            return [p for p in self._parts]
+
+        def compute(self):
+            return pd.concat(self._parts, ignore_index=True)
+
+    monkeypatch.setattr(sdh_pipeline, "LsdbCatalog", FakeLsdbCatalog)
+
+    parts = [
+        pd.DataFrame({"__score__": [0.1, 0.2], "RA": [0.0, 1.0], "DEC": [0.0, 1.0]}),
+        pd.DataFrame({"__score__": [0.3, 0.4], "RA": [2.0, 3.0], "DEC": [2.0, 3.0]}),
+    ]
+    pixels = [FakePixel(order=3, pixel=2), FakePixel(order=3, pixel=536)]
+    cat = FakeLsdbCatalog(parts, pixels)
+
+    cfg = _cfg()
+    params = SimpleNamespace(score_min=0.0, score_max=1.0, sentinel=None)
+
+    ddf_sel = sdh_pipeline.prepare_score_density_hybrid(
+        cat,
+        cfg,
+        diag_ctx,
+        log_fn,
+        params,
+        persist_ddfs=False,
+        avoid_computes=True,
+    )
+    result = ddf_sel.compute()
+    assert result["__sdh_id__"].nunique() == len(result)
+
+
 def test_attach_unique_id_and_drop_selected_ids():
     """Direct helper coverage for id attachment and dropping selected ids."""
     pdf = pd.DataFrame({"a": [1, 2, 3]})
