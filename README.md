@@ -139,6 +139,7 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 ## Mode Summary
 
 - **mag_global**: magnitude-complete slices across all depths.
+- mag_global hist_peak default bounds: when `adaptive_range=hist_peak` and `mag_min`/`mag_max` are not provided, the histogram range clips the global min/max to [-2, 40] (mag_min clipped to >= -2; mag_max from the peak within [-2, min(global_max, 40)]).
 - **score_global**: score-based slices across all depths.
 - **score_density_hybrid**: density-driven tiles for depths 1–3, then score slices for deeper levels.
 - Ordering and ties: `order_desc` controls ascending/descending (default ascending); optional `tie_column` breaks ties before falling back to RA/DEC.
