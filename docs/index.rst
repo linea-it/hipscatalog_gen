@@ -9,6 +9,7 @@ Overview
 - Three selection modes (``algorithm.selection_mode``):
 
   - ``mag_global``: magnitude-complete selection (see ``algorithm.mag_global.*``).
+  - ``mag_global`` hist_peak defaults: when no ``mag_min``/``mag_max`` are provided, the histogram range clips global min/max to [-2, 40] (min clipped to >= -2; max from the peak within [-2, min(global_max, 40)]).
   - ``score_global``: selection driven by an arbitrary score/expression (see ``algorithm.score_global.*``).
   - ``score_density_hybrid``: density-driven depths 1–3 with score-driven remainder (see ``algorithm.score_density_hybrid.*``).
 
