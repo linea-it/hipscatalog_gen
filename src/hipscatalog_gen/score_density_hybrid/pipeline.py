@@ -286,7 +286,7 @@ def prepare_score_density_hybrid(
     meta_with_id = meta_sel.copy()
     meta_with_id["__sdh_id__"] = pd.Series([], dtype="int64")
 
-    def _attach_id_partition(pdf: pd.DataFrame, partition_info=None) -> pd.DataFrame:
+    def _attach_id_partition(pdf: pd.DataFrame, partition_info=None, **kwargs) -> pd.DataFrame:
         """Attach __sdh_id__ deterministically using partition number."""
         if not isinstance(partition_info, dict) or "number" not in partition_info:
             if pdf.empty:
@@ -317,7 +317,7 @@ def prepare_score_density_hybrid(
             return None, None
         return None, None
 
-    def _attach_id_pixel(pdf: pd.DataFrame, pixel=None) -> pd.DataFrame:
+    def _attach_id_pixel(pdf: pd.DataFrame, pixel=None, **kwargs) -> pd.DataFrame:
         """Attach __sdh_id__ using (order, pixel, row_index)."""
         if pdf.empty:
             pdf["__sdh_id__"] = pd.Series([], dtype="int64")
