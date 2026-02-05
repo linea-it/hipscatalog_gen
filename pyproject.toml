@@ -7,6 +7,7 @@ readme = { file = "README.md", content-type = "text/markdown" }
 authors = [
     { name = "Luigi Lucas de Carvalho Silva", email = "luigi.silva@linea.org.br" }
 ]
+description = "Python package for building HiPS-compliant catalog hierarchies from large astronomical tables using Dask and LSDB."
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

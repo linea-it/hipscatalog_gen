@@ -1,10 +1,10 @@
 # Changes here will be overwritten by Copier
-_commit: v2.1.2
+_commit: v2.2.0
 _src_path: gh:lincc-frameworks/python-project-template
 author_email: luigi.silva@linea.org.br
 author_name: Luigi Lucas de Carvalho Silva
-create_example_module: true
-custom_install: true
+create_example_module: false
+custom_install: custom
 enforce_style:
 - ruff_lint
 - ruff_format
@@ -14,11 +14,12 @@ include_docs: true
 include_notebooks: true
 mypy_type_checking: basic
 package_name: hipscatalog_gen
+project_description: Python package for building HiPS-compliant catalog hierarchies
+    from large astronomical tables using Dask and LSDB.
 project_license: MIT
 project_name: hipscatalog-gen
 project_organization: linea-it
 python_versions:
-- '3.10'
 - '3.11'
 - '3.12'
 - '3.13'
