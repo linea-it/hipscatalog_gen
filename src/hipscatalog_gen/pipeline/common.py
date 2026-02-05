@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import glob
-import textwrap
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -253,6 +253,13 @@ def compute_input_total(ddf: Any, diag_ctx, log_fn, avoid_computes: bool) -> int
     return total_int
 
 
+def _format_argument_value(value: Any) -> str:
+    """Render argument values consistently (null for unset)."""
+    if value is None:
+        return "null"
+    return json.dumps(value, ensure_ascii=True, default=str)
+
+
 def write_common_static_products(
     out_dir: Path,
     cfg: Any,
@@ -285,73 +292,108 @@ def write_common_static_products(
     dec_idx = keep_cols.index(dec_col)
     write_metadata_xml(out_dir, cols, ra_idx, dec_idx)
 
-    arg_text = textwrap.dedent(
-        f"""
-        # input
-        input.paths: {paths}
-        input.format: {cfg.input.format}
-        input.header: {getattr(cfg.input, "header", None)}
-        input.ascii_format: {getattr(cfg.input, "ascii_format", None)}
-        # columns
-        columns.ra: {ra_col}
-        columns.dec: {dec_col}
-        columns.keep: {cfg.columns.keep}
-        # algorithm.common
-        algorithm.selection_mode: {cfg.algorithm.selection_mode}
-        algorithm.level_limit: {cfg.algorithm.level_limit}
-        algorithm.moc_order: {moc_order}
-        algorithm.mag_global.order_desc: {getattr(cfg.algorithm, "mg_order_desc", False)}
-        algorithm.score_global.order_desc: {getattr(cfg.algorithm, "sg_order_desc", False)}
-        algorithm.score_density_hybrid.order_desc: {getattr(cfg.algorithm, "sdh_order_desc", False)}
-        # algorithm.mag_global
-        mag_global.mag_column: {cfg.algorithm.mag_column}
-        mag_global.flux_column: {cfg.algorithm.flux_column}
-        mag_global.mag_offset: {cfg.algorithm.mag_offset}
-        mag_global.mag_min: {cfg.algorithm.mag_min}
-        mag_global.mag_max: {cfg.algorithm.mag_max}
-        mag_global.adaptive_range: {cfg.algorithm.mag_adaptive_range}
-        mag_global.hist_nbins: {cfg.algorithm.mag_hist_nbins}
-        mag_global.n_1: {cfg.algorithm.n_1}
-        mag_global.n_2: {cfg.algorithm.n_2}
-        mag_global.n_3: {cfg.algorithm.n_3}
-        # algorithm.score_global
-        score_global.score_column: {cfg.algorithm.score_column}
-        score_global.score_min: {cfg.algorithm.score_min}
-        score_global.score_max: {cfg.algorithm.score_max}
-        score_global.adaptive_range: {cfg.algorithm.score_adaptive_range}
-        score_global.hist_nbins: {cfg.algorithm.score_hist_nbins}
-        score_global.n_1: {cfg.algorithm.score_n_1}
-        score_global.n_2: {cfg.algorithm.score_n_2}
-        score_global.n_3: {cfg.algorithm.score_n_3}
-        # algorithm.score_density_hybrid
-        score_density_hybrid.score_column: {getattr(cfg.algorithm, "sdh_score_column", None)}
-        score_density_hybrid.score_min: {getattr(cfg.algorithm, "sdh_score_min", None)}
-        score_density_hybrid.score_max: {getattr(cfg.algorithm, "sdh_score_max", None)}
-        score_density_hybrid.adaptive_range: {getattr(cfg.algorithm, "sdh_score_adaptive_range", None)}
-        score_density_hybrid.hist_nbins: {getattr(cfg.algorithm, "sdh_score_hist_nbins", None)}
-        score_density_hybrid.n_1: {getattr(cfg.algorithm, "sdh_n_1", None)}
-        score_density_hybrid.n_2: {getattr(cfg.algorithm, "sdh_n_2", None)}
-        score_density_hybrid.n_3: {getattr(cfg.algorithm, "sdh_n_3", None)}
-        score_density_hybrid.density_bias_n1: {getattr(cfg.algorithm, "sdh_density_bias_n1", None)}
-        score_density_hybrid.density_bias_n2: {getattr(cfg.algorithm, "sdh_density_bias_n2", None)}
-        score_density_hybrid.density_bias_n3: {getattr(cfg.algorithm, "sdh_density_bias_n3", None)}
-        # cluster
-        cluster.mode: {cfg.cluster.mode}
-        cluster.n_workers: {cfg.cluster.n_workers}
-        cluster.threads_per_worker: {cfg.cluster.threads_per_worker}
-        cluster.memory_per_worker: {cfg.cluster.memory_per_worker}
-        cluster.persist_ddfs: {cfg.cluster.persist_ddfs}
-        cluster.avoid_computes_wherever_possible: {cfg.cluster.avoid_computes_wherever_possible}
-        cluster.diagnostics_mode: {cfg.cluster.diagnostics_mode}
-        cluster.slurm: {cfg.cluster.slurm}
-        # output
-        output.out_dir: {out_dir}
-        output.cat_name: {cfg.output.cat_name}
-        output.target: {cfg.output.target}
-        output.creator_did: {cfg.output.creator_did}
-        output.obs_title: {cfg.output.obs_title}
-        """
-    ).strip("\n")
+    arg_entries: List[tuple[str, Any]] = [
+        ("# input", None),
+        ("input.paths", paths),
+        ("input.format", getattr(cfg.input, "format", None)),
+        ("input.header", getattr(cfg.input, "header", None)),
+        ("input.ascii_format", getattr(cfg.input, "ascii_format", None)),
+        ("# columns", None),
+        ("columns.ra", ra_col),
+        ("columns.dec", dec_col),
+        ("columns.keep", getattr(cfg.columns, "keep", None)),
+        ("# algorithm.common", None),
+        ("algorithm.selection_mode", getattr(cfg.algorithm, "selection_mode", None)),
+        ("algorithm.level_limit", getattr(cfg.algorithm, "level_limit", None)),
+        ("algorithm.moc_order", moc_order),
+        ("algorithm.selection_defaults.hist_nbins", None),
+        ("algorithm.selection_defaults.adaptive_range", None),
+        ("algorithm.selection_defaults.order_desc", getattr(cfg.algorithm, "order_desc", None)),
+        ("algorithm.selection_defaults.tie_column", getattr(cfg.algorithm, "tie_column", None)),
+        ("algorithm.selection_defaults.keep_invalid_values", None),
+        ("algorithm.selection_defaults.density_bias_n1", None),
+        ("algorithm.selection_defaults.density_bias_n2", None),
+        ("algorithm.selection_defaults.density_bias_n3", None),
+        ("# algorithm.mag_global", None),
+        ("mag_global.mag_column", getattr(cfg.algorithm, "mag_column", None)),
+        ("mag_global.flux_column", getattr(cfg.algorithm, "flux_column", None)),
+        ("mag_global.mag_offset", getattr(cfg.algorithm, "mag_offset", None)),
+        ("mag_global.mag_min", getattr(cfg.algorithm, "mag_min", None)),
+        ("mag_global.mag_max", getattr(cfg.algorithm, "mag_max", None)),
+        ("mag_global.adaptive_range", getattr(cfg.algorithm, "mag_adaptive_range", None)),
+        ("mag_global.hist_nbins", getattr(cfg.algorithm, "mag_hist_nbins", None)),
+        ("mag_global.keep_invalid_values", getattr(cfg.algorithm, "mag_keep_invalid_values", None)),
+        ("mag_global.tie_column", getattr(cfg.algorithm, "mag_tie_column", None)),
+        ("mag_global.order_desc", getattr(cfg.algorithm, "mg_order_desc", None)),
+        ("mag_global.n_1", getattr(cfg.algorithm, "n_1", None)),
+        ("mag_global.n_2", getattr(cfg.algorithm, "n_2", None)),
+        ("mag_global.n_3", getattr(cfg.algorithm, "n_3", None)),
+        ("mag_global.k_1", getattr(cfg.algorithm, "k_1", None)),
+        ("mag_global.k_2", getattr(cfg.algorithm, "k_2", None)),
+        ("mag_global.k_3", getattr(cfg.algorithm, "k_3", None)),
+        ("# algorithm.score_global", None),
+        ("score_global.score_column", getattr(cfg.algorithm, "score_column", None)),
+        ("score_global.score_min", getattr(cfg.algorithm, "score_min", None)),
+        ("score_global.score_max", getattr(cfg.algorithm, "score_max", None)),
+        ("score_global.adaptive_range", getattr(cfg.algorithm, "score_adaptive_range", None)),
+        ("score_global.hist_nbins", getattr(cfg.algorithm, "score_hist_nbins", None)),
+        ("score_global.keep_invalid_values", getattr(cfg.algorithm, "score_keep_invalid_values", None)),
+        ("score_global.tie_column", getattr(cfg.algorithm, "score_tie_column", None)),
+        ("score_global.order_desc", getattr(cfg.algorithm, "sg_order_desc", None)),
+        ("score_global.n_1", getattr(cfg.algorithm, "score_n_1", None)),
+        ("score_global.n_2", getattr(cfg.algorithm, "score_n_2", None)),
+        ("score_global.n_3", getattr(cfg.algorithm, "score_n_3", None)),
+        ("score_global.k_1", getattr(cfg.algorithm, "score_k_1", None)),
+        ("score_global.k_2", getattr(cfg.algorithm, "score_k_2", None)),
+        ("score_global.k_3", getattr(cfg.algorithm, "score_k_3", None)),
+        ("# algorithm.score_density_hybrid", None),
+        ("score_density_hybrid.score_column", getattr(cfg.algorithm, "sdh_score_column", None)),
+        ("score_density_hybrid.score_min", getattr(cfg.algorithm, "sdh_score_min", None)),
+        ("score_density_hybrid.score_max", getattr(cfg.algorithm, "sdh_score_max", None)),
+        ("score_density_hybrid.adaptive_range", getattr(cfg.algorithm, "sdh_score_adaptive_range", None)),
+        ("score_density_hybrid.hist_nbins", getattr(cfg.algorithm, "sdh_score_hist_nbins", None)),
+        ("score_density_hybrid.keep_invalid_values", getattr(cfg.algorithm, "sdh_keep_invalid_values", None)),
+        ("score_density_hybrid.tie_column", getattr(cfg.algorithm, "sdh_tie_column", None)),
+        ("score_density_hybrid.order_desc", getattr(cfg.algorithm, "sdh_order_desc", None)),
+        ("score_density_hybrid.n_1", getattr(cfg.algorithm, "sdh_n_1", None)),
+        ("score_density_hybrid.n_2", getattr(cfg.algorithm, "sdh_n_2", None)),
+        ("score_density_hybrid.n_3", getattr(cfg.algorithm, "sdh_n_3", None)),
+        ("score_density_hybrid.k_1", getattr(cfg.algorithm, "sdh_k_1", None)),
+        ("score_density_hybrid.k_2", getattr(cfg.algorithm, "sdh_k_2", None)),
+        ("score_density_hybrid.k_3", getattr(cfg.algorithm, "sdh_k_3", None)),
+        ("score_density_hybrid.density_bias_n1", getattr(cfg.algorithm, "sdh_density_bias_n1", None)),
+        ("score_density_hybrid.density_bias_n2", getattr(cfg.algorithm, "sdh_density_bias_n2", None)),
+        ("score_density_hybrid.density_bias_n3", getattr(cfg.algorithm, "sdh_density_bias_n3", None)),
+        ("# cluster", None),
+        ("cluster.mode", getattr(cfg.cluster, "mode", None)),
+        ("cluster.n_workers", getattr(cfg.cluster, "n_workers", None)),
+        ("cluster.threads_per_worker", getattr(cfg.cluster, "threads_per_worker", None)),
+        ("cluster.memory_per_worker", getattr(cfg.cluster, "memory_per_worker", None)),
+        ("cluster.low_memory_mode", getattr(cfg.cluster, "low_memory_mode", None)),
+        ("cluster.persist_ddfs", getattr(cfg.cluster, "persist_ddfs", None)),
+        (
+            "cluster.avoid_computes_wherever_possible",
+            getattr(cfg.cluster, "avoid_computes_wherever_possible", None),
+        ),
+        ("cluster.diagnostics_mode", getattr(cfg.cluster, "diagnostics_mode", None)),
+        ("cluster.slurm", getattr(cfg.cluster, "slurm", None)),
+        ("# output", None),
+        ("output.out_dir", str(out_dir)),
+        ("output.cat_name", getattr(cfg.output, "cat_name", None)),
+        ("output.target", getattr(cfg.output, "target", None)),
+        ("output.creator_did", getattr(cfg.output, "creator_did", None)),
+        ("output.obs_title", getattr(cfg.output, "obs_title", None)),
+        ("output.overwrite", getattr(cfg.output, "overwrite", None)),
+    ]
+
+    arg_lines: List[str] = []
+    for key, val in arg_entries:
+        if key.startswith("# "):
+            arg_lines.append(key)
+            continue
+        arg_lines.append(f"{key}: {_format_argument_value(val)}")
+
+    arg_text = "\n".join(arg_lines)
     write_arguments(out_dir, arg_text + "\n")
 
 
@@ -479,5 +521,6 @@ def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, lo
     input_counts = {"total": int(input_total)}
 
     log_fn("[counts] Computed output/input counts.", always=True)
+    log_fn(f"[output] Total rows written: {total_all_depths}", always=True)
 
     return int(total_all_depths), {"output": output_counts, "input": input_counts}

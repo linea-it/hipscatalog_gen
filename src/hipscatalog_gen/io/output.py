@@ -15,6 +15,7 @@ from astropy.io.votable import writeto as vot_writeto
 from astropy.table import Table
 from mocpy import MOC
 
+from .. import __version__
 from ..config import OutputCfg
 from ..utils import _mkdirs, _now_str, _write_text
 
@@ -234,7 +235,7 @@ def write_properties(
     # Recommended/extra keywords.
     buf.append(f"publisher_id    = {publisher_id}\n")
     buf.append(f"hips_service_url  = {str(out_dir).rstrip('/')}/{label}\n")
-    buf.append("hips_builder    = hipscatalog_gen\n")
+    buf.append(f"hips_builder    = linea-it/hipscatalog_gen v{__version__}\n")
     buf.append(f"hips_cat_nrows  = {n_src}\n")
 
     # Optional initial view center.

@@ -532,6 +532,34 @@ def test_write_counts_summaries(tmp_path, log_capture):
     assert total_written == 2
     assert payload["output"]["total"] == 2
     assert payload["input"]["total"] == 5
+    assert any("Total rows written: 2" in m for m in log_capture[0])
+
+
+def test_write_common_static_products_arguments_include_all_input_keys(tmp_path):
+    """arguments file includes all known YAML input keys, even when unset."""
+    cfg = _cfg_pipeline(tmp_path)
+    pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0], "MAG": [1.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    densmaps = {4: np.ones(1, dtype="int64")}
+
+    pipeline_common.write_common_static_products(
+        out_dir=tmp_path,
+        cfg=cfg,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "MAG"],
+        ra_col="RA",
+        dec_col="DEC",
+        paths=["p1"],
+        ddf=ddf,
+    )
+
+    args_text = (tmp_path / "arguments").read_text(encoding="utf-8")
+    assert "algorithm.selection_defaults.hist_nbins: null" in args_text
+    assert "mag_global.k_1: null" in args_text
+    assert "score_global.k_1: null" in args_text
+    assert "score_density_hybrid.k_1: null" in args_text
+    assert "cluster.low_memory_mode: null" in args_text
+    assert "output.overwrite: true" in args_text
 
 
 def test_write_tiles_with_allsky(monkeypatch, tmp_path, log_capture):

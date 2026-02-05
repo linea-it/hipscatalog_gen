@@ -7,6 +7,8 @@ import importlib.metadata
 import json
 import runpy
 import sys
+import tomllib
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -207,14 +209,17 @@ def test_build_config_numeric_fields_convert_and_raise():
 
 
 def test_version_fallback(monkeypatch):
-    """__version__ falls back when package metadata is missing."""
+    """__version__ falls back to local pyproject when metadata is missing."""
 
     def _raise(*_args, **_kwargs):
         raise importlib.metadata.PackageNotFoundError("x")
 
     monkeypatch.setattr("importlib.metadata.version", _raise)
     mod = importlib.reload(importlib.import_module("hipscatalog_gen"))
-    assert getattr(mod, "__version__", "") == "0.0.0"
+    pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+    with pyproject.open("rb") as f:
+        project_version = tomllib.load(f)["project"]["version"]
+    assert getattr(mod, "__version__", "") == str(project_version)
 
 
 def test_version_and_run_pipeline(monkeypatch):

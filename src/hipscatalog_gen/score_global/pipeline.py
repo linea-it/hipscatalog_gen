@@ -53,6 +53,7 @@ def normalize_score_global(
         raise ValueError("score_global selection requires algorithm.score_column to be set.")
 
     score_expr = str(score_expr)
+    log_fn(f"[selection] score_global using score_column={score_expr!r}.", always=True)
     score_range_mode = str(getattr(algo, "score_adaptive_range", "complete") or "complete").lower()
     if score_range_mode not in ("complete", "hist_peak"):
         raise ValueError("algorithm.score_adaptive_range must be 'complete' or 'hist_peak'.")

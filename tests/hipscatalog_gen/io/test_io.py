@@ -12,6 +12,7 @@ import pandas as pd
 import pytest
 from dask import dataframe as dd
 
+import hipscatalog_gen
 import hipscatalog_gen.io.input as io_input
 import hipscatalog_gen.io.output as io_output
 from hipscatalog_gen.config import AlgoOpts, ClusterCfg, ColumnsCfg, Config, InputCfg, OutputCfg
@@ -505,6 +506,7 @@ def test_write_properties_and_arguments(tmp_path):
     props = (tmp_path / "properties").read_text(encoding="utf-8")
     assert "hips_order      = 5" in props
     assert "hips_initial_ra = 123" in props
+    assert f"hips_builder    = linea-it/hipscatalog_gen v{hipscatalog_gen.__version__}" in props
 
     out_cfg_bad = OutputCfg(out_dir=str(tmp_path), cat_name="cat", target="bad-target")
     write_properties(tmp_path, out_cfg_bad, level_limit=5, n_src=10)

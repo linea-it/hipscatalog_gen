@@ -73,6 +73,14 @@ def normalize_mag_global(
             "mag_global selection requires either algorithm.mag_column or algorithm.flux_column."
         )
 
+    if flux_col_cfg:
+        log_fn(
+            f"[selection] mag_global using flux_column={flux_col_cfg!r} (converted to internal __mag__).",
+            always=True,
+        )
+    else:
+        log_fn(f"[selection] mag_global using mag_column={mag_col_cfg!r}.", always=True)
+
     base_meta_mag = _get_meta_df(ddf)
     meta_with_mag = base_meta_mag.copy()
     meta_with_mag["__mag__"] = pd.Series([], dtype="float64")
