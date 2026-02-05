@@ -81,6 +81,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">html</span><span class="w"> </span><span class="kn">import</span> <span class="n">escape</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
 
@@ -92,6 +93,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">astropy.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">Table</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">mocpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">MOC</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">..</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..config</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutputCfg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_mkdirs</span><span class="p">,</span> <span class="n">_now_str</span><span class="p">,</span> <span class="n">_write_text</span>
 
@@ -102,6 +104,7 @@
     <span class="s2">&quot;write_metadata_xml&quot;</span><span class="p">,</span>
     <span class="s2">&quot;write_moc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;write_densmap_fits&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;write_index_html&quot;</span><span class="p">,</span>
     <span class="s2">&quot;finalize_write_tiles&quot;</span><span class="p">,</span>
     <span class="s2">&quot;build_header_line_from_keep&quot;</span><span class="p">,</span>
 <span class="p">]</span>
@@ -312,7 +315,7 @@
     <span class="n">now_iso</span> <span class="o">=</span> <span class="n">_now_str</span><span class="p">()</span>
     <span class="n">label</span> <span class="o">=</span> <span class="n">output_cfg</span><span class="o">.</span><span class="n">cat_name</span>
 
-    <span class="n">creator_did</span> <span class="o">=</span> <span class="n">output_cfg</span><span class="o">.</span><span class="n">creator_did</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;ivo://PRIVATE_USER/</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">publisher_did</span> <span class="o">=</span> <span class="n">output_cfg</span><span class="o">.</span><span class="n">creator_did</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;ivo://PRIVATE_USER/</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="n">obs_title</span> <span class="o">=</span> <span class="n">output_cfg</span><span class="o">.</span><span class="n">obs_title</span> <span class="ow">or</span> <span class="n">label</span>
     <span class="n">publisher_id</span> <span class="o">=</span> <span class="s2">&quot;ivo://PRIVATE_USER&quot;</span>
 
@@ -321,7 +324,7 @@
     <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;# hips_release_date generated at </span><span class="si">{</span><span class="n">now_iso</span><span class="si">}</span><span class="s2"> (UTC)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># Mandatory HiPS 1.4 keywords.</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;creator_did     = </span><span class="si">{</span><span class="n">creator_did</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;publisher_did   = </span><span class="si">{</span><span class="n">publisher_did</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;obs_title       = </span><span class="si">{</span><span class="n">obs_title</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;dataproduct_type  = catalog</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;hips_version    = 1.4</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -334,7 +337,7 @@
     <span class="c1"># Recommended/extra keywords.</span>
     <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;publisher_id    = </span><span class="si">{</span><span class="n">publisher_id</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_service_url  = </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;hips_builder    = hipscatalog_gen</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_builder    = linea-it/hipscatalog_gen v</span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_cat_nrows  = </span><span class="si">{</span><span class="n">n_src</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># Optional initial view center.</span>
@@ -364,6 +367,121 @@
 <span class="sd">        args_text: Text blob to persist under ``arguments``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_write_text</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;arguments&quot;</span><span class="p">,</span> <span class="n">args_text</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="write_index_html">
+<a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_index_html">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_index_html</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">output_cfg</span><span class="p">:</span> <span class="n">OutputCfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a simple index.html page for quick local catalog inspection.&quot;&quot;&quot;</span>
+    <span class="n">cat_name</span> <span class="o">=</span> <span class="n">escape</span><span class="p">(</span><span class="n">output_cfg</span><span class="o">.</span><span class="n">cat_name</span><span class="p">)</span>
+    <span class="n">html_doc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;&lt;!doctype html&gt;</span>
+<span class="s2">&lt;html lang=&quot;en&quot;&gt;</span>
+<span class="s2">  &lt;head&gt;</span>
+<span class="s2">    &lt;meta charset=&quot;UTF-8&quot;&gt;</span>
+<span class="s2">    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;</span>
+<span class="s2">    &lt;title&gt;</span><span class="si">{</span><span class="n">cat_name</span><span class="si">}</span><span class="s2"> HiPS catalogue&lt;/title&gt;</span>
+<span class="s2">    &lt;style&gt;</span>
+<span class="s2">      body </span><span class="se">{{</span><span class="s2"> font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; </span><span class="se">}}</span>
+<span class="s2">      h1 </span><span class="se">{{</span><span class="s2"> margin-bottom: 6px; </span><span class="se">}}</span>
+<span class="s2">      .sub </span><span class="se">{{</span><span class="s2"> color: #555; margin-top: 0; </span><span class="se">}}</span>
+<span class="s2">      .layout </span><span class="se">{{</span><span class="s2"> display: flex; gap: 20px; flex-wrap: wrap; </span><span class="se">}}</span>
+<span class="s2">      #aladin-lite-div </span><span class="se">{{</span><span class="s2"> width: 500px; height: 500px; max-width: 100%; border: 1px solid #ddd; </span><span class="se">}}</span>
+<span class="s2">      #viewerStatus </span><span class="se">{{</span>
+<span class="s2">        max-width: 500px;</span>
+<span class="s2">        color: #8a4500;</span>
+<span class="s2">        background: #fff4e8;</span>
+<span class="s2">        padding: 8px 10px;</span>
+<span class="s2">        border-radius: 6px;</span>
+<span class="s2">      </span><span class="se">}}</span>
+<span class="s2">      ul </span><span class="se">{{</span><span class="s2"> margin: 0; padding-left: 18px; </span><span class="se">}}</span>
+<span class="s2">      li </span><span class="se">{{</span><span class="s2"> margin-bottom: 6px; </span><span class="se">}}</span>
+<span class="s2">      code </span><span class="se">{{</span><span class="s2"> background: #f5f5f5; padding: 2px 4px; border-radius: 4px; </span><span class="se">}}</span>
+<span class="s2">    &lt;/style&gt;</span>
+<span class="s2">    &lt;link rel=&quot;stylesheet&quot; href=&quot;https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css&quot;&gt;</span>
+<span class="s2">    &lt;script src=&quot;https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js&quot;&gt;&lt;/script&gt;</span>
+<span class="s2">    &lt;script&gt;</span>
+<span class="s2">      function baseUrl() </span><span class="se">{{</span>
+<span class="s2">        const href = window.location.href;</span>
+<span class="s2">        return href.substring(0, href.lastIndexOf(&quot;/&quot;) + 1);</span>
+<span class="s2">      </span><span class="se">}}</span>
+
+<span class="s2">      function setLink(id, url, text) </span><span class="se">{{</span>
+<span class="s2">        const a = document.getElementById(id);</span>
+<span class="s2">        a.href = url;</span>
+<span class="s2">        if (text) a.textContent = text;</span>
+<span class="s2">      </span><span class="se">}}</span>
+
+<span class="s2">      window.addEventListener(&quot;load&quot;, function() </span><span class="se">{{</span>
+<span class="s2">        const tabName = &quot;</span><span class="si">{</span><span class="n">cat_name</span><span class="si">}</span><span class="s2">&quot;;</span>
+<span class="s2">        const isFile = window.location.protocol === &quot;file:&quot;;</span>
+<span class="s2">        const url = isFile ? &quot;./&quot; : baseUrl();</span>
+<span class="s2">        document.querySelectorAll(&quot;.hipsNameSpan&quot;).forEach(el =&gt; el.textContent = tabName);</span>
+
+<span class="s2">        setLink(&quot;hrefMetadata&quot;, url + &quot;metadata.xml&quot;);</span>
+<span class="s2">        setLink(&quot;hrefProperties&quot;, url + &quot;properties&quot;);</span>
+<span class="s2">        setLink(&quot;hrefMOC&quot;, url + &quot;Moc.fits&quot;);</span>
+<span class="s2">        setLink(&quot;hrefAll1&quot;, url + &quot;Norder1/Allsky.tsv&quot;);</span>
+<span class="s2">        setLink(&quot;hrefAll2&quot;, url + &quot;Norder2/Allsky.tsv&quot;);</span>
+<span class="s2">        setLink(&quot;hipsBase&quot;, url, url);</span>
+<span class="s2">        document.getElementById(&quot;tilesUrl&quot;).innerHTML =</span>
+<span class="s2">          url + &quot;Norder&lt;i&gt;[0-orderMax]&lt;/i&gt;/Dir&lt;i&gt;[0-9]*&lt;/i&gt;/Npix&lt;i&gt;[0-ipixMax]&lt;/i&gt;.tsv&quot;;</span>
+
+<span class="s2">        const status = document.getElementById(&quot;viewerStatus&quot;);</span>
+<span class="s2">        if (isFile) </span><span class="se">{{</span>
+<span class="s2">          status.textContent =</span>
+<span class="s2">            &quot;Aladin preview is disabled in file:// mode (browser CORS). &quot; +</span>
+<span class="s2">            &quot;Option 1: open a terminal in this same output directory (the one containing index.html), &quot; +</span>
+<span class="s2">            &quot;run: python -m http.server 8000, then open http://localhost:8000/index.html. &quot; +</span>
+<span class="s2">            &quot;Option 2: run: hipscatalog-gen serve --out &lt;dir&gt;&quot;;</span>
+<span class="s2">          return;</span>
+<span class="s2">        </span><span class="se">}}</span>
+
+<span class="s2">        if (window.A &amp;&amp; A.aladin &amp;&amp; A.catalogHiPS) </span><span class="se">{{</span>
+<span class="s2">          try </span><span class="se">{{</span>
+<span class="s2">            const aladin = A.aladin(&quot;#aladin-lite-div&quot;, </span><span class="se">{{</span>
+<span class="s2">              target: &quot;0 +0&quot;,</span>
+<span class="s2">              fov: 55,</span>
+<span class="s2">              survey: &quot;P/2MASS/color&quot;</span>
+<span class="s2">            </span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">            const hips = A.catalogHiPS(url, </span><span class="se">{{</span><span class="s2"> onClick: &quot;showTable&quot;, name: tabName </span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">            aladin.addCatalog(hips);</span>
+<span class="s2">            status.textContent = &quot;Aladin preview loaded.&quot;;</span>
+<span class="s2">          </span><span class="se">}}</span><span class="s2"> catch (err) </span><span class="se">{{</span>
+<span class="s2">            status.textContent = &quot;Failed to initialize Aladin preview: &quot; + String(err);</span>
+<span class="s2">          </span><span class="se">}}</span>
+<span class="s2">        </span><span class="se">}}</span><span class="s2"> else </span><span class="se">{{</span>
+<span class="s2">          status.textContent = &quot;Aladin script was not loaded. Check your network connection.&quot;;</span>
+<span class="s2">        </span><span class="se">}}</span>
+<span class="s2">      </span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">    &lt;/script&gt;</span>
+<span class="s2">  &lt;/head&gt;</span>
+<span class="s2">  &lt;body&gt;</span>
+<span class="s2">    &lt;h1&gt;&lt;span class=&quot;hipsNameSpan&quot;&gt;&lt;/span&gt; progressive catalogue&lt;/h1&gt;</span>
+<span class="s2">    &lt;p class=&quot;sub&quot;&gt;Quick local inspection page for a generated HiPS catalogue.&lt;/p&gt;</span>
+<span class="s2">    &lt;div class=&quot;layout&quot;&gt;</span>
+<span class="s2">      &lt;div&gt;</span>
+<span class="s2">        &lt;div id=&quot;aladin-lite-div&quot;&gt;&lt;/div&gt;</span>
+<span class="s2">        &lt;p id=&quot;viewerStatus&quot;&gt;&lt;/p&gt;</span>
+<span class="s2">      &lt;/div&gt;</span>
+<span class="s2">      &lt;div&gt;</span>
+<span class="s2">        &lt;ul&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Label:&lt;/b&gt; &lt;span class=&quot;hipsNameSpan&quot;&gt;&lt;/span&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Type:&lt;/b&gt; HiPS table&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Raw property file:&lt;/b&gt; &lt;a id=&quot;hrefProperties&quot; href=&quot;&quot;&gt;properties&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Metadata:&lt;/b&gt; &lt;a id=&quot;hrefMetadata&quot; href=&quot;&quot;&gt;metadata.xml&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Associated coverage map:&lt;/b&gt; &lt;a id=&quot;hrefMOC&quot; href=&quot;&quot;&gt;Moc.fits&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Base URL:&lt;/b&gt; &lt;a id=&quot;hipsBase&quot; href=&quot;&quot;&gt;&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Allsky level 1:&lt;/b&gt; &lt;a id=&quot;hrefAll1&quot; href=&quot;&quot;&gt;Allsky.tsv&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Allsky level 2:&lt;/b&gt; &lt;a id=&quot;hrefAll2&quot; href=&quot;&quot;&gt;Allsky.tsv&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Tiles URL format:&lt;/b&gt; &lt;span id=&quot;tilesUrl&quot;&gt;&lt;/span&gt;&lt;/li&gt;</span>
+<span class="s2">        &lt;/ul&gt;</span>
+<span class="s2">      &lt;/div&gt;</span>
+<span class="s2">    &lt;/div&gt;</span>
+<span class="s2">  &lt;/body&gt;</span>
+<span class="s2">&lt;/html&gt;</span>
+<span class="s2">&quot;&quot;&quot;</span>
+    <span class="n">_write_text</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span><span class="p">,</span> <span class="n">html_doc</span><span class="p">)</span></div>
 
 
 

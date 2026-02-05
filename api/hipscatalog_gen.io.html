@@ -289,6 +289,23 @@ Dask DataFrames and LSDB catalogs.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.io.output.write_index_html">
+<span class="sig-name descname"><span class="pre">write_index_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/io/output.html#write_index_html"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.io.output.write_index_html" title="Link to this definition"></a></dt>
+<dd><p>Write a simple index.html page for quick local catalog inspection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>output_cfg</strong> (<a class="reference internal" href="hipscatalog_gen.html#hipscatalog_gen.config.OutputCfg" title="hipscatalog_gen.config.OutputCfg"><em>OutputCfg</em></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.io.output.finalize_write_tiles">
 <span class="sig-name descname"><span class="pre">finalize_write_tiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header_line</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selected</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allsky_collect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/io/output.html#finalize_write_tiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.io.output.finalize_write_tiles" title="Link to this definition"></a></dt>
 <dd><p>Write one TSV per HEALPix cell and build optional Allsky dataframe.</p>
@@ -533,6 +550,23 @@ allsky_df: DataFrame with all rows (if allsky_collect=True), else None.</p>
 <li><p><strong>out_dir</strong> (<em>Path</em>) – HiPS root output directory.</p></li>
 <li><p><strong>depth</strong> (<em>int</em>) – HEALPix order (depth).</p></li>
 <li><p><strong>counts</strong> (<em>ndarray</em>) – Counts per pixel at this depth.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.io.write_index_html">
+<span class="sig-name descname"><span class="pre">write_index_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/io/output.html#write_index_html"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.io.write_index_html" title="Link to this definition"></a></dt>
+<dd><p>Write a simple index.html page for quick local catalog inspection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
+<li><p><strong>output_cfg</strong> (<a class="reference internal" href="hipscatalog_gen.html#hipscatalog_gen.config.OutputCfg" title="hipscatalog_gen.config.OutputCfg"><em>OutputCfg</em></a>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
