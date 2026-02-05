@@ -152,3 +152,7 @@ _html/
 .initialize_new_project.sh
 /config*.yaml
 outputs/
+
+# Other folders
+article/
+original_from_CDS/
