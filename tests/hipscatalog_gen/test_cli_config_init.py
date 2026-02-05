@@ -372,3 +372,36 @@ def test_cli_main_entrypoint(monkeypatch, capsys):
     runpy.run_module("hipscatalog_gen.cli", run_name="__main__")
     out = capsys.readouterr().out
     assert "m: d1" in out
+
+
+def test_cli_serve_dispatch(monkeypatch):
+    """serve subcommand dispatches to local HTTP server helper."""
+    calls: list[dict[str, Any]] = []
+
+    def fake_serve(out_dir, host, port, open_browser):
+        calls.append(
+            {
+                "out_dir": out_dir,
+                "host": host,
+                "port": port,
+                "open_browser": open_browser,
+            }
+        )
+
+    monkeypatch.setattr(cli, "_serve_output_dir", fake_serve)
+    cli.main(["serve", "--out", "/tmp/out"])
+    assert calls == [{"out_dir": "/tmp/out", "host": "127.0.0.1", "port": 8000, "open_browser": True}]
+
+
+def test_cli_serve_dispatch_custom_flags(monkeypatch):
+    """serve subcommand forwards host/port/no-browser options."""
+    calls: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        cli,
+        "_serve_output_dir",
+        lambda out_dir, host, port, open_browser: calls.append(
+            {"out_dir": out_dir, "host": host, "port": port, "open_browser": open_browser}
+        ),
+    )
+    cli.main(["serve", "--out", "/tmp/out", "--host", "127.0.0.2", "--port", "9001", "--no-browser"])
+    assert calls == [{"out_dir": "/tmp/out", "host": "127.0.0.2", "port": 9001, "open_browser": False}]

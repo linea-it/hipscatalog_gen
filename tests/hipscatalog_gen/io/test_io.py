@@ -25,6 +25,7 @@ from hipscatalog_gen.io import (
     finalize_write_tiles,
     write_arguments,
     write_densmap_fits,
+    write_index_html,
     write_metadata_xml,
     write_moc,
     write_properties,
@@ -516,6 +517,17 @@ def test_write_properties_and_arguments(tmp_path):
 
     write_arguments(tmp_path, "--input x")
     assert (tmp_path / "arguments").read_text(encoding="utf-8") == "--input x"
+
+
+def test_write_index_html(tmp_path):
+    """index.html is generated with basic links and catalog label."""
+    out_cfg = OutputCfg(out_dir=str(tmp_path), cat_name="DES_DR2_sample", target="0 0")
+    write_index_html(tmp_path, out_cfg)
+    html = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert "DES_DR2_sample HiPS catalogue" in html
+    assert "metadata.xml" in html
+    assert "Moc.fits" in html
+    assert "Norder1/Allsky.tsv" in html
 
 
 def test_write_metadata_xml(monkeypatch, tmp_path):

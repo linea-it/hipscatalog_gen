@@ -478,6 +478,7 @@ def test_write_common_static_products(monkeypatch, tmp_path):
     calls = []
     monkeypatch.setattr(pipeline_common, "write_arguments", lambda *args, **kwargs: calls.append("args"))
     monkeypatch.setattr(pipeline_common, "write_metadata_xml", lambda *args, **kwargs: calls.append("meta"))
+    monkeypatch.setattr(pipeline_common, "write_index_html", lambda *args, **kwargs: calls.append("index"))
     monkeypatch.setattr(pipeline_common, "write_moc", lambda *args, **kwargs: calls.append("moc"))
     pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0], "MAG": [1.0]})
     ddf = dd.from_pandas(pdf, npartitions=1)
@@ -492,7 +493,7 @@ def test_write_common_static_products(monkeypatch, tmp_path):
         paths=["p1"],
         ddf=ddf,
     )
-    assert set(calls) == {"args", "meta", "moc"}
+    assert set(calls) == {"args", "meta", "index", "moc"}
 
 
 def test_compute_and_write_densmaps(monkeypatch, tmp_path, diag_ctx):

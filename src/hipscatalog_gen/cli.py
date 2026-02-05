@@ -4,11 +4,47 @@ from __future__ import annotations
 
 import argparse
 import sys
+import webbrowser
+from contextlib import suppress
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import List
 
 from .config import load_config
 
 __all__ = ["main"]
+
+
+def _serve_output_dir(
+    out_dir: str,
+    *,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    open_browser: bool = True,
+) -> None:
+    """Serve a generated HiPS output directory over HTTP for local preview."""
+    out_path = Path(out_dir).expanduser().resolve()
+    if not out_path.exists() or not out_path.is_dir():
+        raise ValueError(f"--out must point to an existing directory: {out_path}")
+
+    handler = partial(SimpleHTTPRequestHandler, directory=str(out_path))
+    httpd = ThreadingHTTPServer((host, int(port)), handler)
+    url = f"http://{host}:{int(port)}/index.html"
+    print(f"Serving {out_path}")
+    print(f"Open: {url}")
+    print("Press Ctrl+C to stop.")
+
+    if open_browser:
+        with suppress(Exception):
+            webbrowser.open(url)
+
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nServer stopped.")
+    finally:
+        httpd.server_close()
 
 
 def main(argv: List[str] | None = None) -> None:
@@ -19,6 +55,32 @@ def main(argv: List[str] | None = None) -> None:
     """
     if argv is None:
         argv = sys.argv[1:]
+
+    if argv and argv[0] == "serve":
+        parser = argparse.ArgumentParser(
+            prog="hipscatalog-gen serve",
+            description="Serve a generated HiPS output directory over local HTTP.",
+        )
+        parser.add_argument(
+            "--out",
+            required=True,
+            help="Path to the generated output directory containing index.html.",
+        )
+        parser.add_argument("--host", default="127.0.0.1", help="Bind host (default: 127.0.0.1).")
+        parser.add_argument("--port", type=int, default=8000, help="Bind port (default: 8000).")
+        parser.add_argument(
+            "--no-browser",
+            action="store_true",
+            help="Do not auto-open index.html in the default browser.",
+        )
+        args = parser.parse_args(argv[1:])
+        _serve_output_dir(
+            args.out,
+            host=args.host,
+            port=args.port,
+            open_browser=not bool(args.no_browser),
+        )
+        return
 
     desc = (
         "HiPS Catalog Pipeline "

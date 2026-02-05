@@ -19,6 +19,7 @@ from ..io.output import (
     finalize_write_tiles,
     write_arguments,
     write_densmap_fits,
+    write_index_html,
     write_metadata_xml,
     write_moc,
 )
@@ -291,6 +292,7 @@ def write_common_static_products(
     ra_idx = keep_cols.index(ra_col)
     dec_idx = keep_cols.index(dec_col)
     write_metadata_xml(out_dir, cols, ra_idx, dec_idx)
+    write_index_html(out_dir, cfg.output)
 
     arg_entries: List[tuple[str, Any]] = [
         ("# input", None),
