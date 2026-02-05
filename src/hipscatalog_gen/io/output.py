@@ -213,7 +213,7 @@ def write_properties(
     now_iso = _now_str()
     label = output_cfg.cat_name
 
-    creator_did = output_cfg.creator_did or f"ivo://PRIVATE_USER/{label}"
+    publisher_did = output_cfg.creator_did or f"ivo://PRIVATE_USER/{label}"
     obs_title = output_cfg.obs_title or label
     publisher_id = "ivo://PRIVATE_USER"
 
@@ -222,7 +222,7 @@ def write_properties(
     buf.append(f"# hips_release_date generated at {now_iso} (UTC)\n")
 
     # Mandatory HiPS 1.4 keywords.
-    buf.append(f"creator_did     = {creator_did}\n")
+    buf.append(f"publisher_did   = {publisher_did}\n")
     buf.append(f"obs_title       = {obs_title}\n")
     buf.append("dataproduct_type  = catalog\n")
     buf.append("hips_version    = 1.4\n")

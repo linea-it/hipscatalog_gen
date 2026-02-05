@@ -504,6 +504,7 @@ def test_write_properties_and_arguments(tmp_path):
     out_cfg = OutputCfg(out_dir=str(tmp_path), cat_name="cat", target="123 456")
     write_properties(tmp_path, out_cfg, level_limit=5, n_src=10)
     props = (tmp_path / "properties").read_text(encoding="utf-8")
+    assert "publisher_did   = ivo://PRIVATE_USER/cat" in props
     assert "hips_order      = 5" in props
     assert "hips_initial_ra = 123" in props
     assert f"hips_builder    = linea-it/hipscatalog_gen v{hipscatalog_gen.__version__}" in props
