@@ -17,7 +17,7 @@
     "environment_type": "virtualenv",
     "show_commit_url": "https://github.com/linea-it/hipscatalog-gen/commit/",
     "pythons": [
-        "3.11"
+        "3.12"
     ],
     "matrix": {
         "Cython": [],
