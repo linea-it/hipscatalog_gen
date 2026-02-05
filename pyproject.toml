@@ -24,7 +24,7 @@ requires-python = ">=3.11"
 dependencies = [
   "numpy>=2.0,<3.0",
   "pandas>=2.1,<4.0",
-  "pyarrow>=14,<23",
+  "pyarrow>=14,<24",
   "dask>=2026.1.0,<2027.0",
   "distributed>=2026.1.0,<2027.0",
   "astropy>=6,<8",
