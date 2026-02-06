@@ -12,6 +12,7 @@ import pandas as pd
 import pytest
 from dask import dataframe as dd
 
+import hipscatalog_gen
 import hipscatalog_gen.io.input as io_input
 import hipscatalog_gen.io.output as io_output
 from hipscatalog_gen.config import AlgoOpts, ClusterCfg, ColumnsCfg, Config, InputCfg, OutputCfg
@@ -24,6 +25,7 @@ from hipscatalog_gen.io import (
     finalize_write_tiles,
     write_arguments,
     write_densmap_fits,
+    write_index_html,
     write_metadata_xml,
     write_moc,
     write_properties,
@@ -503,8 +505,10 @@ def test_write_properties_and_arguments(tmp_path):
     out_cfg = OutputCfg(out_dir=str(tmp_path), cat_name="cat", target="123 456")
     write_properties(tmp_path, out_cfg, level_limit=5, n_src=10)
     props = (tmp_path / "properties").read_text(encoding="utf-8")
+    assert "publisher_did   = ivo://PRIVATE_USER/cat" in props
     assert "hips_order      = 5" in props
     assert "hips_initial_ra = 123" in props
+    assert f"hips_builder    = linea-it/hipscatalog_gen v{hipscatalog_gen.__version__}" in props
 
     out_cfg_bad = OutputCfg(out_dir=str(tmp_path), cat_name="cat", target="bad-target")
     write_properties(tmp_path, out_cfg_bad, level_limit=5, n_src=10)
@@ -513,6 +517,17 @@ def test_write_properties_and_arguments(tmp_path):
 
     write_arguments(tmp_path, "--input x")
     assert (tmp_path / "arguments").read_text(encoding="utf-8") == "--input x"
+
+
+def test_write_index_html(tmp_path):
+    """index.html is generated with basic links and catalog label."""
+    out_cfg = OutputCfg(out_dir=str(tmp_path), cat_name="DES_DR2_sample", target="0 0")
+    write_index_html(tmp_path, out_cfg)
+    html = (tmp_path / "index.html").read_text(encoding="utf-8")
+    assert "DES_DR2_sample HiPS catalogue" in html
+    assert "metadata.xml" in html
+    assert "Moc.fits" in html
+    assert "Norder1/Allsky.tsv" in html
 
 
 def test_write_metadata_xml(monkeypatch, tmp_path):
@@ -548,6 +563,7 @@ def test_write_moc_branches(monkeypatch, tmp_path):
         fail_next = False
         serialize_value: Any = {}
         save_raises: Exception | None = None
+        from_calls: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
 
         def __init__(self, payload: Any):
             self.payload = payload
@@ -560,6 +576,7 @@ def test_write_moc_branches(monkeypatch, tmp_path):
 
         @classmethod
         def from_healpix_cells(cls, *args, **kwargs):
+            cls.from_calls.append((args, kwargs))
             if cls.fail_next:
                 cls.fail_next = False
                 raise RuntimeError("boom")
@@ -595,10 +612,12 @@ def test_write_moc_branches(monkeypatch, tmp_path):
     FakeMOC.fail_next = True
     FakeMOC.serialize_value = b"data"
     FakeMOC.save_raises = TypeError("positional format unsupported")
+    FakeMOC.from_calls = []
 
     write_moc(tmp_path, moc_order=1, dens_counts=np.array([0, 1], dtype="int64"))
     assert (tmp_path / "Moc.fits").exists()
     assert (tmp_path / "Moc.json").read_text(encoding="utf-8") == "data"
+    assert FakeMOC.from_calls and {"ipix", "depth", "max_depth"} <= set(FakeMOC.from_calls[0][1])
 
     # Force outer save exception to hit write(...)
     FakeMOC.save_raises = ValueError("force write")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from html import escape
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -15,6 +16,7 @@ from astropy.io.votable import writeto as vot_writeto
 from astropy.table import Table
 from mocpy import MOC
 
+from .. import __version__
 from ..config import OutputCfg
 from ..utils import _mkdirs, _now_str, _write_text
 
@@ -25,6 +27,7 @@ __all__ = [
     "write_metadata_xml",
     "write_moc",
     "write_densmap_fits",
+    "write_index_html",
     "finalize_write_tiles",
     "build_header_line_from_keep",
 ]
@@ -212,7 +215,7 @@ def write_properties(
     now_iso = _now_str()
     label = output_cfg.cat_name
 
-    creator_did = output_cfg.creator_did or f"ivo://PRIVATE_USER/{label}"
+    publisher_did = output_cfg.creator_did or f"ivo://PRIVATE_USER/{label}"
     obs_title = output_cfg.obs_title or label
     publisher_id = "ivo://PRIVATE_USER"
 
@@ -221,7 +224,7 @@ def write_properties(
     buf.append(f"# hips_release_date generated at {now_iso} (UTC)\n")
 
     # Mandatory HiPS 1.4 keywords.
-    buf.append(f"creator_did     = {creator_did}\n")
+    buf.append(f"publisher_did   = {publisher_did}\n")
     buf.append(f"obs_title       = {obs_title}\n")
     buf.append("dataproduct_type  = catalog\n")
     buf.append("hips_version    = 1.4\n")
@@ -234,7 +237,7 @@ def write_properties(
     # Recommended/extra keywords.
     buf.append(f"publisher_id    = {publisher_id}\n")
     buf.append(f"hips_service_url  = {str(out_dir).rstrip('/')}/{label}\n")
-    buf.append("hips_builder    = hipscatalog_gen\n")
+    buf.append(f"hips_builder    = linea-it/hipscatalog_gen v{__version__}\n")
     buf.append(f"hips_cat_nrows  = {n_src}\n")
 
     # Optional initial view center.
@@ -261,6 +264,118 @@ def write_arguments(out_dir: Path, args_text: str) -> None:
         args_text: Text blob to persist under ``arguments``.
     """
     _write_text(out_dir / "arguments", args_text)
+
+
+def write_index_html(out_dir: Path, output_cfg: OutputCfg) -> None:
+    """Write a simple index.html page for quick local catalog inspection."""
+    cat_name = escape(output_cfg.cat_name)
+    html_doc = f"""<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{cat_name} HiPS catalogue</title>
+    <style>
+      body {{ font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; }}
+      h1 {{ margin-bottom: 6px; }}
+      .sub {{ color: #555; margin-top: 0; }}
+      .layout {{ display: flex; gap: 20px; flex-wrap: wrap; }}
+      #aladin-lite-div {{ width: 500px; height: 500px; max-width: 100%; border: 1px solid #ddd; }}
+      #viewerStatus {{
+        max-width: 500px;
+        color: #8a4500;
+        background: #fff4e8;
+        padding: 8px 10px;
+        border-radius: 6px;
+      }}
+      ul {{ margin: 0; padding-left: 18px; }}
+      li {{ margin-bottom: 6px; }}
+      code {{ background: #f5f5f5; padding: 2px 4px; border-radius: 4px; }}
+    </style>
+    <link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css">
+    <script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"></script>
+    <script>
+      function baseUrl() {{
+        const href = window.location.href;
+        return href.substring(0, href.lastIndexOf("/") + 1);
+      }}
+
+      function setLink(id, url, text) {{
+        const a = document.getElementById(id);
+        a.href = url;
+        if (text) a.textContent = text;
+      }}
+
+      window.addEventListener("load", function() {{
+        const tabName = "{cat_name}";
+        const isFile = window.location.protocol === "file:";
+        const url = isFile ? "./" : baseUrl();
+        document.querySelectorAll(".hipsNameSpan").forEach(el => el.textContent = tabName);
+
+        setLink("hrefMetadata", url + "metadata.xml");
+        setLink("hrefProperties", url + "properties");
+        setLink("hrefMOC", url + "Moc.fits");
+        setLink("hrefAll1", url + "Norder1/Allsky.tsv");
+        setLink("hrefAll2", url + "Norder2/Allsky.tsv");
+        setLink("hipsBase", url, url);
+        document.getElementById("tilesUrl").innerHTML =
+          url + "Norder<i>[0-orderMax]</i>/Dir<i>[0-9]*</i>/Npix<i>[0-ipixMax]</i>.tsv";
+
+        const status = document.getElementById("viewerStatus");
+        if (isFile) {{
+          status.textContent =
+            "Aladin preview is disabled in file:// mode (browser CORS). " +
+            "Option 1: open a terminal in this same output directory (the one containing index.html), " +
+            "run: python -m http.server 8000, then open http://localhost:8000/index.html. " +
+            "Option 2: run: hipscatalog-gen serve --out <dir>";
+          return;
+        }}
+
+        if (window.A && A.aladin && A.catalogHiPS) {{
+          try {{
+            const aladin = A.aladin("#aladin-lite-div", {{
+              target: "0 +0",
+              fov: 55,
+              survey: "P/2MASS/color"
+            }});
+            const hips = A.catalogHiPS(url, {{ onClick: "showTable", name: tabName }});
+            aladin.addCatalog(hips);
+            status.textContent = "Aladin preview loaded.";
+          }} catch (err) {{
+            status.textContent = "Failed to initialize Aladin preview: " + String(err);
+          }}
+        }} else {{
+          status.textContent = "Aladin script was not loaded. Check your network connection.";
+        }}
+      }});
+    </script>
+  </head>
+  <body>
+    <h1><span class="hipsNameSpan"></span> progressive catalogue</h1>
+    <p class="sub">Quick local inspection page for a generated HiPS catalogue.</p>
+    <div class="layout">
+      <div>
+        <div id="aladin-lite-div"></div>
+        <p id="viewerStatus"></p>
+      </div>
+      <div>
+        <ul>
+          <li><b>Label:</b> <span class="hipsNameSpan"></span></li>
+          <li><b>Type:</b> HiPS table</li>
+          <li><b>Raw property file:</b> <a id="hrefProperties" href="">properties</a></li>
+          <li><b>Metadata:</b> <a id="hrefMetadata" href="">metadata.xml</a></li>
+          <li><b>Associated coverage map:</b> <a id="hrefMOC" href="">Moc.fits</a></li>
+          <li><b>Base URL:</b> <a id="hipsBase" href=""></a></li>
+          <li><b>Allsky level 1:</b> <a id="hrefAll1" href="">Allsky.tsv</a></li>
+          <li><b>Allsky level 2:</b> <a id="hrefAll2" href="">Allsky.tsv</a></li>
+          <li><b>Tiles URL format:</b> <span id="tilesUrl"></span></li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>
+"""
+    _write_text(out_dir / "index.html", html_doc)
 
 
 def write_metadata_xml(
@@ -340,18 +455,31 @@ def write_moc(out_dir: Path, moc_order: int, dens_counts: np.ndarray) -> None:
     else:
         ipix_list = [int(x) for x in np.asarray(ipix, dtype=np.int64).tolist()]
         nside = 1 << order
+        ipix_arr = np.asarray(ipix_list, dtype=np.uint64)
+        depth_arr = np.full(ipix_arr.shape, order, dtype=np.uint8)
 
         moc = None
         last_err: Exception | None = None
+        # Prefer explicit keyword signatures first to avoid ambiguous positional
+        # calls that can be interpreted differently across mocpy versions.
         candidates = [
-            lambda: MOC.from_healpix_cells(order, ipix_list, True),
-            lambda: MOC.from_healpix_cells(order, ipix_list),
-            lambda: MOC.from_healpix_cells(nside, ipix_list, order, True),
-            lambda: MOC.from_healpix_cells(nside, ipix_list, order),
-            lambda: MOC.from_healpix_cells(ipix_list, order, True),
-            lambda: MOC.from_healpix_cells(ipix_list, order),
+            # mocpy >= 0.19
+            lambda: MOC.from_healpix_cells(ipix=ipix_arr, depth=depth_arr, max_depth=order),
+            lambda: MOC.from_healpix_cells(ipix=ipix_arr, depth=order, max_depth=order),
+            # older/alternate mocpy variants
             lambda: MOC.from_healpix_cells(nside=nside, ipix=ipix_list, max_depth=order, nested=True),
             lambda: MOC.from_healpix_cells(nside=nside, ipix=ipix_list, max_depth=order),
+            lambda: MOC.from_healpix_cells(ipix=ipix_list, max_depth=order, nested=True),
+            lambda: MOC.from_healpix_cells(ipix=ipix_list, max_depth=order),
+            lambda: MOC.from_healpix_cells(ipix=ipix_list, depth=order, nested=True),
+            lambda: MOC.from_healpix_cells(ipix=ipix_list, depth=order),
+            # Legacy fallbacks (positional variants used in older mocpy builds).
+            lambda: MOC.from_healpix_cells(nside, ipix_list, order, True),
+            lambda: MOC.from_healpix_cells(nside, ipix_list, order),
+            lambda: MOC.from_healpix_cells(order, ipix_list, True),
+            lambda: MOC.from_healpix_cells(order, ipix_list),
+            lambda: MOC.from_healpix_cells(ipix_list, order, True),
+            lambda: MOC.from_healpix_cells(ipix_list, order),
         ]
         for builder in candidates:
             try:

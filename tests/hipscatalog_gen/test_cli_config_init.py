@@ -7,6 +7,8 @@ import importlib.metadata
 import json
 import runpy
 import sys
+import tomllib
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -207,14 +209,17 @@ def test_build_config_numeric_fields_convert_and_raise():
 
 
 def test_version_fallback(monkeypatch):
-    """__version__ falls back when package metadata is missing."""
+    """__version__ falls back to local pyproject when metadata is missing."""
 
     def _raise(*_args, **_kwargs):
         raise importlib.metadata.PackageNotFoundError("x")
 
     monkeypatch.setattr("importlib.metadata.version", _raise)
     mod = importlib.reload(importlib.import_module("hipscatalog_gen"))
-    assert getattr(mod, "__version__", "") == "0.0.0"
+    pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+    with pyproject.open("rb") as f:
+        project_version = tomllib.load(f)["project"]["version"]
+    assert getattr(mod, "__version__", "") == str(project_version)
 
 
 def test_version_and_run_pipeline(monkeypatch):
@@ -367,3 +372,36 @@ def test_cli_main_entrypoint(monkeypatch, capsys):
     runpy.run_module("hipscatalog_gen.cli", run_name="__main__")
     out = capsys.readouterr().out
     assert "m: d1" in out
+
+
+def test_cli_serve_dispatch(monkeypatch):
+    """serve subcommand dispatches to local HTTP server helper."""
+    calls: list[dict[str, Any]] = []
+
+    def fake_serve(out_dir, host, port, open_browser):
+        calls.append(
+            {
+                "out_dir": out_dir,
+                "host": host,
+                "port": port,
+                "open_browser": open_browser,
+            }
+        )
+
+    monkeypatch.setattr(cli, "_serve_output_dir", fake_serve)
+    cli.main(["serve", "--out", "/tmp/out"])
+    assert calls == [{"out_dir": "/tmp/out", "host": "127.0.0.1", "port": 8000, "open_browser": True}]
+
+
+def test_cli_serve_dispatch_custom_flags(monkeypatch):
+    """serve subcommand forwards host/port/no-browser options."""
+    calls: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        cli,
+        "_serve_output_dir",
+        lambda out_dir, host, port, open_browser: calls.append(
+            {"out_dir": out_dir, "host": host, "port": port, "open_browser": open_browser}
+        ),
+    )
+    cli.main(["serve", "--out", "/tmp/out", "--host", "127.0.0.2", "--port", "9001", "--no-browser"])
+    assert calls == [{"out_dir": "/tmp/out", "host": "127.0.0.2", "port": 9001, "open_browser": False}]

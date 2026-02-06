@@ -2,15 +2,31 @@
 
 from __future__ import annotations
 
+import tomllib
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _pkg_version
+from pathlib import Path
+
+
+def _resolve_version() -> str:
+    """Resolve package version from installed metadata or local pyproject."""
+    for dist_name in ("hipscatalog-gen", "hipscatalog_gen"):
+        try:
+            return _pkg_version(dist_name)
+        except PackageNotFoundError:
+            continue
+
+    try:
+        pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+        with pyproject.open("rb") as f:
+            data = tomllib.load(f)
+        return str(data.get("project", {}).get("version", "0.0.0"))
+    except Exception:
+        return "0.0.0"
+
 
 # Expose package version for tests and users.
-# When the package is not installed (editable/dev mode), fall back gracefully.
-try:
-    __version__ = _pkg_version("hipscatalog_gen")
-except PackageNotFoundError:
-    __version__ = "0.0.0"
+__version__ = _resolve_version()
 
 from .config import Config, load_config  # noqa: E402
 

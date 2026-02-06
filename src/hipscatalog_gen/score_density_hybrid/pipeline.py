@@ -74,7 +74,16 @@ def normalize_score_density_hybrid(
     if not score_expr:
         raise ValueError("score_density_hybrid selection requires algorithm.sdh_score_column/score_column.")
 
+    score_source = (
+        "score_density_hybrid.score_column"
+        if getattr(algo, "sdh_score_column", None)
+        else "score_global.score_column"
+    )
     score_expr = str(score_expr)
+    log_fn(
+        f"[selection] score_density_hybrid using {score_source}={score_expr!r}.",
+        always=True,
+    )
     score_range_mode = str(getattr(algo, "sdh_score_adaptive_range", "complete") or "complete").lower()
     if score_range_mode not in ("complete", "hist_peak"):
         raise ValueError("algorithm.sdh_score_adaptive_range must be 'complete' or 'hist_peak'.")
