@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0
+
+- Merge Dependabot updates (GitHub workflows and dependency version limits).
+- Add score/magnitude column details to `process.log`.
+- Add output row count to `process.log`.
+- Improve generated `properties` file content.
+- Improve generated `arguments` file content.
+- Add `index.html` preview file generation in outputs.
+- Fix MOC order generation bug (`Moc.fits`/`Moc.json`) for compatibility with current `mocpy` signatures.
+
 ## 0.1.1
 
 - Fix `score_density_hybrid` stage-1 de-duplication for LSDB catalogs by deriving unique IDs from pixel metadata and partition context.
