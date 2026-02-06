@@ -455,18 +455,31 @@ def write_moc(out_dir: Path, moc_order: int, dens_counts: np.ndarray) -> None:
     else:
         ipix_list = [int(x) for x in np.asarray(ipix, dtype=np.int64).tolist()]
         nside = 1 << order
+        ipix_arr = np.asarray(ipix_list, dtype=np.uint64)
+        depth_arr = np.full(ipix_arr.shape, order, dtype=np.uint8)
 
         moc = None
         last_err: Exception | None = None
+        # Prefer explicit keyword signatures first to avoid ambiguous positional
+        # calls that can be interpreted differently across mocpy versions.
         candidates = [
-            lambda: MOC.from_healpix_cells(order, ipix_list, True),
-            lambda: MOC.from_healpix_cells(order, ipix_list),
-            lambda: MOC.from_healpix_cells(nside, ipix_list, order, True),
-            lambda: MOC.from_healpix_cells(nside, ipix_list, order),
-            lambda: MOC.from_healpix_cells(ipix_list, order, True),
-            lambda: MOC.from_healpix_cells(ipix_list, order),
+            # mocpy >= 0.19
+            lambda: MOC.from_healpix_cells(ipix=ipix_arr, depth=depth_arr, max_depth=order),
+            lambda: MOC.from_healpix_cells(ipix=ipix_arr, depth=order, max_depth=order),
+            # older/alternate mocpy variants
             lambda: MOC.from_healpix_cells(nside=nside, ipix=ipix_list, max_depth=order, nested=True),
             lambda: MOC.from_healpix_cells(nside=nside, ipix=ipix_list, max_depth=order),
+            lambda: MOC.from_healpix_cells(ipix=ipix_list, max_depth=order, nested=True),
+            lambda: MOC.from_healpix_cells(ipix=ipix_list, max_depth=order),
+            lambda: MOC.from_healpix_cells(ipix=ipix_list, depth=order, nested=True),
+            lambda: MOC.from_healpix_cells(ipix=ipix_list, depth=order),
+            # Legacy fallbacks (positional variants used in older mocpy builds).
+            lambda: MOC.from_healpix_cells(nside, ipix_list, order, True),
+            lambda: MOC.from_healpix_cells(nside, ipix_list, order),
+            lambda: MOC.from_healpix_cells(order, ipix_list, True),
+            lambda: MOC.from_healpix_cells(order, ipix_list),
+            lambda: MOC.from_healpix_cells(ipix_list, order, True),
+            lambda: MOC.from_healpix_cells(ipix_list, order),
         ]
         for builder in candidates:
             try:

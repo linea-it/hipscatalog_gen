@@ -563,6 +563,7 @@ def test_write_moc_branches(monkeypatch, tmp_path):
         fail_next = False
         serialize_value: Any = {}
         save_raises: Exception | None = None
+        from_calls: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
 
         def __init__(self, payload: Any):
             self.payload = payload
@@ -575,6 +576,7 @@ def test_write_moc_branches(monkeypatch, tmp_path):
 
         @classmethod
         def from_healpix_cells(cls, *args, **kwargs):
+            cls.from_calls.append((args, kwargs))
             if cls.fail_next:
                 cls.fail_next = False
                 raise RuntimeError("boom")
@@ -610,10 +612,12 @@ def test_write_moc_branches(monkeypatch, tmp_path):
     FakeMOC.fail_next = True
     FakeMOC.serialize_value = b"data"
     FakeMOC.save_raises = TypeError("positional format unsupported")
+    FakeMOC.from_calls = []
 
     write_moc(tmp_path, moc_order=1, dens_counts=np.array([0, 1], dtype="int64"))
     assert (tmp_path / "Moc.fits").exists()
     assert (tmp_path / "Moc.json").read_text(encoding="utf-8") == "data"
+    assert FakeMOC.from_calls and {"ipix", "depth", "max_depth"} <= set(FakeMOC.from_calls[0][1])
 
     # Force outer save exception to hit write(...)
     FakeMOC.save_raises = ValueError("force write")
