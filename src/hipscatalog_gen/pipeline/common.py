@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import glob
 import json
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -186,6 +187,7 @@ def compute_and_write_densmaps(
     level_limit: int,
     out_dir: Path,
     diag_ctx,
+    log_fn=None,
 ) -> Dict[int, np.ndarray]:
     """Compute density maps for all depths and write them to disk.
 
@@ -196,6 +198,7 @@ def compute_and_write_densmaps(
         level_limit: Maximum HiPS order to compute.
         out_dir: Output directory where FITS files are written.
         diag_ctx: Diagnostics context factory (label -> context manager).
+        log_fn: Optional logging callback for progress updates.
 
     Returns:
         Mapping of depth -> numpy array with counts per HEALPix pixel.
@@ -204,10 +207,21 @@ def compute_and_write_densmaps(
     densmaps: Dict[int, np.ndarray] = {}
 
     with diag_ctx("dask_densmaps"):
-        for depth in depths:
+        for i, depth in enumerate(depths, start=1):
+            if log_fn is not None:
+                log_fn(
+                    f"[densmaps] Computing densmap_o{depth}.fits ({i}/{len(depths)})...",
+                    always=True,
+                )
+            t_depth = time.time()
             dens = dask_compute(densmap_for_depth_delayed(ddf_sel, ra_col, dec_col, depth=depth))[0]
             densmaps[depth] = dens
             write_densmap_fits(out_dir, depth, dens)
+            if log_fn is not None:
+                log_fn(
+                    f"[densmaps] Wrote densmap_o{depth}.fits in {_fmt_dur(time.time() - t_depth)}",
+                    always=True,
+                )
 
     return densmaps
 

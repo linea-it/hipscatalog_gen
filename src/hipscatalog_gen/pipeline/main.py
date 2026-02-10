@@ -171,6 +171,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
             level_limit=context.cfg.algorithm.level_limit,
             out_dir=context.out_dir,
             diag_ctx=context.diag_ctx,
+            log_fn=context.log_fn,
         )
         return context.with_updates(densmaps=densmaps)
 
