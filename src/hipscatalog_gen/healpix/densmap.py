@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List, cast
+from typing import Any, List, Sequence, cast
 
 import healpy as hp
 import numpy as np
@@ -75,14 +75,24 @@ def densmap_for_depth_delayed(ddf: Any, ra_col: str, dec_col: str, depth: int):
         if m:
             base_order = int(m.group(1))
 
-    def _part_hist(pdf: pd.DataFrame) -> np.ndarray:
-        """Return histogram counts for one partition at the requested depth."""
+    def _empty_sparse() -> tuple[np.ndarray, np.ndarray]:
+        """Return an empty sparse histogram representation."""
+        empty = np.empty(0, dtype=np.int64)
+        return empty, empty
+
+    def _part_hist_sparse(pdf: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+        """Return sparse histogram counts for one partition.
+
+        The returned tuple is ``(ipix_unique, counts)`` where both arrays are
+        ``int64``. This avoids materializing one dense ``npix`` vector per
+        partition, which scales poorly for high depths.
+        """
         if pdf is None or len(pdf) == 0:
-            return np.zeros(npix, dtype=np.int64)
+            return _empty_sparse()
 
         # Fast path: HEALPix nested index available and depth <= base_order.
         if base_order is not None and pdf.index.name == idx_name and depth <= base_order:
-            ipix_base = pdf.index.to_numpy()
+            ipix_base = pdf.index.to_numpy(dtype=np.int64, copy=False)
             shift = 2 * (base_order - depth)
             ip = (ipix_base >> shift).astype(np.int64)
         else:
@@ -93,24 +103,84 @@ def densmap_for_depth_delayed(ddf: Any, ra_col: str, dec_col: str, depth: int):
                 depth,
             )
 
-        return np.bincount(ip, minlength=npix).astype(np.int64)
+        if ip.size == 0:
+            return _empty_sparse()
 
-    # One histogram per partition.
+        uniq, cnt = np.unique(ip, return_counts=True)
+        return uniq.astype(np.int64), cnt.astype(np.int64)
+
+    def _merge_sparse_chunks(
+        chunks: Sequence[tuple[np.ndarray, np.ndarray]],
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Merge many sparse histograms into one sparse histogram."""
+        if not chunks:
+            return _empty_sparse()
+
+        if len(chunks) == 1:
+            ip0, c0 = chunks[0]
+            if ip0.size == 0:
+                return _empty_sparse()
+            return ip0.astype(np.int64, copy=False), c0.astype(np.int64, copy=False)
+
+        ip_parts: List[np.ndarray] = []
+        c_parts: List[np.ndarray] = []
+        for ip_arr, cnt_arr in chunks:
+            if ip_arr.size == 0:
+                continue
+            ip_parts.append(np.asarray(ip_arr, dtype=np.int64))
+            c_parts.append(np.asarray(cnt_arr, dtype=np.int64))
+
+        if not ip_parts:
+            return _empty_sparse()
+
+        ip_all = np.concatenate(ip_parts)
+        c_all = np.concatenate(c_parts)
+
+        order = np.argsort(ip_all, kind="mergesort")
+        ip_sorted = ip_all[order]
+        c_sorted = c_all[order]
+
+        starts = np.flatnonzero(np.r_[True, ip_sorted[1:] != ip_sorted[:-1]])
+        c_merged = np.add.reduceat(c_sorted, starts).astype(np.int64)
+        ip_merged = ip_sorted[starts].astype(np.int64)
+        return ip_merged, c_merged
+
+    def _reduce_sparse_tree(
+        leaves: List[Any],  # delayed sparse tuples
+        fanin: int = 8,
+    ):
+        """Reduce sparse histograms with bounded fan-in to avoid giant gather tasks."""
+        if not leaves:
+            return _delayed(_empty_sparse)()
+
+        current = leaves
+        while len(current) > 1:
+            nxt: List[Any] = []
+            for i in range(0, len(current), fanin):
+                chunk = current[i : i + fanin]
+                nxt.append(_delayed(_merge_sparse_chunks)(chunk))
+            current = nxt
+        return current[0]
+
+    def _sparse_to_dense(sparse_pair: tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+        """Convert sparse histogram to dense HEALPix counts vector."""
+        ipix, counts = sparse_pair
+        dense = np.zeros(npix, dtype=np.int64)
+        if ipix.size > 0:
+            dense[ipix] = counts
+        return dense
+
+    # One sparse histogram per partition.
     part_delayed = ddf.to_delayed()
-    hists = [_delayed(_part_hist)(p) for p in part_delayed]
+    hists_sparse = [_delayed(_part_hist_sparse)(p) for p in part_delayed]
 
-    if len(hists) == 0:
+    if len(hists_sparse) == 0:
         # Still return a delayed object for consistency.
         return _delayed(lambda: np.zeros(npix, dtype=np.int64))()
 
-    def _sum_vecs(vecs: List[np.ndarray]) -> np.ndarray:
-        """Sum partition histograms into a single numpy vector."""
-        arr = np.sum(vecs, axis=0, dtype=np.int64)
-        # Ensure ndarray[int64] for the type checker
-        return cast(NDArray[np.int64], np.asarray(arr, dtype=np.int64))
-
-    total = _delayed(_sum_vecs)(hists)
-    return total
+    sparse_total = _reduce_sparse_tree(hists_sparse, fanin=8)
+    total_dense = _delayed(_sparse_to_dense)(sparse_total)
+    return total_dense
 
 
 def densmap_for_depth(ddf: Any, ra_col: str, dec_col: str, depth: int) -> np.ndarray:

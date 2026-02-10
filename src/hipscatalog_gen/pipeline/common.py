@@ -203,14 +203,11 @@ def compute_and_write_densmaps(
     depths = list(range(0, level_limit + 1))
     densmaps: Dict[int, np.ndarray] = {}
 
-    delayed_maps = {d: densmap_for_depth_delayed(ddf_sel, ra_col, dec_col, depth=d) for d in depths}
-
     with diag_ctx("dask_densmaps"):
-        computed = dask_compute(*delayed_maps.values())
-
-    for d, dens in zip(delayed_maps.keys(), computed, strict=False):
-        densmaps[d] = dens
-        write_densmap_fits(out_dir, d, dens)
+        for depth in depths:
+            dens = dask_compute(densmap_for_depth_delayed(ddf_sel, ra_col, dec_col, depth=depth))[0]
+            densmaps[depth] = dens
+            write_densmap_fits(out_dir, depth, dens)
 
     return densmaps
 
