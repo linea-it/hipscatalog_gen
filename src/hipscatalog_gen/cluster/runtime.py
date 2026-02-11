@@ -83,10 +83,24 @@ def setup_cluster(
             raise ImportError("dask-jobqueue is required for mode='slurm'")
         sl = cfg.slurm or {}
         job_directives = sl.get("job_extra_directives", sl.get("job_extra", []))
+        queue = sl.get("queue", "cpu_dev")
+        account = sl.get("account", None)
+
+        log_fn(
+            "[cluster] Starting Dask SLURM cluster: "
+            f"n_workers={cfg.n_workers} threads_per_worker={cfg.threads_per_worker} "
+            f"memory_per_worker={cfg.memory_per_worker}",
+            True,
+        )
+        log_fn(
+            f"[cluster] SLURM directives: queue={queue!r} account={account!r} "
+            f"job_extra_directives={job_directives!r}",
+            True,
+        )
 
         cluster = SLURMCluster(
-            queue=sl.get("queue", "cpu_dev"),
-            account=sl.get("account", None),
+            queue=queue,
+            account=account,
             cores=cfg.threads_per_worker,
             processes=1,
             memory=cfg.memory_per_worker,
@@ -95,6 +109,12 @@ def setup_cluster(
         cluster.scale(cfg.n_workers)
         client = Client(cluster)
     else:
+        log_fn(
+            "[cluster] Starting Dask local cluster: "
+            f"n_workers={cfg.n_workers} threads_per_worker={cfg.threads_per_worker} "
+            f"memory_per_worker={cfg.memory_per_worker}",
+            True,
+        )
         cluster = LocalCluster(
             n_workers=cfg.n_workers,
             threads_per_worker=cfg.threads_per_worker,

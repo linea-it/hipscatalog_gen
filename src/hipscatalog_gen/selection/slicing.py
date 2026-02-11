@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import os
 import shutil
+import tempfile
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Sequence
 
@@ -20,6 +24,210 @@ from .levels import assign_level_edges
 from .score import compute_score_histogram_ddf
 
 __all__ = ["select_by_value_slices", "select_by_score_slices"]
+
+
+@dataclass
+class _BucketWriteStats:
+    """Aggregated stats for one bucket write task."""
+
+    selected_len: int = 0
+    tiles_written: int = 0
+    rows_written: int = 0
+    files_in: int = 0
+    files_out: int = 0
+    rounds: int = 0
+    compacted: bool = False
+
+
+def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
+    """Read integer env var with fallback and lower bound enforcement."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return max(minimum, int(default))
+    try:
+        return max(minimum, int(raw))
+    except Exception:
+        return max(minimum, int(default))
+
+
+def _resolve_local_scratch_base(out_dir: Path) -> Path:
+    """Choose a local scratch base path for compaction intermediates."""
+    candidates: list[Path] = []
+    for env_name in ("HIPSCATALOG_STREAM_LOCAL_TMPDIR", "SLURM_TMPDIR", "TMPDIR"):
+        raw = os.environ.get(env_name)
+        if raw:
+            candidates.append(Path(raw))
+    candidates.append(Path(tempfile.gettempdir()))
+    candidates.append(out_dir)
+
+    for base in candidates:
+        try:
+            base.mkdir(parents=True, exist_ok=True)
+            return base
+        except OSError:
+            pass
+    return out_dir
+
+
+def _should_compact_bucket(
+    depth: int,
+    files_in: int,
+    *,
+    mode: str,
+    min_depth: int,
+    min_files: int,
+) -> bool:
+    """Decide whether a bucket should run local compaction."""
+    if files_in <= 1:
+        return False
+    if mode == "on":
+        return True
+    if mode == "off":
+        return False
+    # auto mode
+    return (depth >= min_depth) or (files_in >= min_files)
+
+
+def _merge_files_to_parquet(
+    input_files: list[Path],
+    output_file: Path,
+    *,
+    sort_cols: list[str],
+    ascending: list[bool],
+) -> None:
+    """Merge many parquet fragments into one sorted parquet file."""
+    merged = pd.concat((pd.read_parquet(fp) for fp in input_files), ignore_index=True)
+    if len(merged) > 0:
+        merged = merged.sort_values(
+            ["__ipix__", *sort_cols],
+            ascending=[True, *ascending],
+            kind="mergesort",
+        )
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    merged.to_parquet(output_file, index=False)
+
+
+def _compact_bucket_fragments(
+    frag_files: list[Path],
+    *,
+    local_bucket_dir: Path,
+    sort_cols: list[str],
+    ascending: list[bool],
+    chunk_size: int,
+    target_files: int,
+) -> tuple[list[Path], int]:
+    """Compact bucket fragments in rounds into local scratch."""
+    current_files = list(frag_files)
+    rounds = 0
+    chunk = max(2, int(chunk_size))
+    target = max(1, int(target_files))
+
+    while len(current_files) > target:
+        rounds += 1
+        round_dir = local_bucket_dir / f"round_{rounds:02d}"
+        round_dir.mkdir(parents=True, exist_ok=True)
+
+        next_files: list[Path] = []
+        for start in range(0, len(current_files), chunk):
+            batch = current_files[start : start + chunk]
+            out_fp = round_dir / f"compact_{start // chunk:05d}.parquet"
+            _merge_files_to_parquet(
+                batch,
+                out_fp,
+                sort_cols=sort_cols,
+                ascending=ascending,
+            )
+            next_files.append(out_fp)
+
+        current_files = next_files
+
+    return current_files, rounds
+
+
+def _process_bucket_dir(
+    *,
+    bucket_dir: Path,
+    depth: int,
+    out_dir: Path,
+    header_line: str,
+    ra_col: str,
+    dec_col: str,
+    counts: np.ndarray,
+    order_desc: bool,
+    sort_cols: list[str],
+    ascending: list[bool],
+    compaction_mode: str,
+    compaction_min_depth: int,
+    compaction_min_files: int,
+    compaction_chunk_size: int,
+    compaction_target_files: int,
+    local_scratch_base: Path,
+    log_fn,
+) -> _BucketWriteStats:
+    """Process one bucket (optional local compaction + final tile write)."""
+    frag_files = sorted(bucket_dir.glob("part_*.parquet"))
+    stats = _BucketWriteStats(files_in=len(frag_files), files_out=len(frag_files))
+    if not frag_files:
+        shutil.rmtree(bucket_dir, ignore_errors=True)
+        return stats
+
+    local_bucket_dir = local_scratch_base / (
+        f"hipscatalog_stream_depth_{depth:02d}_{bucket_dir.name}_{uuid.uuid4().hex}"
+    )
+
+    try:
+        use_compaction = _should_compact_bucket(
+            depth,
+            stats.files_in,
+            mode=compaction_mode,
+            min_depth=compaction_min_depth,
+            min_files=compaction_min_files,
+        )
+        working_files = frag_files
+        if use_compaction:
+            local_bucket_dir.mkdir(parents=True, exist_ok=True)
+            working_files, rounds = _compact_bucket_fragments(
+                frag_files,
+                local_bucket_dir=local_bucket_dir,
+                sort_cols=sort_cols,
+                ascending=ascending,
+                chunk_size=compaction_chunk_size,
+                target_files=compaction_target_files,
+            )
+            stats.rounds = int(rounds)
+            stats.files_out = int(len(working_files))
+            stats.compacted = stats.rounds > 0
+
+        bucket_df = pd.concat((pd.read_parquet(fp) for fp in working_files), ignore_index=True)
+        if len(bucket_df) == 0:
+            return stats
+
+        bucket_df = bucket_df.sort_values(
+            ["__ipix__", *sort_cols],
+            ascending=[True, *ascending],
+            kind="mergesort",
+        )
+        stats.selected_len = int(len(bucket_df))
+
+        written_per_ipix, _ = write_tiles_with_allsky(
+            out_dir=out_dir,
+            depth=depth,
+            header_line=header_line,
+            ra_col=ra_col,
+            dec_col=dec_col,
+            counts=counts,
+            selected=bucket_df,
+            order_desc=order_desc,
+            allsky_needed=False,
+            log_fn=log_fn,
+        )
+        if written_per_ipix:
+            stats.tiles_written = int(len(written_per_ipix))
+            stats.rows_written = int(sum(written_per_ipix.values()))
+        return stats
+    finally:
+        shutil.rmtree(local_bucket_dir, ignore_errors=True)
+        shutil.rmtree(bucket_dir, ignore_errors=True)
 
 
 def _stream_write_depth_without_allsky(
@@ -120,41 +328,106 @@ def _stream_write_depth_without_allsky(
         selected_len = int(spill_stats["rows"].sum()) if len(spill_stats) else 0
         if selected_len == 0:
             return 0, 0, 0
-        tiles_written = 0
-        rows_written = 0
         bucket_dirs = sorted(
             [p for p in tmp_root.iterdir() if p.is_dir() and p.name.startswith("bucket_")],
             key=lambda p: int(p.name.split("_", 1)[1]),
         )
+        if not bucket_dirs:
+            return selected_len, 0, 0
 
-        for bucket_dir in bucket_dirs:
-            frag_files = sorted(bucket_dir.glob("part_*.parquet"))
-            if not frag_files:
-                continue
+        mode_env = str(os.environ.get("HIPSCATALOG_STREAM_COMPACTION_MODE", "auto")).strip().lower()
+        compaction_mode = mode_env if mode_env in {"auto", "on", "off"} else "auto"
+        compaction_min_depth = _env_int("HIPSCATALOG_STREAM_COMPACTION_MIN_DEPTH", 8, minimum=0)
+        compaction_min_files = _env_int("HIPSCATALOG_STREAM_COMPACTION_MIN_FILES", 4096, minimum=1)
+        compaction_chunk_size = _env_int("HIPSCATALOG_STREAM_COMPACTION_CHUNK_SIZE", 128, minimum=2)
+        compaction_target_files = _env_int("HIPSCATALOG_STREAM_COMPACTION_TARGET_FILES", 8, minimum=1)
+        if compaction_chunk_size <= compaction_target_files:
+            compaction_chunk_size = compaction_target_files + 1
 
-            bucket_df = pd.concat((pd.read_parquet(fp) for fp in frag_files), ignore_index=True)
-            bucket_df = bucket_df.sort_values(
-                ["__ipix__", *sort_cols],
-                ascending=[True, *ascending],
-                kind="mergesort",
-            )
+        max_workers_cap = _env_int("HIPSCATALOG_STREAM_BUCKET_WORKERS", 8, minimum=1)
+        max_workers = max(1, min(max_workers_cap, len(bucket_dirs)))
+        local_scratch_base = _resolve_local_scratch_base(Path(out_dir))
+        log_fn(
+            f"[stream] depth={depth} ThreadPoolExecutor setup: workers={max_workers} "
+            f"buckets={len(bucket_dirs)} compaction_mode={compaction_mode} "
+            f"min_depth={compaction_min_depth} min_files={compaction_min_files} "
+            f"chunk_size={compaction_chunk_size} target_files={compaction_target_files} "
+            f"scratch={str(local_scratch_base)!r}",
+            always=True,
+            depth=depth,
+        )
 
-            written_per_ipix, _ = write_tiles_with_allsky(
-                out_dir=Path(out_dir),
+        stats_list: list[_BucketWriteStats] = []
+        if max_workers == 1:
+            for bucket_dir in bucket_dirs:
+                stats_list.append(
+                    _process_bucket_dir(
+                        bucket_dir=bucket_dir,
+                        depth=depth,
+                        out_dir=Path(out_dir),
+                        header_line=header_line,
+                        ra_col=ra_col,
+                        dec_col=dec_col,
+                        counts=counts,
+                        order_desc=order_desc,
+                        sort_cols=sort_cols,
+                        ascending=ascending,
+                        compaction_mode=compaction_mode,
+                        compaction_min_depth=compaction_min_depth,
+                        compaction_min_files=compaction_min_files,
+                        compaction_chunk_size=compaction_chunk_size,
+                        compaction_target_files=compaction_target_files,
+                        local_scratch_base=local_scratch_base,
+                        log_fn=log_fn,
+                    )
+                )
+        else:
+            with ThreadPoolExecutor(max_workers=max_workers) as ex:
+                futures = [
+                    ex.submit(
+                        _process_bucket_dir,
+                        bucket_dir=bucket_dir,
+                        depth=depth,
+                        out_dir=Path(out_dir),
+                        header_line=header_line,
+                        ra_col=ra_col,
+                        dec_col=dec_col,
+                        counts=counts,
+                        order_desc=order_desc,
+                        sort_cols=sort_cols,
+                        ascending=ascending,
+                        compaction_mode=compaction_mode,
+                        compaction_min_depth=compaction_min_depth,
+                        compaction_min_files=compaction_min_files,
+                        compaction_chunk_size=compaction_chunk_size,
+                        compaction_target_files=compaction_target_files,
+                        local_scratch_base=local_scratch_base,
+                        log_fn=log_fn,
+                    )
+                    for bucket_dir in bucket_dirs
+                ]
+                for fut in as_completed(futures):
+                    stats_list.append(fut.result())
+
+        tiles_written = int(sum(s.tiles_written for s in stats_list))
+        rows_written = int(sum(s.rows_written for s in stats_list))
+        files_in_total = int(sum(s.files_in for s in stats_list))
+        files_out_total = int(sum(s.files_out for s in stats_list))
+        compacted_buckets = int(sum(1 for s in stats_list if s.compacted))
+        rounds_total = int(sum(s.rounds for s in stats_list))
+        max_bucket_in = int(max((s.files_in for s in stats_list), default=0))
+
+        if compacted_buckets > 0:
+            reduction = 0.0
+            if files_in_total > 0:
+                reduction = 100.0 * (1.0 - (files_out_total / float(files_in_total)))
+            log_fn(
+                f"[stream-compaction] depth={depth} buckets={len(bucket_dirs)} compacted={compacted_buckets} "
+                f"files_in={files_in_total} files_out={files_out_total} reduction={reduction:.1f}% "
+                f"rounds_total={rounds_total} max_bucket_in={max_bucket_in}",
+                always=True,
                 depth=depth,
-                header_line=header_line,
-                ra_col=ra_col,
-                dec_col=dec_col,
-                counts=counts,
-                selected=bucket_df,
-                order_desc=order_desc,
-                allsky_needed=False,
-                log_fn=log_fn,
             )
-            if written_per_ipix:
-                tiles_written += int(len(written_per_ipix))
-                rows_written += int(sum(written_per_ipix.values()))
-            shutil.rmtree(bucket_dir, ignore_errors=True)
 
         return selected_len, tiles_written, rows_written
     finally:
