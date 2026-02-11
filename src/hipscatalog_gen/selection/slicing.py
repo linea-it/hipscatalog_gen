@@ -93,7 +93,9 @@ def _stream_write_depth_without_allsky(
             ipix_dir = tmp_root / f"ipix_{ipix}"
             ipix_dir.mkdir(parents=True, exist_ok=True)
             frag_path = ipix_dir / f"part_{part_no:08d}.parquet"
-            grp.to_parquet(frag_path, index=False)
+            # LSDB partitions may be NestedFrame; cast to plain pandas before parquet IO
+            # to keep a consistent writer signature across backends.
+            pd.DataFrame(grp).reset_index(drop=True).to_parquet(frag_path, index=False)
             n_frag += 1
 
         return pd.DataFrame({"rows": [int(len(pdf_sorted))], "fragments": [int(n_frag)]}, dtype="int64")
