@@ -792,6 +792,49 @@ def test_select_by_value_slices_full_flow(monkeypatch, tmp_path, diag_ctx, log_c
     assert captured_written[0]["selected"]["VAL"].tolist() == [1.7, 1.5]  # order_desc with tie handled
 
 
+def test_select_by_value_slices_uses_stream_path_without_allsky(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """Depths outside (1, 2) use streaming write path and log aggregated write stats."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0], "VAL": [0.5], "TIE": [1.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    densmaps = {3: np.ones(hp.nside2npix(8), dtype="int64")}
+    level_edges = np.array([0.0, 1.0], dtype="float64")
+    called: dict[str, Any] = {}
+
+    def fake_stream(**kwargs):
+        called.update(kwargs)
+        return 7, 3, 7
+
+    monkeypatch.setattr(selection_slicing, "_stream_write_depth_without_allsky", fake_stream)
+    monkeypatch.setattr(
+        selection_slicing,
+        "write_tiles_with_allsky",
+        lambda **_kwargs: pytest.fail("write_tiles_with_allsky should not be called directly in stream path"),
+    )
+
+    selection_slicing.select_by_value_slices(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        depths_sel=[3],
+        keep_cols=["RA", "DEC", "VAL", "TIE"],
+        ra_col="RA",
+        dec_col="DEC",
+        value_col="VAL",
+        order_desc=False,
+        label="val",
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+        level_edges=level_edges,
+        tie_col="TIE",
+    )
+
+    assert called["depth"] == 3
+    assert called["tie_col"] == "TIE"
+    assert any("[DEPTH 3] selected:" in msg and "selected=7" in msg for msg in logs)
+    assert any("[DEPTH 3] written:" in msg and "tiles_written=3" in msg for msg in logs)
+
+
 def test_select_by_value_slices_histogram_path(monkeypatch, tmp_path, diag_ctx, log_capture):
     """Histogram path with zeroed CDF still proceeds and calls assign_level_edges."""
     logs, log_fn = log_capture

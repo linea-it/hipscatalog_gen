@@ -5,6 +5,7 @@
 - Fix densmap scalability for large catalogs by replacing dense per-partition aggregation with sparse histogram reduction in a bounded fan-in tree, preventing oversized gather tasks at high depths.
 - Compute only the finest densmap from source data and derive lower orders by exact NESTED parent-child aggregation (4 children -> 1 parent), reducing repeated catalog scans; keep per-depth progress logs (`Computing/Derived/Wrote densmap_o*.fits`).
 - Optimize `score_density_hybrid` stage-1 per-tile top-k with an exact two-stage strategy (local prune + global reduce), reducing shuffle volume and improving runtime on large catalogs.
+- Make stage-2 depth writing (`depth >= 3`, no Allsky) streaming-based to avoid `depth_ddf.compute()` materialization on the driver; preserves tile/output logic while reducing scheduler/driver memory pressure on very large runs.
 - Remove pandas `FutureWarning` in local top-k pruning by avoiding partition-level `DataFrameGroupBy.apply`.
 - Detailed run benchmarks for these optimizations are tracked in:
   - `benchmarks/records/2026-02-10_des_dr2_score_density_hybrid_topk_two_stage.md`
