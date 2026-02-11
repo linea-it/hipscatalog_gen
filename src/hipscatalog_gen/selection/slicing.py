@@ -38,8 +38,8 @@ def _stream_write_depth_without_allsky(
 ) -> tuple[int, int, int]:
     """Write one depth without collecting all selected rows into driver memory.
 
-    The function spills sorted partition fragments to temporary files and then
-    merges per tile (`__ipix__`) before delegating final tile writing.
+    The function spills sorted partition fragments into bucketed temporary files
+    and then merges per bucket before delegating final tile writing.
     """
     asc = not order_desc
     sort_cols = [value_col]
@@ -56,13 +56,20 @@ def _stream_write_depth_without_allsky(
 
     meta_ipix = meta_depth.copy()
     meta_ipix["__ipix__"] = pd.Series([], dtype="int64")
-    ddf_with_ipix = depth_ddf.map_partitions(
-        add_ipix_column,
-        depth,
-        ra_col,
-        dec_col,
-        meta=meta_ipix,
-    )
+    # Bucket by ipix to reduce small-file fan-out on distributed filesystems.
+    # Keep bucket count bounded to control metadata overhead.
+    n_buckets = max(16, min(128, int((len(counts) + 16383) // 16384)))
+    meta_ipix["__bucket__"] = pd.Series([], dtype="int16")
+
+    def _add_ipix_and_bucket(pdf: pd.DataFrame) -> pd.DataFrame:
+        out = add_ipix_column(pdf, depth, ra_col, dec_col)
+        if out.empty:
+            out["__bucket__"] = pd.Series([], dtype="int16")
+            return out
+        out["__bucket__"] = np.mod(out["__ipix__"].to_numpy(dtype=np.int64), n_buckets).astype(np.int16)
+        return out
+
+    ddf_with_ipix = depth_ddf.map_partitions(_add_ipix_and_bucket, meta=meta_ipix)
 
     tmp_root = Path(out_dir) / f".tmp_stream_depth_{depth:02d}"
     if tmp_root.exists():
@@ -84,18 +91,18 @@ def _stream_write_depth_without_allsky(
         if isinstance(partition_info, dict) and "number" in partition_info:
             part_no = int(partition_info["number"])
 
-        local_sort_cols = ["__ipix__", *sort_cols]
-        local_ascending = [True, *ascending]
+        local_sort_cols = ["__bucket__", "__ipix__", *sort_cols]
+        local_ascending = [True, True, *ascending]
         pdf_sorted = pdf.sort_values(local_sort_cols, ascending=local_ascending, kind="mergesort")
 
         n_frag = 0
-        for pid, grp in pdf_sorted.groupby("__ipix__", sort=True):
-            ipix = int(pid)
-            ipix_dir = tmp_root / f"ipix_{ipix}"
-            ipix_dir.mkdir(parents=True, exist_ok=True)
+        for bid, grp in pdf_sorted.groupby("__bucket__", sort=True):
+            bucket = int(bid)
+            bucket_dir = tmp_root / f"bucket_{bucket:04d}"
+            bucket_dir.mkdir(parents=True, exist_ok=True)
             # LSDB may not provide partition_info.number; keep filenames unique to
             # avoid write collisions across concurrent tasks.
-            frag_path = ipix_dir / f"part_{part_no:08d}_{uuid.uuid4().hex}.parquet"
+            frag_path = bucket_dir / f"part_{part_no:08d}_{uuid.uuid4().hex}.parquet"
             # LSDB partitions may be NestedFrame; cast to plain pandas before parquet IO
             # to keep a consistent writer signature across backends.
             pd.DataFrame(grp).reset_index(drop=True).to_parquet(frag_path, index=False)
@@ -115,19 +122,22 @@ def _stream_write_depth_without_allsky(
             return 0, 0, 0
         tiles_written = 0
         rows_written = 0
-        ipix_dirs = sorted(
-            [p for p in tmp_root.iterdir() if p.is_dir() and p.name.startswith("ipix_")],
+        bucket_dirs = sorted(
+            [p for p in tmp_root.iterdir() if p.is_dir() and p.name.startswith("bucket_")],
             key=lambda p: int(p.name.split("_", 1)[1]),
         )
 
-        for ipix_dir in ipix_dirs:
-            frag_files = sorted(ipix_dir.glob("part_*.parquet"))
+        for bucket_dir in bucket_dirs:
+            frag_files = sorted(bucket_dir.glob("part_*.parquet"))
             if not frag_files:
                 continue
 
-            parts = [pd.read_parquet(fp) for fp in frag_files]
-            tile_df = pd.concat(parts, ignore_index=True)
-            tile_df = tile_df.sort_values(sort_cols, ascending=ascending, kind="mergesort")
+            bucket_df = pd.concat((pd.read_parquet(fp) for fp in frag_files), ignore_index=True)
+            bucket_df = bucket_df.sort_values(
+                ["__ipix__", *sort_cols],
+                ascending=[True, *ascending],
+                kind="mergesort",
+            )
 
             written_per_ipix, _ = write_tiles_with_allsky(
                 out_dir=Path(out_dir),
@@ -136,7 +146,7 @@ def _stream_write_depth_without_allsky(
                 ra_col=ra_col,
                 dec_col=dec_col,
                 counts=counts,
-                selected=tile_df,
+                selected=bucket_df,
                 order_desc=order_desc,
                 allsky_needed=False,
                 log_fn=log_fn,
@@ -144,6 +154,7 @@ def _stream_write_depth_without_allsky(
             if written_per_ipix:
                 tiles_written += int(len(written_per_ipix))
                 rows_written += int(sum(written_per_ipix.values()))
+            shutil.rmtree(bucket_dir, ignore_errors=True)
 
         return selected_len, tiles_written, rows_written
     finally:
