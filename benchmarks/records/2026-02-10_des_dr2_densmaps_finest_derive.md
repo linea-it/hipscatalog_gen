@@ -1,21 +1,22 @@
-# Benchmark Record: DES_DR2 score_density_hybrid (top-k two-stage)
+# Benchmark Record: DES_DR2 densmaps (single-pass finest + derive)
 
 Date: 2026-02-10
 Author: Luigi Silva / hipscatalog-gen local run logs
-Goal: compare `score_density_hybrid` stage-1 runtime before vs after the two-stage exact top-k optimization.
+Goal: compare densmap stage runtime before vs after replacing per-depth source scans with:
+- one source pass at `o11`
+- exact NESTED hierarchical derivation for `o10..o0`
 
 ## Context
 
 - Input catalog: `/data/public/des/dr2/secondary/catalogs/main/hats`
 - Selection mode: `score_density_hybrid`
-- Score column: `MAG_AUTO_R_DERED`
 - level_limit: `11`
 - Input rows: `691483608`
 - Cluster hardware (user report): each node with `128 GB RAM` and `56 cores`
 
 ## Configuration used in both runs
 
-Same configuration before and after top-k optimization.
+Same configuration before and after densmap optimization.
 Key runtime parameters:
 
 ```yaml
@@ -128,70 +129,70 @@ output:
 
 ## Compared behavior
 
-- Before: stage-1 used a single global `groupby(...).apply(topk)` over all candidate rows.
-- After: stage-1 uses exact two-stage top-k:
-  1. per-partition local top-k prune
-  2. global top-k reduce on pruned rows
-
-Both paths keep the same ordering semantics (`score`, `tie`, `RA`, `DEC`) and the same `k` per tile.
+- Before: densmaps computed directly from source data for each depth (`o0..o11`), i.e. 12 source passes.
+- After: compute only `o11` from source data once, derive `o10..o0` by exact NESTED parent-child aggregation.
+- Both paths write the same `densmap_o*.fits` products for all depths.
 
 ## Raw log excerpts used
 
 ### Before (baseline)
 
-- Stage-1 targets logged: `20:16:15.679`
-- `[DEPTH 1] done in 00:06:29.250` at `20:22:44.929`
-- `[DEPTH 2] done in 00:03:24.082` at `20:26:09.012`
-- `[DEPTH 3] done in 00:03:08.526` at `20:29:17.538`
-- Next stage started: `20:30:19.995`
+- Start densmaps: `20:46:49.284` (`Computing densmap_o0.fits (1/12)...`)
+- Per-depth source compute+write around `~52-55s` each from `o0` to `o11`
+- Final write: `20:57:31.134` (`Wrote densmap_o11.fits in 00:00:54.830`)
 
 ### After (optimized)
 
-- Stage-1 targets logged: `20:58:26.521`
-- `[DEPTH 1] done in 00:02:19.846` at `21:00:46.367`
-- `[DEPTH 2] done in 00:02:28.409` at `21:03:14.776`
-- `[DEPTH 3] done in 00:02:32.150` at `21:05:46.927`
-- Next stage started: `21:06:58.251`
+- Start densmaps: `21:23:26.857` (`Computing densmap_o11.fits (single source pass)...`)
+- Finest compute done: `21:24:20.340` (`Computed densmap_o11.fits in 00:00:53.481`)
+- Derivations:
+  - `o10 <- o11`: `00:00:00.289`
+  - `o9 <- o10`: `00:00:00.063`
+  - `o8 <- o9`: `00:00:00.014`
+  - `o7 <- o8`: `00:00:00.004`
+  - `o6..o0`: `~0.000-0.001s` each
+- Final write: `21:24:22.631` (`Wrote densmap_o11.fits in 00:00:01.454`)
 
 ## Runtime comparison
 
 | Metric | Before | After | Delta |
 |---|---:|---:|---:|
-| Depth 1 duration | 6m 29.250s | 2m 19.846s | -64.1% |
-| Depth 2 duration | 3m 24.082s | 2m 28.409s | -27.3% |
-| Depth 3 duration | 3m 08.526s | 2m 32.150s | -19.3% |
-| Stage-1 wall time (`targets` -> `DEPTH 3 done`) | 13m 01.859s | 7m 20.406s | -43.7% |
+| Densmaps stage wall time | 10m 41.850s | 55.774s | -91.3% |
+| Source passes over catalog | 12 | 1 | -91.7% |
+| Derived lower depths | no | yes (`o10..o0`) | exact NESTED aggregation |
+
+Derived speedup factor (stage wall time):
+- `641.850 / 55.774 = 11.5x`
 
 ## Correctness checks
 
-- Stage-1 target totals remained the same across runs:
-  - depth 1: `1391`
-  - depth 2: `3764`
-  - depth 3: `11374`
-- Tile/row writes for stage-1 remained consistent in logs:
-  - depth 1: `tiles_written=16`, `rows_written=1391`
-  - depth 2: `tiles_written=42`, `rows_written=3764`
-  - depth 3: `tiles_written=132`, `rows_written=11374`
+Validation performed on generated files (`outputs/test_densmaps`):
+- depths present: `o0..o11`
+- shape per depth matches `12 * 4^depth`
+- total counts invariant across all depths (`691483608`)
+- parent-child consistency passes for all consecutive pairs:
+  - `o0 <- o1`, `o1 <- o2`, ..., `o10 <- o11`
+
+Conclusion: derived densmaps are internally consistent and preserve counts.
 
 ## Stability observations
 
-- Largest gain occurred at depth 1, where candidate volume and shuffle pressure are highest.
-- Before memory/scaling fixes, runs showed worker restarts and communication failures.
-- With the current config and current code path, compared runs progressed through densmaps and stage-1 depths without fatal worker churn in the shared logs.
+- No additional source-scan fan-out per depth is required in the optimized path.
+- The densmaps stage completes in under 1 minute in the captured run window.
 
 ## Reproducibility checklist
 
 To reproduce this benchmark:
 1. Use the same DES DR2 HATS input path and the same config above.
-2. Capture logs from pipeline start through `[DEPTH 3] done`.
+2. Capture logs from densmap stage start through final densmap write.
 3. Record:
-   - stage-1 start timestamp (`stage 1 targets` log line)
-   - per-depth duration from `[DEPTH n] done in ...`
-   - stage-1 end timestamp (`[DEPTH 3] done` line)
+   - densmap stage start timestamp
+   - densmap stage end timestamp
+   - per-depth compute/derive/write durations from log lines
 4. Compare against this table.
 
 ## Notes
 
-- In this run window, densmap times were higher (~53-55s each) than in a previous window (~48-49s each), likely due to cluster variability.
-- Densmap-stage optimization benchmark is documented separately in:
-  - `benchmarks/records/2026-02-10_des_dr2_densmaps_finest_derive.md`
+- This benchmark isolates densmap stage behavior only.
+- Stage-1 selection benchmark (top-k two-stage optimization) is documented separately in:
+  - `benchmarks/records/2026-02-10_des_dr2_score_density_hybrid_topk_two_stage.md`
