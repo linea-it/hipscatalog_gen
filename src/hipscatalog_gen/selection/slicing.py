@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Sequence
 
@@ -92,7 +93,9 @@ def _stream_write_depth_without_allsky(
             ipix = int(pid)
             ipix_dir = tmp_root / f"ipix_{ipix}"
             ipix_dir.mkdir(parents=True, exist_ok=True)
-            frag_path = ipix_dir / f"part_{part_no:08d}.parquet"
+            # LSDB may not provide partition_info.number; keep filenames unique to
+            # avoid write collisions across concurrent tasks.
+            frag_path = ipix_dir / f"part_{part_no:08d}_{uuid.uuid4().hex}.parquet"
             # LSDB partitions may be NestedFrame; cast to plain pandas before parquet IO
             # to keep a consistent writer signature across backends.
             pd.DataFrame(grp).reset_index(drop=True).to_parquet(frag_path, index=False)
