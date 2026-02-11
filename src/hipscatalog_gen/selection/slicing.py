@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 import time
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Sequence
 
@@ -20,6 +21,13 @@ from .levels import assign_level_edges
 from .score import compute_score_histogram_ddf
 
 __all__ = ["select_by_value_slices", "select_by_score_slices"]
+
+
+@dataclass(frozen=True)
+class _CompactionStats:
+    files_in: int
+    files_out: int
+    rounds: int
 
 
 def _stream_write_depth_without_allsky(
@@ -105,10 +113,48 @@ def _stream_write_depth_without_allsky(
             frag_path = bucket_dir / f"part_{part_no:08d}_{uuid.uuid4().hex}.parquet"
             # LSDB partitions may be NestedFrame; cast to plain pandas before parquet IO
             # to keep a consistent writer signature across backends.
-            pd.DataFrame(grp).reset_index(drop=True).to_parquet(frag_path, index=False)
+            grp_out = pd.DataFrame(grp).reset_index(drop=True).drop(columns=["__bucket__"], errors="ignore")
+            grp_out.to_parquet(frag_path, index=False)
             n_frag += 1
 
         return pd.DataFrame({"rows": [int(len(pdf_sorted))], "fragments": [int(n_frag)]}, dtype="int64")
+
+    def _compact_bucket_files(
+        bucket_dir: Path,
+        parquet_files: List[Path],
+    ) -> tuple[List[Path], _CompactionStats]:
+        """Reduce many tiny bucket fragments into a few larger sorted runs."""
+        max_merge_inputs = 32
+        target_files = 16
+        current = sorted(parquet_files)
+        files_in = int(len(current))
+        if len(current) <= target_files:
+            return current, _CompactionStats(files_in=files_in, files_out=int(len(current)), rounds=0)
+
+        round_idx = 0
+        while len(current) > target_files:
+            next_files: List[Path] = []
+            for chunk_idx, start in enumerate(range(0, len(current), max_merge_inputs)):
+                chunk = current[start : start + max_merge_inputs]
+                if len(chunk) == 1:
+                    next_files.append(chunk[0])
+                    continue
+
+                merged_df = pd.concat((pd.read_parquet(fp) for fp in chunk), ignore_index=True)
+                merged_df = merged_df.sort_values(
+                    ["__ipix__", *sort_cols],
+                    ascending=[True, *ascending],
+                    kind="mergesort",
+                )
+                run_path = bucket_dir / f"run_r{round_idx:02d}_{chunk_idx:05d}.parquet"
+                merged_df.to_parquet(run_path, index=False)
+                for fp in chunk:
+                    fp.unlink(missing_ok=True)
+                next_files.append(run_path)
+            current = sorted(next_files)
+            round_idx += 1
+
+        return current, _CompactionStats(files_in=files_in, files_out=int(len(current)), rounds=round_idx)
 
     try:
         spill_stats = ddf_with_ipix.map_partitions(
@@ -126,13 +172,37 @@ def _stream_write_depth_without_allsky(
             [p for p in tmp_root.iterdir() if p.is_dir() and p.name.startswith("bucket_")],
             key=lambda p: int(p.name.split("_", 1)[1]),
         )
+        comp_files_in_total = 0
+        comp_files_out_total = 0
+        comp_rounds_total = 0
+        comp_buckets_total = 0
+        comp_buckets_compacted = 0
+        comp_max_bucket_in = 0
 
         for bucket_dir in bucket_dirs:
             frag_files = sorted(bucket_dir.glob("part_*.parquet"))
             if not frag_files:
                 continue
 
-            bucket_df = pd.concat((pd.read_parquet(fp) for fp in frag_files), ignore_index=True)
+            compacted_files, comp_stats = _compact_bucket_files(bucket_dir, frag_files)
+            comp_buckets_total += 1
+            comp_files_in_total += comp_stats.files_in
+            comp_files_out_total += comp_stats.files_out
+            comp_rounds_total += comp_stats.rounds
+            comp_max_bucket_in = max(comp_max_bucket_in, comp_stats.files_in)
+            if comp_stats.files_out < comp_stats.files_in:
+                comp_buckets_compacted += 1
+            if comp_stats.files_in > 512 and comp_stats.files_out < comp_stats.files_in:
+                log_fn(
+                    "[stream-compaction] "
+                    f"depth={depth} bucket={bucket_dir.name} "
+                    f"files_in={comp_stats.files_in} "
+                    f"files_out={comp_stats.files_out} "
+                    f"rounds={comp_stats.rounds}",
+                    always=True,
+                    depth=depth,
+                )
+            bucket_df = pd.concat((pd.read_parquet(fp) for fp in compacted_files), ignore_index=True)
             bucket_df = bucket_df.sort_values(
                 ["__ipix__", *sort_cols],
                 ascending=[True, *ascending],
@@ -155,6 +225,20 @@ def _stream_write_depth_without_allsky(
                 tiles_written += int(len(written_per_ipix))
                 rows_written += int(sum(written_per_ipix.values()))
             shutil.rmtree(bucket_dir, ignore_errors=True)
+
+        if comp_buckets_total > 0:
+            reduction = 100.0
+            if comp_files_in_total > 0:
+                reduction = 100.0 * (1.0 - (float(comp_files_out_total) / float(comp_files_in_total)))
+            log_fn(
+                "[stream-compaction] "
+                f"depth={depth} buckets={comp_buckets_total} compacted={comp_buckets_compacted} "
+                f"files_in={comp_files_in_total} files_out={comp_files_out_total} "
+                f"reduction={reduction:.1f}% rounds_total={comp_rounds_total} "
+                f"max_bucket_in={comp_max_bucket_in}",
+                always=True,
+                depth=depth,
+            )
 
         return selected_len, tiles_written, rows_written
     finally:
