@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Fix densmap scalability for large catalogs by replacing dense per-partition aggregation with sparse histogram reduction in a bounded fan-in tree, preventing oversized gather tasks at high depths.
+- Compute only the finest densmap from source data and derive lower orders by exact NESTED parent-child aggregation (4 children -> 1 parent), reducing repeated catalog scans; keep per-depth progress logs (`Computing/Derived/Wrote densmap_o*.fits`).
+- Optimize `score_density_hybrid` stage-1 per-tile top-k with an exact two-stage strategy (local prune + global reduce), reducing shuffle volume and improving runtime on large catalogs.
+- Remove pandas `FutureWarning` in local top-k pruning by avoiding partition-level `DataFrameGroupBy.apply`.
+- Detailed run benchmarks for this optimization are tracked in `benchmarks/records/2026-02-10_des_dr2_score_density_hybrid_topk_two_stage.md`.
+
 ## 0.2.0
 
 - Merge Dependabot updates (GitHub workflows and dependency version limits).

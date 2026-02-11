@@ -203,23 +203,87 @@ def compute_and_write_densmaps(
     Returns:
         Mapping of depth -> numpy array with counts per HEALPix pixel.
     """
+
+    def _npix_for_depth(depth: int) -> int:
+        return int(12 * (4 ** int(depth)))
+
     depths = list(range(0, level_limit + 1))
     densmaps: Dict[int, np.ndarray] = {}
+    finest = int(level_limit)
 
     with diag_ctx("dask_densmaps"):
-        for i, depth in enumerate(depths, start=1):
+        # Single source pass on the finest depth.
+        if log_fn is not None:
+            log_fn(
+                f"[densmaps] Computing densmap_o{finest}.fits (single source pass)...",
+                always=True,
+            )
+        t_finest = time.time()
+        dens_finest = dask_compute(densmap_for_depth_delayed(ddf_sel, ra_col, dec_col, depth=finest))[0]
+        densmaps[finest] = dens_finest
+        if log_fn is not None:
+            log_fn(
+                f"[densmaps] Computed densmap_o{finest}.fits in {_fmt_dur(time.time() - t_finest)}",
+                always=True,
+            )
+
+        # If the finest vector shape matches HEALPix expectations, derive lower
+        # depths by aggregating 4 children per parent in NESTED indexing.
+        expected_finest_npix = _npix_for_depth(finest)
+        can_derive = int(getattr(dens_finest, "size", -1)) == expected_finest_npix
+
+        if can_derive:
+            child_counts = dens_finest
+            for depth in range(finest - 1, -1, -1):
+                if log_fn is not None:
+                    log_fn(
+                        f"[densmaps] Deriving densmap_o{depth}.fits from densmap_o{depth + 1}.fits...",
+                        always=True,
+                    )
+                t_der = time.time()
+                parent_counts = (
+                    np.asarray(child_counts, dtype=np.int64).reshape(-1, 4).sum(axis=1, dtype=np.int64)
+                )
+                densmaps[depth] = parent_counts
+                child_counts = parent_counts
+                if log_fn is not None:
+                    log_fn(
+                        f"[densmaps] Derived densmap_o{depth}.fits in {_fmt_dur(time.time() - t_der)}",
+                        always=True,
+                    )
+        else:
+            # Defensive fallback for non-standard testing doubles.
             if log_fn is not None:
                 log_fn(
-                    f"[densmaps] Computing densmap_o{depth}.fits ({i}/{len(depths)})...",
+                    "[densmaps] Finest densmap size does not match expected HEALPix npix; "
+                    "falling back to per-depth source computation.",
                     always=True,
                 )
-            t_depth = time.time()
-            dens = dask_compute(densmap_for_depth_delayed(ddf_sel, ra_col, dec_col, depth=depth))[0]
-            densmaps[depth] = dens
-            write_densmap_fits(out_dir, depth, dens)
+            for depth in depths:
+                if depth == finest:
+                    continue
+                if log_fn is not None:
+                    log_fn(
+                        f"[densmaps] Computing densmap_o{depth}.fits (fallback source pass)...",
+                        always=True,
+                    )
+                t_depth = time.time()
+                densmaps[depth] = dask_compute(
+                    densmap_for_depth_delayed(ddf_sel, ra_col, dec_col, depth=depth)
+                )[0]
+                if log_fn is not None:
+                    log_fn(
+                        f"[densmaps] Computed densmap_o{depth}.fits in {_fmt_dur(time.time() - t_depth)}",
+                        always=True,
+                    )
+
+        # Write outputs in increasing depth order for deterministic layout/logs.
+        for depth in depths:
+            t_write = time.time()
+            write_densmap_fits(out_dir, depth, densmaps[depth])
             if log_fn is not None:
                 log_fn(
-                    f"[densmaps] Wrote densmap_o{depth}.fits in {_fmt_dur(time.time() - t_depth)}",
+                    f"[densmaps] Wrote densmap_o{depth}.fits in {_fmt_dur(time.time() - t_write)}",
                     always=True,
                 )
 

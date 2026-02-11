@@ -99,8 +99,23 @@ def reduce_topk_by_group_dask(
         pdf = pdf[pdf[group_col].isin(groups_allowed)]
         if pdf.empty:
             return pdf.iloc[0:0]
+        sort_cols = [group_col, score_col]
+        ascending = [True, asc]
+        if tie_col and tie_col in pdf.columns:
+            sort_cols.append(tie_col)
+            ascending.append(True)
+        if ra_col in pdf.columns:
+            sort_cols.append(ra_col)
+            ascending.append(True)
+        if dec_col in pdf.columns:
+            sort_cols.append(dec_col)
+            ascending.append(True)
 
-        return pdf.groupby(group_col, group_keys=False).apply(_take_topk)
+        pdf_sorted = pdf.sort_values(sort_cols, ascending=ascending, kind="mergesort")
+        rank_in_group = pdf_sorted.groupby(group_col, sort=False).cumcount()
+        k_by_row = pdf_sorted[group_col].map(k_map).fillna(0).astype("int64")
+        keep_mask = rank_in_group.to_numpy() < k_by_row.to_numpy()
+        return pdf_sorted.loc[keep_mask]
 
     meta = _get_meta_df(ddf_like)
     cols_all = list(meta.columns)
