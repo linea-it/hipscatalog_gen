@@ -896,6 +896,47 @@ def test_stream_compaction_mode_overrides():
     )
 
 
+def test_detected_cpu_count_prefers_affinity(monkeypatch):
+    """CPU detection uses process affinity when available."""
+    monkeypatch.setattr(selection_slicing.os, "sched_getaffinity", lambda _pid: {0, 1, 2})
+    monkeypatch.setattr(selection_slicing.os, "cpu_count", lambda: 99)
+    assert selection_slicing._detected_cpu_count() == 3
+
+
+def test_detected_cpu_count_fallback(monkeypatch):
+    """CPU detection falls back to os.cpu_count and then to 1."""
+    monkeypatch.setattr(
+        selection_slicing.os,
+        "sched_getaffinity",
+        lambda _pid: (_ for _ in ()).throw(OSError("x")),
+    )
+    monkeypatch.setattr(selection_slicing.os, "cpu_count", lambda: None)
+    assert selection_slicing._detected_cpu_count() == 1
+
+    monkeypatch.setattr(selection_slicing.os, "cpu_count", lambda: 4)
+    assert selection_slicing._detected_cpu_count() == 4
+
+
+def test_resolve_bucket_workers_default_is_adaptive(monkeypatch):
+    """Default workers are capped by both detected CPUs and bucket count."""
+    monkeypatch.delenv("HIPSCATALOG_STREAM_BUCKET_WORKERS", raising=False)
+    monkeypatch.setattr(selection_slicing, "_detected_cpu_count", lambda: 2)
+    workers, detected, from_env = selection_slicing._resolve_bucket_workers(16)
+    assert (workers, detected, from_env) == (2, 2, False)
+
+    monkeypatch.setattr(selection_slicing, "_detected_cpu_count", lambda: 64)
+    workers2, detected2, from_env2 = selection_slicing._resolve_bucket_workers(3)
+    assert (workers2, detected2, from_env2) == (3, 64, False)
+
+
+def test_resolve_bucket_workers_env_allows_override(monkeypatch):
+    """Explicit env override can exceed detected CPU count."""
+    monkeypatch.setenv("HIPSCATALOG_STREAM_BUCKET_WORKERS", "8")
+    monkeypatch.setattr(selection_slicing, "_detected_cpu_count", lambda: 2)
+    workers, detected, from_env = selection_slicing._resolve_bucket_workers(16)
+    assert (workers, detected, from_env) == (8, 2, True)
+
+
 def test_select_by_value_slices_histogram_path(monkeypatch, tmp_path, diag_ctx, log_capture):
     """Histogram path with zeroed CDF still proceeds and calls assign_level_edges."""
     logs, log_fn = log_capture

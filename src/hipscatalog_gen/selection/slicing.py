@@ -50,6 +50,41 @@ def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
         return max(minimum, int(default))
 
 
+def _detected_cpu_count() -> int:
+    """Best-effort CPU count for the current process affinity."""
+    try:
+        affinity = os.sched_getaffinity(0)
+        n_aff = int(len(affinity))
+        if n_aff > 0:
+            return n_aff
+    except (AttributeError, OSError):
+        pass
+    n_cpu = os.cpu_count()
+    if n_cpu is None or int(n_cpu) <= 0:
+        return 1
+    return int(n_cpu)
+
+
+def _resolve_bucket_workers(n_buckets: int) -> tuple[int, int, bool]:
+    """Resolve ThreadPool workers from env/defaults and current CPU availability."""
+    n_bk = max(1, int(n_buckets))
+    detected = _detected_cpu_count()
+    raw_env = os.environ.get("HIPSCATALOG_STREAM_BUCKET_WORKERS")
+
+    if raw_env is None:
+        requested = max(1, min(8, detected))
+        from_env = False
+    else:
+        try:
+            requested = max(1, int(raw_env))
+        except Exception:
+            requested = max(1, min(8, detected))
+        from_env = True
+
+    workers = max(1, min(requested, n_bk))
+    return workers, detected, from_env
+
+
 def _resolve_local_scratch_base(out_dir: Path) -> Path:
     """Choose a local scratch base path for compaction intermediates."""
     candidates: list[Path] = []
@@ -344,11 +379,19 @@ def _stream_write_depth_without_allsky(
         if compaction_chunk_size <= compaction_target_files:
             compaction_chunk_size = compaction_target_files + 1
 
-        max_workers_cap = _env_int("HIPSCATALOG_STREAM_BUCKET_WORKERS", 8, minimum=1)
-        max_workers = max(1, min(max_workers_cap, len(bucket_dirs)))
+        max_workers, detected_cpus, workers_from_env = _resolve_bucket_workers(len(bucket_dirs))
+        if workers_from_env and max_workers > detected_cpus:
+            log_fn(
+                f"[stream] depth={depth} requested bucket workers exceed detected CPU availability: "
+                f"workers={max_workers} detected_cpus={detected_cpus} "
+                "(oversubscription may reduce performance).",
+                always=True,
+                depth=depth,
+            )
         local_scratch_base = _resolve_local_scratch_base(Path(out_dir))
         log_fn(
             f"[stream] depth={depth} ThreadPoolExecutor setup: workers={max_workers} "
+            f"detected_cpus={detected_cpus} workers_source={'env' if workers_from_env else 'auto'} "
             f"buckets={len(bucket_dirs)} compaction_mode={compaction_mode} "
             f"min_depth={compaction_min_depth} min_files={compaction_min_files} "
             f"chunk_size={compaction_chunk_size} target_files={compaction_target_files} "
