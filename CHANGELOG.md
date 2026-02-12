@@ -5,10 +5,14 @@
 - Fix densmap scalability for large catalogs by replacing dense per-partition aggregation with sparse histogram reduction in a bounded fan-in tree, preventing oversized gather tasks at high depths.
 - Compute only the finest densmap from source data and derive lower orders by exact NESTED parent-child aggregation (4 children -> 1 parent), reducing repeated catalog scans; keep per-depth progress logs (`Computing/Derived/Wrote densmap_o*.fits`).
 - Optimize `score_density_hybrid` stage-1 per-tile top-k with an exact two-stage strategy (local prune + global reduce), reducing shuffle volume and improving runtime on large catalogs.
-- Make stage-2 depth writing (`depth >= 3`, no Allsky) streaming-based to avoid `depth_ddf.compute()` materialization on the driver; preserves tile/output logic while reducing scheduler/driver memory pressure on very large runs.
-- Reduce stage-2 spill metadata pressure by switching from per-tile temporary fragments to bucketed temporary fragments, keeping exact output semantics while improving distributed-filesystem throughput.
-- Add adaptive stage-2 bucket compaction (`auto`/`on`/`off`) with depth/file-count thresholds, local-scratch intermediate compaction, and parallel bucket processing via `ThreadPoolExecutor`; preserves selection/output semantics while improving high-depth throughput on distributed filesystems.
-- Add startup observability logs for cluster runtime (local/SLURM resources + directives) and stage-2 stream writer (effective ThreadPool/compaction parameters and scratch path).
+- Make stage-2 depth writing (`depth >= 3`, no Allsky) streaming-based with bucketed temporary fragments, avoiding `depth_ddf.compute()` materialization on the driver and reducing distributed-filesystem metadata pressure.
+- Run stage-2 bucket processing on distributed workers (`Client.submit`) so compute/IO stay on workers and the driver remains orchestration-only.
+- Require an active `dask.distributed` client for streamed stage-2 writes; fail fast when absent instead of silently degrading to local execution.
+- Auto-tune merge fan-in per worker task using `RLIMIT_NOFILE` and worker concurrency, and bound fan-in rounds to prevent `EMFILE` (`Too many open files`) during high-depth bucket merges.
+- Keep stage-2 k-way merge on a single bounded fan-in safety path, simplifying behavior while preserving robustness under high fragment fan-out.
+- Reuse selection-stage per-depth write stats for final output counts (`telemetry`/`properties`) and remove slow full-TSV recount fallback; pipeline now fails fast if required intermediate stats are missing/invalid.
+- Add startup observability logs for cluster runtime (local/SLURM resources + directives) and stage-2 streaming execution (worker count, bucket count, fan-in reduction summary).
+- Fix distributed compatibility warning by reading worker concurrency from `Worker.state.nthreads` (with fallback for older versions), avoiding `FutureWarning` on new `distributed`.
 - Remove pandas `FutureWarning` in local top-k pruning by avoiding partition-level `DataFrameGroupBy.apply`.
 - Detailed run benchmarks for these optimizations are tracked in:
   - `benchmarks/records/2026-02-10_des_dr2_score_density_hybrid_topk_two_stage.md`
