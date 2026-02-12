@@ -61,22 +61,21 @@ def test_load_config_from_file(tmp_path):
     cfg = load_config(str(cfg_path))
     assert isinstance(cfg, Config)
     assert cfg.algorithm.moc_order == cfg.algorithm.level_limit == 3
-    assert cfg.cluster.persist_ddfs is False
-    assert cfg.cluster.avoid_computes_wherever_possible is True
+    assert cfg.cluster.low_memory_mode is None
 
 
-def test_build_config_low_memory_overrides():
-    """Cluster policy derived from low_memory_mode can be overridden."""
+def test_build_config_low_memory_mode_is_deprecated():
+    """low_memory_mode is accepted only for deprecation signaling."""
     cfg_dict = _base_cfg_dict()
     cfg_dict["cluster"] = {"low_memory_mode": False}
-    cfg = load_config_from_dict(cfg_dict)
+    with pytest.warns(DeprecationWarning, match="low_memory_mode is deprecated"):
+        cfg = load_config_from_dict(cfg_dict)
     assert cfg.cluster.low_memory_mode is False
-    assert cfg.cluster.persist_ddfs is True
-    assert cfg.cluster.avoid_computes_wherever_possible is False
 
     cfg_dict["cluster"]["persist_ddfs"] = False
-    cfg = load_config_from_dict(cfg_dict)
-    assert cfg.cluster.persist_ddfs is False
+    with pytest.warns(DeprecationWarning, match="persist_ddfs is deprecated and ignored"):
+        cfg2 = load_config_from_dict(cfg_dict)
+    assert cfg2.cluster.low_memory_mode is False
 
 
 def test_build_config_moc_order_clamped():

@@ -44,8 +44,6 @@ class ClusterRuntime:
 
     cluster: Any
     client: Client
-    persist_ddfs: bool
-    avoid_computes: bool
     diagnostics_mode: str
 
 
@@ -127,25 +125,11 @@ def setup_cluster(
     # ------------------------------------------------------------------
     # Memory vs. compute policy
     # ------------------------------------------------------------------
-    persist_ddfs = bool(getattr(cfg, "persist_ddfs", False))
-    avoid_computes = bool(getattr(cfg, "avoid_computes_wherever_possible", True))
-
-    if persist_ddfs:
-        log_fn("[cluster] persist_ddfs=True → will persist large intermediates in memory", True)
-    else:
-        log_fn("[cluster] persist_ddfs=False (lower memory consumption)", True)
-
-    if avoid_computes:
-        log_fn(
-            "[cluster] avoid_computes_wherever_possible=True → will try to avoid large .compute() calls "
-            "whenever possible (using more Dask-native operations) (lower memory consumption)",
-            True,
-        )
-    else:
-        log_fn(
-            "[cluster] avoid_computes_wherever_possible=False → keep standard behaviour for computes.",
-            True,
-        )
+    log_fn("[cluster] persist_ddfs=False (fixed policy)", True)
+    log_fn(
+        "[cluster] avoid_computes_wherever_possible=True (fixed policy)",
+        True,
+    )
 
     diagnostics_mode = getattr(cfg, "diagnostics_mode", "per_step")
 
@@ -169,8 +153,6 @@ def setup_cluster(
     runtime = ClusterRuntime(
         cluster=cluster,
         client=client,
-        persist_ddfs=persist_ddfs,
-        avoid_computes=avoid_computes,
         diagnostics_mode=str(diagnostics_mode),
     )
 

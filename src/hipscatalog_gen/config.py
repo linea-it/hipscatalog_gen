@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping
 
@@ -137,9 +138,7 @@ class ClusterCfg:
     threads_per_worker: int
     memory_per_worker: str  # e.g. "8GB"
     slurm: Dict | None = None
-    low_memory_mode: bool = True
-    persist_ddfs: bool = False
-    avoid_computes_wherever_possible: bool = True
+    low_memory_mode: bool | None = None  # deprecated (kept only to emit user-facing warning)
     diagnostics_mode: str = "global"  # "per_step" | "global" | "off"
 
 
@@ -265,8 +264,10 @@ threads_per_worker       [optional, default=1] int
 memory_per_worker        [optional, default="2GB"] str
 slurm                    [optional, default=None] dict
 low_memory_mode          [optional, default=True] bool
-    True  → persist_ddfs=False, avoid_computes_wherever_possible=True
-    False → persist_ddfs=True, avoid_computes_wherever_possible=False
+    DEPRECATED: kept only for backward compatibility and has no effect.
+    The pipeline now always uses:
+      - no DataFrame persistence of large intermediates
+      - avoiding early large computes whenever possible
 diagnostics_mode         [optional, default="global"]
     "per_step" | "global" | "off".
 
@@ -434,6 +435,32 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         _to_int_or_none(v, f"score_density_hybrid.k_{i + 1}") for i, v in enumerate(sdh_k_vals)
     )
 
+    cluster_map = y["cluster"]
+    low_memory_mode_raw = cluster_map.get("low_memory_mode", None)
+    low_memory_mode_value: bool | None = None
+    if low_memory_mode_raw is not None:
+        low_memory_mode_value = bool(low_memory_mode_raw)
+        warnings.warn(
+            "cluster.low_memory_mode is deprecated and has no effect. "
+            "The pipeline now always defaults to non-persistent intermediates and "
+            "avoiding early large computes.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    if "persist_ddfs" in cluster_map:
+        warnings.warn(
+            "cluster.persist_ddfs is deprecated and ignored.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    if "avoid_computes_wherever_possible" in cluster_map:
+        warnings.warn(
+            "cluster.avoid_computes_wherever_possible is deprecated and ignored.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     cfg = Config(
         input=InputCfg(
             paths=y["input"]["paths"],
@@ -505,15 +532,13 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             sdh_order_desc=_order_desc_mode(sdh_cfg),
         ),
         cluster=ClusterCfg(
-            mode=y["cluster"].get("mode", "local"),
-            n_workers=int(y["cluster"].get("n_workers", 3)),
-            threads_per_worker=int(y["cluster"].get("threads_per_worker", 1)),
-            memory_per_worker=str(y["cluster"].get("memory_per_worker", "2GB")),
-            slurm=y["cluster"].get("slurm"),
-            low_memory_mode=bool(y["cluster"].get("low_memory_mode", True)),
-            persist_ddfs=False,  # set below after resolving low_memory_mode
-            avoid_computes_wherever_possible=True,  # set below after resolving low_memory_mode
-            diagnostics_mode=y["cluster"].get("diagnostics_mode", "global"),
+            mode=cluster_map.get("mode", "local"),
+            n_workers=int(cluster_map.get("n_workers", 3)),
+            threads_per_worker=int(cluster_map.get("threads_per_worker", 1)),
+            memory_per_worker=str(cluster_map.get("memory_per_worker", "2GB")),
+            slurm=cluster_map.get("slurm"),
+            low_memory_mode=low_memory_mode_value,
+            diagnostics_mode=cluster_map.get("diagnostics_mode", "global"),
         ),
         output=OutputCfg(
             out_dir=y["output"]["out_dir"],
@@ -524,15 +549,6 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             overwrite=bool(y["output"].get("overwrite", False)),
         ),
     )
-
-    # Resolve memory/compute policy
-    lmm = bool(y["cluster"].get("low_memory_mode", True))
-    # Allow explicit overrides if present, otherwise derive from low_memory_mode.
-    cfg.cluster.persist_ddfs = bool(y["cluster"].get("persist_ddfs", not lmm))
-    cfg.cluster.avoid_computes_wherever_possible = bool(
-        y["cluster"].get("avoid_computes_wherever_possible", lmm)
-    )
-    cfg.cluster.low_memory_mode = lmm
 
     # ------------------------------------------------------------------
     # mag_global-specific validation (mag_column vs flux_column)

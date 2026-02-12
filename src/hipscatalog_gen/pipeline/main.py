@@ -102,8 +102,8 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     mode_entry = get_selection_mode(selection_mode)
 
     runtime, diag_ctx = setup_cluster(cfg.cluster, report_dir, _log)
-    persist_ddfs = runtime.persist_ddfs
-    avoid_computes = runtime.avoid_computes
+    persist_ddfs = False
+    avoid_computes = True
     diagnostics_mode = runtime.diagnostics_mode
 
     ctx = PipelineContext(

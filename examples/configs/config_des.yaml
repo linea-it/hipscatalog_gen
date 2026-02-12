@@ -190,31 +190,24 @@ cluster:
   #   - n_workers          → number of worker processes.
   #   - threads_per_worker → threads per worker.
   #   - memory_per_worker  → memory limit per worker, as a string ("8GB", "32GB", etc.).
-  n_workers: 10
+  n_workers: 20
   threads_per_worker: 8
-  memory_per_worker: "96GB"
-
-  # Memory vs throughput policy (applies to all modes):
-  #   low_memory_mode=true  → persist_ddfs=False, avoid_computes_wherever_possible=True
-  #   low_memory_mode=false → persist_ddfs=True, avoid_computes_wherever_possible=False
-  low_memory_mode: true
+  memory_per_worker: "32GB"
 
   # SLURM options (only used if mode: slurm)
   slurm:
     queue: "cpu"
     account: "hpc-bpglsst"
     job_extra_directives:
-      - "--partition=cpu"
-      - "--time=04:00:00"
+      - "--time=1-00:00:00"
     # Optional extras:
     # - "--constraint=..."
     # - "--qos=..."
     # - "--mem=0"   # use all node memory if allowed
 
-    # Dask performance reports:
-    # "none" → disabled, "local" → per-depth, "global" → full pipeline
-    diagnostics_mode: global
-
+  # Dask performance reports:
+  # "none" → disabled, "local" → per-depth, "global" → full pipeline
+  diagnostics_mode: global
 
 # -----------------------------------------------------------------------------
 # Output settings

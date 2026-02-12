@@ -49,6 +49,12 @@ def log_prologue(cfg: Any, out_dir: Path, log_fn) -> None:
     sel_mode = (getattr(cfg.algorithm, "selection_mode", "") or "").lower()
     base = f"Config -> lM={cfg.algorithm.level_limit} selection_mode={sel_mode}"
     log_fn(base, always=True)
+    if getattr(cfg.cluster, "low_memory_mode", None) is not None:
+        log_fn(
+            "[config] cluster.low_memory_mode is deprecated and has no effect. "
+            "Using fixed policy: persist_ddfs=False and avoid_computes_wherever_possible=True.",
+            always=True,
+        )
 
 
 def log_epilogue(
@@ -448,11 +454,6 @@ def write_common_static_products(
         ("cluster.threads_per_worker", getattr(cfg.cluster, "threads_per_worker", None)),
         ("cluster.memory_per_worker", getattr(cfg.cluster, "memory_per_worker", None)),
         ("cluster.low_memory_mode", getattr(cfg.cluster, "low_memory_mode", None)),
-        ("cluster.persist_ddfs", getattr(cfg.cluster, "persist_ddfs", None)),
-        (
-            "cluster.avoid_computes_wherever_possible",
-            getattr(cfg.cluster, "avoid_computes_wherever_possible", None),
-        ),
         ("cluster.diagnostics_mode", getattr(cfg.cluster, "diagnostics_mode", None)),
         ("cluster.slurm", getattr(cfg.cluster, "slurm", None)),
         ("# output", None),
