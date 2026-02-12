@@ -208,7 +208,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
             or context.DEC_NAME is None
         ):
             raise RuntimeError("Pipeline context missing selection inputs.")  # pragma: no cover
-        mode_entry.run_fn(
+        run_result = mode_entry.run_fn(
             remainder_ddf=context.remainder_ddf,
             densmaps=context.densmaps,
             keep_cols=context.keep_cols,
@@ -221,14 +221,45 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
             avoid_computes=context.avoid_computes,
             params=context.selection_params,
         )
-        return context
+        if not isinstance(run_result, dict):
+            return context
+
+        depth_totals_raw = run_result.get("depth_totals")
+        if not isinstance(depth_totals_raw, dict):
+            return context
+
+        depth_totals: dict[str, int] = {}
+        for k, v in depth_totals_raw.items():
+            value_int: int | None = None
+            with suppress(TypeError, ValueError):
+                value_int = int(v)
+            if value_int is None:
+                continue
+            depth_totals[str(k)] = value_int
+        if not depth_totals:
+            return context
+
+        telemetry = dict(context.telemetry)
+        telemetry["selection_write_stats"] = {"depth_totals": depth_totals}
+        return context.with_updates(telemetry=telemetry)
 
     def _stage_counts(context: PipelineContext) -> PipelineContext:
         """Write per-depth count summaries and store telemetry."""
         if context.input_total is None:
             raise RuntimeError("Pipeline context missing input totals.")  # pragma: no cover
+        precomputed_depth_totals = None
+        if isinstance(context.telemetry, dict):
+            sws = context.telemetry.get("selection_write_stats")
+            if isinstance(sws, dict):
+                cand = sws.get("depth_totals")
+                if isinstance(cand, dict):
+                    precomputed_depth_totals = cand
         total_written, counts_payload = write_counts_summaries(
-            context.out_dir, context.cfg.algorithm.level_limit, context.input_total, context.log_fn
+            context.out_dir,
+            context.cfg.algorithm.level_limit,
+            context.input_total,
+            context.log_fn,
+            precomputed_depth_totals=precomputed_depth_totals,
         )
         telemetry = dict(context.telemetry)
         telemetry["output_counts"] = counts_payload

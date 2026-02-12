@@ -23,7 +23,7 @@ from .validation import (
 )
 
 PrepareFn = Callable[..., Any]
-RunFn = Callable[..., None]
+RunFn = Callable[..., Any]
 NormalizeFn = Callable[..., Tuple[Any, Any]]
 ValidateFn = Callable[[Any], None]
 

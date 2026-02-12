@@ -536,6 +536,26 @@ def test_write_counts_summaries(tmp_path, log_capture):
     assert any("Total rows written: 2" in m for m in log_capture[0])
 
 
+def test_write_counts_summaries_uses_precomputed_depth_totals(tmp_path, log_capture):
+    """Precomputed depth totals skip tile scanning and preserve totals payload."""
+    logs, log_fn = log_capture
+    # No tile files are required for this path.
+    total_written, payload = pipeline_common.write_counts_summaries(
+        tmp_path,
+        level_limit=4,
+        input_total=10,
+        log_fn=log_fn,
+        precomputed_depth_totals={"3": 7, "4": 11, "9": 99},  # depth 9 out of range -> ignored
+    )
+
+    assert total_written == 18
+    assert payload["output"]["total"] == 18
+    assert payload["output"]["depth_totals"] == {"3": 7, "4": 11}
+    assert payload["output"]["depths"] == {}
+    assert payload["input"]["total"] == 10
+    assert any("Using precomputed output counts" in m for m in logs)
+
+
 def test_write_common_static_products_arguments_include_all_input_keys(tmp_path):
     """arguments file includes all known YAML input keys, even when unset."""
     cfg = _cfg_pipeline(tmp_path)
@@ -641,7 +661,7 @@ def test_run_pipeline_happy_path(monkeypatch, tmp_path, log_capture):
 
         def run_fn(self, **kwargs):
             self.run_called = True
-            return None
+            return {"depth_totals": {"1": 1}, "depth_tiles": {"1": 1}}
 
     dummy_mode = DummyMode()
     monkeypatch.setattr(
@@ -676,11 +696,18 @@ def test_run_pipeline_happy_path(monkeypatch, tmp_path, log_capture):
     monkeypatch.setattr(main, "compute_input_total", lambda *_, **__: 1)
     monkeypatch.setattr(main, "compute_and_write_densmaps", lambda *_, **__: {1: np.ones(1, dtype="int64")})
     monkeypatch.setattr(main, "write_common_static_products", lambda *_, **__: None)
-    monkeypatch.setattr(main, "write_counts_summaries", lambda *_, **__: (1, {"output": {}, "input": {}}))
+    captured_counts_kwargs: dict[str, object] = {}
+
+    def fake_write_counts_summaries(*args, **kwargs):
+        captured_counts_kwargs.update(kwargs)
+        return (1, {"output": {}, "input": {}})
+
+    monkeypatch.setattr(main, "write_counts_summaries", fake_write_counts_summaries)
     monkeypatch.setattr(main, "write_properties", lambda *_, **__: None)
 
     main.run_pipeline(cfg)
     assert dummy_mode.normalize_called and dummy_mode.prepare_called and dummy_mode.run_called
+    assert captured_counts_kwargs.get("precomputed_depth_totals") == {"1": 1}
     assert any("START HiPS" in m for m in logs)
 
 

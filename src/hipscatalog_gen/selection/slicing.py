@@ -674,8 +674,12 @@ def select_by_value_slices(
     fixed_targets: Dict[int, float] | None = None,
     hist_diag_ctx_name: str | None = None,
     depth_diag_prefix: str | None = None,
-) -> None:
-    """Slice by per-depth value ranges and write tiles; expects value_col and densmaps populated."""
+) -> dict[str, dict[str, int]]:
+    """Slice by per-depth value ranges and write tiles.
+
+    Returns:
+        Dict with per-depth write summaries (currently depth_totals/depth_tiles).
+    """
     if level_edges is None:
         if compute_hist_fn is None or hist_nbins is None or value_min is None or value_max is None:
             raise ValueError(
@@ -698,7 +702,7 @@ def select_by_value_slices(
                 f"[{value_min}, {value_max}] → nothing to select.",
                 always=True,
             )
-            return
+            return {"depth_totals": {}, "depth_tiles": {}}
 
         cdf_hist = hist.cumsum().astype("float64")
         if cdf_hist[-1] > 0:
@@ -734,6 +738,8 @@ def select_by_value_slices(
 
     header_line = build_header_line_from_keep(keep_cols)
     depth_ctx = depth_diag_prefix or f"dask_{label}_depth"
+    depth_totals: dict[str, int] = {}
+    depth_tiles: dict[str, int] = {}
 
     for i, depth in enumerate(depths_list):
         depth_t0 = time.time()
@@ -810,6 +816,8 @@ def select_by_value_slices(
                     log_fn=log_fn,
                 )
                 _log_depth_stats(log_fn, depth, "written", counts=densmaps[depth], written=written_per_ipix)
+                depth_totals[str(depth)] = int(sum(written_per_ipix.values())) if written_per_ipix else 0
+                depth_tiles[str(depth)] = int(len(written_per_ipix)) if written_per_ipix else 0
             else:
                 selected_len, tiles_written, rows_written = _stream_write_depth_without_allsky(
                     depth_ddf=depth_ddf,
@@ -851,12 +859,16 @@ def select_by_value_slices(
                     tiles_written=tiles_written,
                     rows_written=rows_written,
                 )
+                depth_totals[str(depth)] = int(rows_written)
+                depth_tiles[str(depth)] = int(tiles_written)
 
         log_fn(
             f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}",
             always=True,
             depth=depth,
         )
+
+    return {"depth_totals": depth_totals, "depth_tiles": depth_tiles}
 
 
 def select_by_score_slices(
@@ -879,9 +891,9 @@ def select_by_score_slices(
     hist_diag_ctx_name: str | None = None,
     depth_diag_prefix: str | None = None,
     tie_col: str | None = None,
-) -> None:
+) -> dict[str, dict[str, int]]:
     """Score-specialized wrapper around select_by_value_slices."""
-    select_by_value_slices(
+    return select_by_value_slices(
         remainder_ddf=remainder_ddf,
         densmaps=densmaps,
         depths_sel=depths_sel,

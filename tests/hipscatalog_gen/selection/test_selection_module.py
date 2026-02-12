@@ -812,7 +812,7 @@ def test_select_by_value_slices_uses_stream_path_without_allsky(monkeypatch, tmp
         lambda **_kwargs: pytest.fail("write_tiles_with_allsky should not be called directly in stream path"),
     )
 
-    selection_slicing.select_by_value_slices(
+    summary = selection_slicing.select_by_value_slices(
         remainder_ddf=ddf,
         densmaps=densmaps,
         depths_sel=[3],
@@ -831,6 +831,8 @@ def test_select_by_value_slices_uses_stream_path_without_allsky(monkeypatch, tmp
 
     assert called["depth"] == 3
     assert called["tie_col"] == "TIE"
+    assert summary["depth_totals"]["3"] == 7
+    assert summary["depth_tiles"]["3"] == 3
     assert any("[DEPTH 3] selected:" in msg and "selected=7" in msg for msg in logs)
     assert any("[DEPTH 3] written:" in msg and "tiles_written=3" in msg for msg in logs)
 

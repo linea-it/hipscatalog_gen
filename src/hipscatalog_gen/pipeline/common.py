@@ -5,6 +5,7 @@ from __future__ import annotations
 import glob
 import json
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -553,7 +554,13 @@ def write_tiles_with_allsky(
     return written_per_ipix, allsky_df
 
 
-def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, log_fn) -> tuple[int, dict]:
+def write_counts_summaries(
+    out_dir: Path,
+    level_limit: int,
+    input_total: int,
+    log_fn,
+    precomputed_depth_totals: Dict[str, int] | None = None,
+) -> tuple[int, dict]:
     """Compute counts for later cross-checks and return (total written, counts dict)."""
 
     def _count_rows(tile_path: Path) -> int:
@@ -564,7 +571,38 @@ def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, lo
             next(f, None)
             return sum(1 for _ in f)
 
-    depth_totals: Dict[str, int] = {}
+    if precomputed_depth_totals:
+        depth_totals: Dict[str, int] = {}
+        for depth_key, depth_total in precomputed_depth_totals.items():
+            d: int | None = None
+            with suppress(TypeError, ValueError):
+                d = int(depth_key)
+            if d is None:
+                continue
+
+            v: int | None = None
+            with suppress(TypeError, ValueError):
+                v = int(depth_total)
+            if v is None:
+                continue
+
+            if d < 0 or d > int(level_limit):
+                continue
+            depth_totals[str(d)] = max(0, v)
+
+        total_all_depths = int(sum(depth_totals.values()))
+        output_counts = {
+            "total": int(total_all_depths),
+            "depth_totals": depth_totals,
+            "depths": {},
+        }
+        input_counts = {"total": int(input_total)}
+
+        log_fn("[counts] Using precomputed output counts from selection write stage.", always=True)
+        log_fn(f"[output] Total rows written: {total_all_depths}", always=True)
+        return int(total_all_depths), {"output": output_counts, "input": input_counts}
+
+    depth_totals = {}
     depth_counts: Dict[str, Dict[str, int]] = {}
     total_all_depths = 0
 

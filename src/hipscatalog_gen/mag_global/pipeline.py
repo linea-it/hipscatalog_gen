@@ -395,7 +395,7 @@ def run_mag_global_selection(
     log_fn,
     avoid_computes: bool = True,
     params: MagGlobalParams | None = None,
-) -> None:
+) -> dict[str, dict[str, int]]:
     """Execute the mag_global selection path and write tiles.
 
     Args:
@@ -438,7 +438,7 @@ def run_mag_global_selection(
             f"[{mag_min}, {mag_max}] → nothing to select.",
             always=True,
         )
-        return
+        return {"depth_totals": {}, "depth_tiles": {}}
 
     cdf_hist = hist.cumsum().astype("float64")
     if cdf_hist[-1] > 0:
@@ -475,7 +475,7 @@ def run_mag_global_selection(
 
     order_desc = bool(getattr(cfg.algorithm, "mg_order_desc", getattr(cfg.algorithm, "order_desc", False)))
 
-    select_by_value_slices(
+    return select_by_value_slices(
         remainder_ddf=remainder_ddf,
         densmaps=densmaps,
         depths_sel=depths_sel,

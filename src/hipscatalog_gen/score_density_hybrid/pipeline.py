@@ -388,7 +388,7 @@ def run_score_density_hybrid_selection(
     log_fn,
     avoid_computes: bool = True,
     params: ScoreDensityHybridParams | None = None,
-) -> None:
+) -> dict[str, dict[str, int]]:
     """Execute the score_density_hybrid selection.
 
     Args:
@@ -433,7 +433,7 @@ def run_score_density_hybrid_selection(
             f"[{score_min}, {score_max}] → nothing to select.",
             always=True,
         )
-        return
+        return {"depth_totals": {}, "depth_tiles": {}}
 
     cdf_hist = hist.cumsum().astype("float64")
     if cdf_hist[-1] > 0:
@@ -488,6 +488,8 @@ def run_score_density_hybrid_selection(
     available_ddf = remainder_ddf
     order_desc = bool(getattr(algo, "sdh_order_desc", getattr(algo, "order_desc", False)))
     tie_col = getattr(algo, "sdh_tie_column", None) or getattr(algo, "tie_column", None)
+    stage1_depth_totals: dict[str, int] = {}
+    stage1_depth_tiles: dict[str, int] = {}
 
     for depth in [d for d in depths_sel if d <= 3]:
         depth_t0 = time.time()
@@ -554,6 +556,8 @@ def run_score_density_hybrid_selection(
             log_fn=log_fn,
         )
         _log_depth_stats(log_fn, depth, "written", counts=counts, written=written_per_ipix)
+        stage1_depth_totals[str(depth)] = int(sum(written_per_ipix.values())) if written_per_ipix else 0
+        stage1_depth_tiles[str(depth)] = int(len(written_per_ipix)) if written_per_ipix else 0
 
         ids_used = selected_pdf["__sdh_id__"].dropna().astype("int64").tolist()
         if ids_used:
@@ -567,9 +571,9 @@ def run_score_density_hybrid_selection(
     # ------------------------------------------------------------------
     remaining_depths = [d for d in depths_sel if d > 3]
     if not remaining_depths:
-        return
+        return {"depth_totals": stage1_depth_totals, "depth_tiles": stage1_depth_tiles}
 
-    select_by_score_slices(
+    stage2_stats = select_by_score_slices(
         remainder_ddf=available_ddf,
         densmaps=densmaps,
         depths_sel=remaining_depths,
@@ -590,3 +594,11 @@ def run_score_density_hybrid_selection(
         depth_diag_prefix="dask_sdh_depth_score",
         tie_col=tie_col,
     )
+    depth_totals = dict(stage1_depth_totals)
+    depth_tiles = dict(stage1_depth_tiles)
+    if isinstance(stage2_stats, dict):
+        for depth_key, depth_total in (stage2_stats.get("depth_totals") or {}).items():
+            depth_totals[str(depth_key)] = int(depth_total)
+        for depth_key, depth_tile_count in (stage2_stats.get("depth_tiles") or {}).items():
+            depth_tiles[str(depth_key)] = int(depth_tile_count)
+    return {"depth_totals": depth_totals, "depth_tiles": depth_tiles}
