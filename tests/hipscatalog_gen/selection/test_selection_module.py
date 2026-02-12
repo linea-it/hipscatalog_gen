@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+import types
 from contextlib import nullcontext
 from typing import Any
 
@@ -1030,6 +1032,309 @@ def test_resolve_merge_max_open_files_override_is_clipped(monkeypatch):
     monkeypatch.setattr(selection_slicing.resource, "getrlimit", lambda _rl: (200, 200))
     monkeypatch.setattr(selection_slicing, "_detect_worker_nthreads", lambda: 4)
     assert selection_slicing._resolve_merge_max_open_files() == 18
+
+
+def test_env_int_invalid_and_minimum(monkeypatch):
+    """_env_int falls back to defaults and enforces minimum bounds."""
+    monkeypatch.delenv("HIPSCATALOG_TEST_INT", raising=False)
+    assert selection_slicing._env_int("HIPSCATALOG_TEST_INT", 5, minimum=2) == 5
+    monkeypatch.setenv("HIPSCATALOG_TEST_INT", "bad")
+    assert selection_slicing._env_int("HIPSCATALOG_TEST_INT", 5, minimum=7) == 7
+    monkeypatch.setenv("HIPSCATALOG_TEST_INT", "1")
+    assert selection_slicing._env_int("HIPSCATALOG_TEST_INT", 9, minimum=3) == 3
+
+
+def test_resolve_local_scratch_base_prefers_env(monkeypatch, tmp_path):
+    """First writable env candidate is used as local scratch base."""
+    preferred = tmp_path / "scratch_env"
+    monkeypatch.setenv("HIPSCATALOG_STREAM_LOCAL_TMPDIR", str(preferred))
+    resolved = selection_slicing._resolve_local_scratch_base(tmp_path / "out")
+    assert resolved == preferred
+    assert resolved.exists()
+
+
+def test_resolve_local_scratch_base_falls_back_to_out_dir_on_mkdir_errors(monkeypatch, tmp_path):
+    """If all candidates fail mkdir, out_dir is returned as conservative fallback."""
+    monkeypatch.setattr(
+        selection_slicing.Path, "mkdir", lambda *args, **kwargs: (_ for _ in ()).throw(OSError("x"))
+    )
+    out_dir = tmp_path / "out_fallback"
+    assert selection_slicing._resolve_local_scratch_base(out_dir) == out_dir
+
+
+def test_sort_component_desc_uses_reverse_wrapper_for_non_negatable_values():
+    """Descending key uses _ReverseSortValue when unary minus is not supported."""
+
+    class _NonNegatable:
+        def __init__(self, value: int) -> None:
+            self.value = value
+
+        def __neg__(self):
+            raise TypeError("not-negatable")
+
+        def __lt__(self, other: _NonNegatable) -> bool:
+            return bool(self.value < other.value)
+
+    comp_small = selection_slicing._sort_component(_NonNegatable(2), ascending=False)
+    comp_big = selection_slicing._sort_component(_NonNegatable(3), ascending=False)
+    assert isinstance(comp_small[1], selection_slicing._ReverseSortValue)
+    assert isinstance(comp_big[1], selection_slicing._ReverseSortValue)
+    assert (comp_big[1] < comp_small[1]) is True
+
+
+def test_iter_parquet_rows_falls_back_to_pandas_when_pyarrow_unavailable(monkeypatch, tmp_path):
+    """Row iterator falls back to pandas parquet reader when pyarrow backend is unavailable."""
+    parquet_path = tmp_path / "rows.parquet"
+    pd.DataFrame({"A": [1, 2], "B": [3, 4]}).to_parquet(parquet_path, index=False)
+    monkeypatch.setattr(selection_slicing, "_pq", None)
+    rows = list(selection_slicing._iter_parquet_rows(parquet_path, columns=["A", "B"]))
+    assert rows == [(1, 3), (2, 4)]
+
+
+def test_get_active_dask_client_and_worker_nthreads_fallbacks(monkeypatch):
+    """Client/worker helpers tolerate distributed runtime errors and old worker APIs."""
+    fake_ddist = types.ModuleType("dask.distributed")
+    fake_ddist.get_client = lambda: (_ for _ in ()).throw(RuntimeError("no client"))
+    fake_ddist.get_worker = lambda: type(
+        "W", (), {"state": type("S", (), {"nthreads": 6})(), "nthreads": 2}
+    )()
+    monkeypatch.setitem(sys.modules, "dask.distributed", fake_ddist)
+
+    assert selection_slicing._get_active_dask_client() is None
+
+    assert selection_slicing._detect_worker_nthreads() == 6
+
+    fake_ddist.get_worker = lambda: type("WOld", (), {"nthreads": 3})()
+    assert selection_slicing._detect_worker_nthreads() == 3
+
+    fake_ddist.get_worker = lambda: (_ for _ in ()).throw(RuntimeError("no worker"))
+    assert selection_slicing._detect_worker_nthreads() == 1
+
+
+def test_resolve_merge_max_open_files_handles_missing_rlimit(monkeypatch):
+    """When RLIMIT_NOFILE is unavailable, fallback uses override or default."""
+    monkeypatch.setattr(
+        selection_slicing.resource,
+        "getrlimit",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("rlimit")),
+    )
+
+    monkeypatch.setenv("HIPSCATALOG_STREAM_MERGE_MAX_OPEN_FILES", "77")
+    assert selection_slicing._resolve_merge_max_open_files() == 77
+
+    monkeypatch.setenv("HIPSCATALOG_STREAM_MERGE_MAX_OPEN_FILES", "bad")
+    assert selection_slicing._resolve_merge_max_open_files() == 32
+
+
+def test_process_bucket_dir_handles_empty_or_invalid_inputs(tmp_path):
+    """Empty bucket returns zero stats; missing required columns raise KeyError."""
+    out_dir = tmp_path / "out"
+    empty_bucket = tmp_path / "bucket_empty"
+    empty_bucket.mkdir(parents=True, exist_ok=True)
+    counts = np.ones(hp.nside2npix(8), dtype="int64")
+
+    empty_stats = selection_slicing._process_bucket_dir(
+        bucket_dir=empty_bucket,
+        depth=3,
+        out_dir=out_dir,
+        header_line="OBJID\tRA\tDEC\tVAL\n",
+        counts=counts,
+        sort_cols=["VAL", "RA", "DEC"],
+        ascending=[False, True, True],
+    )
+    assert empty_stats.files_in == 0
+    assert not empty_bucket.exists()
+
+    invalid_bucket = tmp_path / "bucket_invalid"
+    invalid_bucket.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"VAL": [1.0], "RA": [1.0], "DEC": [1.0], "OBJID": [1]}).to_parquet(
+        invalid_bucket / "part_00000000.parquet",
+        index=False,
+    )
+    with pytest.raises(KeyError, match="missing columns"):
+        selection_slicing._process_bucket_dir(
+            bucket_dir=invalid_bucket,
+            depth=3,
+            out_dir=out_dir,
+            header_line="OBJID\tRA\tDEC\tVAL\n",
+            counts=counts,
+            sort_cols=["VAL", "RA", "DEC"],
+            ascending=[False, True, True],
+        )
+
+
+def test_process_bucket_dir_drops_out_of_range_ipix(tmp_path):
+    """Rows with ipix outside count bounds are skipped during flush."""
+    out_dir = tmp_path / "out"
+    bucket_dir = tmp_path / "bucket_oob"
+    bucket_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"__ipix__": [999], "VAL": [1.0], "RA": [1.0], "DEC": [1.0], "OBJID": [42]}).to_parquet(
+        bucket_dir / "part_00000000.parquet",
+        index=False,
+    )
+
+    stats = selection_slicing._process_bucket_dir(
+        bucket_dir=bucket_dir,
+        depth=3,
+        out_dir=out_dir,
+        header_line="OBJID\tRA\tDEC\tVAL\n",
+        counts=np.ones(16, dtype="int64"),
+        sort_cols=["VAL", "RA", "DEC"],
+        ascending=[False, True, True],
+    )
+    assert stats.selected_len == 1
+    assert stats.rows_written == 0
+    assert stats.tiles_written == 0
+
+
+def test_process_bucket_dir_handles_compaction_result_with_no_working_files(monkeypatch, tmp_path):
+    """If fan-in compaction yields zero working files, task returns cleanly."""
+    out_dir = tmp_path / "out"
+    bucket_dir = tmp_path / "bucket_nowork"
+    bucket_dir.mkdir(parents=True, exist_ok=True)
+    for idx in range(3):
+        pd.DataFrame({"__ipix__": [1], "VAL": [float(idx)], "RA": [0.0], "DEC": [0.0]}).to_parquet(
+            bucket_dir / f"part_{idx:08d}.parquet",
+            index=False,
+        )
+
+    monkeypatch.setattr(selection_slicing, "_resolve_merge_max_open_files", lambda: 2)
+    monkeypatch.setattr(selection_slicing, "_compact_bucket_fragments", lambda *args, **kwargs: ([], 1))
+
+    stats = selection_slicing._process_bucket_dir(
+        bucket_dir=bucket_dir,
+        depth=3,
+        out_dir=out_dir,
+        header_line="RA\tDEC\tVAL\n",
+        counts=np.ones(hp.nside2npix(8), dtype="int64"),
+        sort_cols=["VAL", "RA", "DEC"],
+        ascending=[False, True, True],
+    )
+    assert stats.rounds == 1
+    assert stats.files_out == 0
+    assert stats.selected_len == 0
+
+
+def test_stream_write_depth_zero_rows_and_missing_tie_column(monkeypatch, tmp_path, log_capture):
+    """Streaming writer returns early on empty input and validates tie column schema."""
+    _, log_fn = log_capture
+    counts = np.ones(hp.nside2npix(8), dtype="int64")
+    ddf_empty = dd.from_pandas(pd.DataFrame({"RA": [], "DEC": [], "VAL": []}), npartitions=1)
+    assert selection_slicing._stream_write_depth_without_allsky(
+        depth_ddf=ddf_empty,
+        depth=3,
+        value_col="VAL",
+        order_desc=False,
+        tie_col=None,
+        ra_col="RA",
+        dec_col="DEC",
+        out_dir=tmp_path,
+        header_line="RA\tDEC\tVAL\n",
+        counts=counts,
+        log_fn=log_fn,
+    ) == (0, 0, 0)
+
+    ddf = dd.from_pandas(pd.DataFrame({"RA": [1.0], "DEC": [1.0], "VAL": [1.0]}), npartitions=1)
+    with pytest.raises(KeyError, match="tie_column 'TIE'"):
+        selection_slicing._stream_write_depth_without_allsky(
+            depth_ddf=ddf,
+            depth=3,
+            value_col="VAL",
+            order_desc=False,
+            tie_col="TIE",
+            ra_col="RA",
+            dec_col="DEC",
+            out_dir=tmp_path,
+            header_line="RA\tDEC\tVAL\n",
+            counts=counts,
+            log_fn=log_fn,
+        )
+
+
+def test_stream_write_depth_scatter_fallback_and_fanin_log(monkeypatch, tmp_path, log_capture):
+    """Scatter failures fall back to local payload and fan-in reduction is logged."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [1.0, 1.0], "DEC": [1.0, 1.0], "VAL": [0.2, 0.8]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    counts = np.ones(hp.nside2npix(8), dtype="int64")
+
+    class _Future:
+        def __init__(self, value):
+            self.value = value
+
+    class _FakeClient:
+        def scheduler_info(self):
+            return {"workers": {"w1": {}}}
+
+        def scatter(self, value, broadcast=False):
+            raise RuntimeError("scatter failed")
+
+        def submit(self, fn, *args, **kwargs):
+            kwargs = dict(kwargs)
+            kwargs.pop("pure", None)
+            return _Future(fn(*args, **kwargs))
+
+        def gather(self, futures):
+            return [f.value for f in futures]
+
+    monkeypatch.setattr(selection_slicing, "_get_active_dask_client", lambda: _FakeClient())
+    monkeypatch.setattr(
+        selection_slicing,
+        "_process_bucket_dir",
+        lambda **kwargs: selection_slicing._BucketWriteStats(
+            selected_len=2,
+            tiles_written=1,
+            rows_written=2,
+            files_in=10,
+            files_out=2,
+            rounds=1,
+            compacted=True,
+        ),
+    )
+
+    selected_len, tiles_written, rows_written = selection_slicing._stream_write_depth_without_allsky(
+        depth_ddf=ddf,
+        depth=3,
+        value_col="VAL",
+        order_desc=False,
+        tie_col=None,
+        ra_col="RA",
+        dec_col="DEC",
+        out_dir=tmp_path,
+        header_line="RA\tDEC\tVAL\n",
+        counts=counts,
+        log_fn=log_fn,
+    )
+    assert selected_len == 2
+    assert tiles_written == 1
+    assert rows_written == 2
+    assert any("[stream-fan-in]" in msg for msg in logs)
+
+
+def test_select_by_value_slices_stream_zero_selected_logs_skip(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """Stream branch logs and skips depth when selection is empty."""
+    logs, log_fn = log_capture
+    ddf = dd.from_pandas(pd.DataFrame({"RA": [0.0], "DEC": [0.0], "VAL": [0.2]}), npartitions=1)
+    densmaps = {4: np.ones(hp.nside2npix(16), dtype="int64")}
+    monkeypatch.setattr(selection_slicing, "_stream_write_depth_without_allsky", lambda **kwargs: (0, 0, 0))
+
+    summary = selection_slicing.select_by_value_slices(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        depths_sel=[4],
+        keep_cols=["RA", "DEC", "VAL"],
+        ra_col="RA",
+        dec_col="DEC",
+        value_col="VAL",
+        order_desc=False,
+        label="val",
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+        level_edges=np.array([0.0, 1.0], dtype="float64"),
+    )
+    assert summary == {"depth_totals": {}, "depth_tiles": {}}
+    assert any("no rows in slice" in msg for msg in logs)
 
 
 def test_select_by_value_slices_histogram_path(monkeypatch, tmp_path, diag_ctx, log_capture):

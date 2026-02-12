@@ -277,6 +277,73 @@ def test_prepare_ids_unique_lsdb(monkeypatch, diag_ctx, log_capture):
     assert result["__sdh_id__"].nunique() == len(result)
 
 
+def test_prepare_ids_unique_lsdb_parses_pixel_from_string(monkeypatch, diag_ctx, log_capture):
+    """LSDB path parses pixel metadata from string form when attrs are absent."""
+    _, log_fn = log_capture
+
+    class FakePixelString:
+        def __str__(self) -> str:
+            return "Order: 3, Pixel: 7"
+
+    class FakeLsdbCatalog:
+        def __init__(self, parts: list[pd.DataFrame], pixels: list[FakePixelString]) -> None:
+            self._parts = parts
+            self._pixels = pixels
+
+        def map_partitions(self, func, *args, meta=None, include_pixel=False, **kwargs):
+            out_parts = []
+            for pdf, pix in zip(self._parts, self._pixels, strict=True):
+                if include_pixel:
+                    out = func(pdf.copy(), pix, *args, **kwargs)
+                else:
+                    out = func(pdf.copy(), *args, **kwargs)
+                out_parts.append(out)
+            return FakeLsdbCatalog(out_parts, self._pixels)
+
+        def compute(self):
+            return pd.concat(self._parts, ignore_index=True)
+
+    monkeypatch.setattr(sdh_pipeline, "LsdbCatalog", FakeLsdbCatalog)
+    parts = [pd.DataFrame({"__score__": [0.1, 0.2], "RA": [0.0, 1.0], "DEC": [0.0, 1.0]})]
+    cat = FakeLsdbCatalog(parts, [FakePixelString()])
+    params = SimpleNamespace(score_min=0.0, score_max=1.0, sentinel=None)
+
+    out = sdh_pipeline.prepare_score_density_hybrid(cat, _cfg(), diag_ctx, log_fn, params).compute()
+    assert "__sdh_id__" in out.columns
+    assert out["__sdh_id__"].nunique() == len(out)
+
+
+def test_prepare_lsdb_raises_when_pixel_metadata_missing(monkeypatch, diag_ctx, log_capture):
+    """Missing LSDB pixel metadata raises in non-empty partitions."""
+    _, log_fn = log_capture
+
+    class FakePixelBad:
+        def __str__(self) -> str:
+            return "pixel=unknown"
+
+    class FakeLsdbCatalog:
+        def __init__(self, parts: list[pd.DataFrame], pixels: list[FakePixelBad]) -> None:
+            self._parts = parts
+            self._pixels = pixels
+
+        def map_partitions(self, func, *args, meta=None, include_pixel=False, **kwargs):
+            out_parts = []
+            for pdf, pix in zip(self._parts, self._pixels, strict=True):
+                if include_pixel:
+                    out = func(pdf.copy(), pix, *args, **kwargs)
+                else:
+                    out = func(pdf.copy(), *args, **kwargs)
+                out_parts.append(out)
+            return FakeLsdbCatalog(out_parts, self._pixels)
+
+    monkeypatch.setattr(sdh_pipeline, "LsdbCatalog", FakeLsdbCatalog)
+    cat = FakeLsdbCatalog([pd.DataFrame({"__score__": [0.1], "RA": [0.0], "DEC": [0.0]})], [FakePixelBad()])
+    params = SimpleNamespace(score_min=0.0, score_max=1.0, sentinel=None)
+
+    with pytest.raises(RuntimeError, match="missing LSDB pixel metadata"):
+        sdh_pipeline.prepare_score_density_hybrid(cat, _cfg(), diag_ctx, log_fn, params)
+
+
 def test_attach_unique_id_and_drop_selected_ids():
     """Direct helper coverage for id attachment and dropping selected ids."""
     pdf = pd.DataFrame({"a": [1, 2, 3]})
@@ -603,3 +670,74 @@ def test_run_selection_stage1_and_stage2(monkeypatch, diag_ctx, log_capture):
     assert captured_writes  # stage1 wrote something
     assert captured_writes[0]["order_desc"] is True
     assert captured_stage2 and captured_stage2[0]["depths_sel"] == [4]
+
+
+def test_run_selection_merges_stage2_depth_stats(monkeypatch, diag_ctx, log_capture):
+    """Stage2 depth totals/tiles are merged into the final returned summary."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [0.0, 10.0],
+            "DEC": [0.0, 5.0],
+            "__score__": [1.0, 2.0],
+            "__sdh_id__": [10, 11],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(level_limit=4, sdh_k_1=0.5)
+    params = SimpleNamespace(score_min=0.0, score_max=3.0, sentinel=None)
+    densmaps = {
+        1: np.ones(hp.nside2npix(2), dtype="int64"),
+        2: np.ones(hp.nside2npix(4), dtype="int64"),
+        3: np.ones(hp.nside2npix(8), dtype="int64"),
+        4: np.ones(hp.nside2npix(16), dtype="int64"),
+    }
+
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.compute_score_histogram_ddf",
+        lambda *_, **__: (np.array([1], dtype="int64"), np.array([0.0, 1.0]), 2),
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.assign_level_edges",
+        lambda **kwargs: (np.array([0.0, 1.0, 2.0, 3.0, 4.0]), np.array([1.0, 0.0, 0.0, 0.0])),
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline._targets_stage1_by_depth",
+        lambda **kwargs: {1: 1, 2: 0, 3: 0},
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.targets_per_tile",
+        lambda counts, depth_total, bias: {0: depth_total},
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.add_ipix_column",
+        lambda pdf, depth, ra_col, dec_col: pdf.assign(__ipix__=0),
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.reduce_topk_by_group_dask",
+        lambda cand_ddf, **_: cand_ddf,
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.write_tiles_with_allsky",
+        lambda **kwargs: ({0: len(kwargs["selected"])}, None),
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.select_by_score_slices",
+        lambda **kwargs: {"depth_totals": {"4": 7}, "depth_tiles": {"4": 3}},
+    )
+
+    summary = sdh_pipeline.run_score_density_hybrid_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC", "__score__"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir="/tmp",
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+        params=params,
+    )
+
+    assert summary["depth_totals"]["4"] == 7
+    assert summary["depth_tiles"]["4"] == 3

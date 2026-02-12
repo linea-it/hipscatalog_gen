@@ -516,6 +516,73 @@ def test_compute_and_write_densmaps(monkeypatch, tmp_path, diag_ctx):
     assert calls  # write_densmap_fits called
 
 
+def test_compute_and_write_densmaps_logs_derive_path(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """When finest npix matches expected shape, lower depths are derived and logged."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    level_limit = 2
+    finest_npix = int(12 * (4**level_limit))
+
+    monkeypatch.setattr(
+        pipeline_common,
+        "densmap_for_depth_delayed",
+        lambda *args, **kwargs: pipeline_common.dask_delayed(lambda: np.ones(finest_npix, dtype="int64"))(),
+    )
+    written_depths: list[int] = []
+    monkeypatch.setattr(
+        pipeline_common,
+        "write_densmap_fits",
+        lambda _out_dir, depth, _dens: written_depths.append(int(depth)),
+    )
+
+    densmaps = pipeline_common.compute_and_write_densmaps(
+        ddf,
+        "RA",
+        "DEC",
+        level_limit=level_limit,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    assert sorted(densmaps.keys()) == [0, 1, 2]
+    assert written_depths == [0, 1, 2]
+    assert any("Computing densmap_o2" in msg for msg in logs)
+    assert any("Deriving densmap_o1" in msg for msg in logs)
+    assert any("Derived densmap_o0" in msg for msg in logs)
+    assert any("Wrote densmap_o2" in msg for msg in logs)
+
+
+def test_compute_and_write_densmaps_logs_fallback_path(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """Unexpected finest size triggers per-depth fallback computation with logs."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+
+    def fake_densmap(*_args, **kwargs):
+        depth = int(kwargs["depth"])
+        return pipeline_common.dask_delayed(lambda: np.full(depth + 1, 1, dtype="int64"))()
+
+    monkeypatch.setattr(pipeline_common, "densmap_for_depth_delayed", fake_densmap)
+    monkeypatch.setattr(pipeline_common, "write_densmap_fits", lambda *args, **kwargs: None)
+
+    densmaps = pipeline_common.compute_and_write_densmaps(
+        ddf,
+        "RA",
+        "DEC",
+        level_limit=1,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    assert sorted(densmaps.keys()) == [0, 1]
+    assert any("falling back to per-depth source computation" in msg for msg in logs)
+    assert any("Computing densmap_o0" in msg for msg in logs)
+    assert any("Computed densmap_o0" in msg for msg in logs)
+
+
 def test_write_counts_summaries_requires_precomputed_stats(tmp_path, log_capture):
     """write_counts_summaries fails fast when precomputed stats are missing."""
     _, log_fn = log_capture
@@ -558,6 +625,45 @@ def test_write_counts_summaries_rejects_invalid_depth(tmp_path, log_capture):
             input_total=10,
             log_fn=log_fn,
             precomputed_depth_totals={"9": 1},
+        )
+
+
+def test_write_counts_summaries_rejects_invalid_depth_key(tmp_path, log_capture):
+    """Non-integer depth keys are rejected in precomputed selection stats."""
+    _, log_fn = log_capture
+    with pytest.raises(RuntimeError, match="Invalid depth key"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=4,
+            input_total=10,
+            log_fn=log_fn,
+            precomputed_depth_totals={"depth-x": 1},
+        )
+
+
+def test_write_counts_summaries_rejects_invalid_depth_total(tmp_path, log_capture):
+    """Depth totals must be integer-like values."""
+    _, log_fn = log_capture
+    with pytest.raises(RuntimeError, match="Invalid depth total"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=4,
+            input_total=10,
+            log_fn=log_fn,
+            precomputed_depth_totals={"1": "bad"},
+        )
+
+
+def test_write_counts_summaries_rejects_negative_depth_total(tmp_path, log_capture):
+    """Negative depth totals are rejected to avoid telemetry corruption."""
+    _, log_fn = log_capture
+    with pytest.raises(RuntimeError, match="Negative depth total"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=4,
+            input_total=10,
+            log_fn=log_fn,
+            precomputed_depth_totals={"1": -3},
         )
 
 

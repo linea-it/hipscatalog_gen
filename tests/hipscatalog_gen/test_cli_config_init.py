@@ -405,3 +405,41 @@ def test_cli_serve_dispatch_custom_flags(monkeypatch):
     )
     cli.main(["serve", "--out", "/tmp/out", "--host", "127.0.0.2", "--port", "9001", "--no-browser"])
     assert calls == [{"out_dir": "/tmp/out", "host": "127.0.0.2", "port": 9001, "open_browser": False}]
+
+
+def test_serve_output_dir_rejects_missing_path(tmp_path):
+    """_serve_output_dir requires an existing directory."""
+    missing = tmp_path / "does_not_exist"
+    with pytest.raises(ValueError, match="existing directory"):
+        cli._serve_output_dir(str(missing), open_browser=False)
+
+
+def test_serve_output_dir_keyboard_interrupt_closes_server(monkeypatch, tmp_path, capsys):
+    """Server helper closes HTTP server on Ctrl+C and prints status lines."""
+    created: list[Any] = []
+
+    class _FakeHTTPServer:
+        def __init__(self, addr, handler):
+            self.addr = addr
+            self.handler = handler
+            self.closed = False
+            created.append(self)
+
+        def serve_forever(self):
+            raise KeyboardInterrupt
+
+        def server_close(self):
+            self.closed = True
+
+    monkeypatch.setattr(cli, "ThreadingHTTPServer", _FakeHTTPServer)
+    monkeypatch.setattr(
+        cli.webbrowser, "open", lambda _url: (_ for _ in ()).throw(RuntimeError("no-browser"))
+    )
+
+    cli._serve_output_dir(str(tmp_path), host="127.0.0.1", port=8765, open_browser=True)
+
+    out = capsys.readouterr().out
+    assert "Serving" in out
+    assert "Open: http://127.0.0.1:8765/index.html" in out
+    assert "Server stopped." in out
+    assert created and created[0].closed is True
