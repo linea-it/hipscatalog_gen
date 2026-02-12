@@ -115,7 +115,7 @@
 <h1>hipscatalog_gen.pipeline.common.compute_and_write_densmaps<a class="headerlink" href="#hipscatalog-gen-pipeline-common-compute-and-write-densmaps" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.compute_and_write_densmaps">
-<span class="sig-name descname"><span class="pre">compute_and_write_densmaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_sel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/pipeline/common.html#compute_and_write_densmaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.compute_and_write_densmaps" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute_and_write_densmaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_sel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/pipeline/common.html#compute_and_write_densmaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.compute_and_write_densmaps" title="Link to this definition"></a></dt>
 <dd><p>Compute density maps for all depths and write them to disk.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -126,6 +126,7 @@
 <li><p><strong>level_limit</strong> (<em>int</em>) – Maximum HiPS order to compute.</p></li>
 <li><p><strong>out_dir</strong> (<em>Path</em>) – Output directory where FITS files are written.</p></li>
 <li><p><strong>diag_ctx</strong> – Diagnostics context factory (label -&gt; context manager).</p></li>
+<li><p><strong>log_fn</strong> – Optional logging callback for progress updates.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

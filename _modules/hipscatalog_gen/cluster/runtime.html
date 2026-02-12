@@ -123,8 +123,6 @@
 
     <span class="n">cluster</span><span class="p">:</span> <span class="n">Any</span>
     <span class="n">client</span><span class="p">:</span> <span class="n">Client</span>
-    <span class="n">persist_ddfs</span><span class="p">:</span> <span class="nb">bool</span>
-    <span class="n">avoid_computes</span><span class="p">:</span> <span class="nb">bool</span>
     <span class="n">diagnostics_mode</span><span class="p">:</span> <span class="nb">str</span></div>
 
 
@@ -165,10 +163,24 @@
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;dask-jobqueue is required for mode=&#39;slurm&#39;&quot;</span><span class="p">)</span>
         <span class="n">sl</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">slurm</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="n">job_directives</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;job_extra_directives&quot;</span><span class="p">,</span> <span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;job_extra&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+        <span class="n">queue</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;queue&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu_dev&quot;</span><span class="p">)</span>
+        <span class="n">account</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;account&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">log_fn</span><span class="p">(</span>
+            <span class="s2">&quot;[cluster] Starting Dask SLURM cluster: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;n_workers=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">n_workers</span><span class="si">}</span><span class="s2"> threads_per_worker=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">threads_per_worker</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;memory_per_worker=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">memory_per_worker</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">log_fn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;[cluster] SLURM directives: queue=</span><span class="si">{</span><span class="n">queue</span><span class="si">!r}</span><span class="s2"> account=</span><span class="si">{</span><span class="n">account</span><span class="si">!r}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;job_extra_directives=</span><span class="si">{</span><span class="n">job_directives</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">cluster</span> <span class="o">=</span> <span class="n">SLURMCluster</span><span class="p">(</span>
-            <span class="n">queue</span><span class="o">=</span><span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;queue&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu_dev&quot;</span><span class="p">),</span>
-            <span class="n">account</span><span class="o">=</span><span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;account&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">queue</span><span class="o">=</span><span class="n">queue</span><span class="p">,</span>
+            <span class="n">account</span><span class="o">=</span><span class="n">account</span><span class="p">,</span>
             <span class="n">cores</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">threads_per_worker</span><span class="p">,</span>
             <span class="n">processes</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">memory</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">memory_per_worker</span><span class="p">,</span>
@@ -177,6 +189,12 @@
         <span class="n">cluster</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">n_workers</span><span class="p">)</span>
         <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="n">log_fn</span><span class="p">(</span>
+            <span class="s2">&quot;[cluster] Starting Dask local cluster: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;n_workers=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">n_workers</span><span class="si">}</span><span class="s2"> threads_per_worker=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">threads_per_worker</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;memory_per_worker=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">memory_per_worker</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">cluster</span> <span class="o">=</span> <span class="n">LocalCluster</span><span class="p">(</span>
             <span class="n">n_workers</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">n_workers</span><span class="p">,</span>
             <span class="n">threads_per_worker</span><span class="o">=</span><span class="n">cfg</span><span class="o">.</span><span class="n">threads_per_worker</span><span class="p">,</span>
@@ -189,25 +207,11 @@
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Memory vs. compute policy</span>
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="n">persist_ddfs</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="s2">&quot;persist_ddfs&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
-    <span class="n">avoid_computes</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="s2">&quot;avoid_computes_wherever_possible&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="n">persist_ddfs</span><span class="p">:</span>
-        <span class="n">log_fn</span><span class="p">(</span><span class="s2">&quot;[cluster] persist_ddfs=True → will persist large intermediates in memory&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">log_fn</span><span class="p">(</span><span class="s2">&quot;[cluster] persist_ddfs=False (lower memory consumption)&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">avoid_computes</span><span class="p">:</span>
-        <span class="n">log_fn</span><span class="p">(</span>
-            <span class="s2">&quot;[cluster] avoid_computes_wherever_possible=True → will try to avoid large .compute() calls &quot;</span>
-            <span class="s2">&quot;whenever possible (using more Dask-native operations) (lower memory consumption)&quot;</span><span class="p">,</span>
-            <span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">log_fn</span><span class="p">(</span>
-            <span class="s2">&quot;[cluster] avoid_computes_wherever_possible=False → keep standard behaviour for computes.&quot;</span><span class="p">,</span>
-            <span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">log_fn</span><span class="p">(</span><span class="s2">&quot;[cluster] persist_ddfs=False (fixed policy)&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">log_fn</span><span class="p">(</span>
+        <span class="s2">&quot;[cluster] avoid_computes_wherever_possible=True (fixed policy)&quot;</span><span class="p">,</span>
+        <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">diagnostics_mode</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="s2">&quot;diagnostics_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;per_step&quot;</span><span class="p">)</span>
 
@@ -231,8 +235,6 @@
     <span class="n">runtime</span> <span class="o">=</span> <span class="n">ClusterRuntime</span><span class="p">(</span>
         <span class="n">cluster</span><span class="o">=</span><span class="n">cluster</span><span class="p">,</span>
         <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-        <span class="n">persist_ddfs</span><span class="o">=</span><span class="n">persist_ddfs</span><span class="p">,</span>
-        <span class="n">avoid_computes</span><span class="o">=</span><span class="n">avoid_computes</span><span class="p">,</span>
         <span class="n">diagnostics_mode</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">diagnostics_mode</span><span class="p">),</span>
     <span class="p">)</span>
 

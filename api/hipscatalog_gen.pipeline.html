@@ -112,7 +112,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.compute_and_write_densmaps">
-<span class="sig-name descname"><span class="pre">compute_and_write_densmaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_sel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#compute_and_write_densmaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.compute_and_write_densmaps" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute_and_write_densmaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_sel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#compute_and_write_densmaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.compute_and_write_densmaps" title="Link to this definition"></a></dt>
 <dd><p>Compute density maps for all depths and write them to disk.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -123,6 +123,7 @@
 <li><p><strong>level_limit</strong> (<em>int</em>) – Maximum HiPS order to compute.</p></li>
 <li><p><strong>out_dir</strong> (<em>Path</em>) – Output directory where FITS files are written.</p></li>
 <li><p><strong>diag_ctx</strong> – Diagnostics context factory (label -&gt; context manager).</p></li>
+<li><p><strong>log_fn</strong> – Optional logging callback for progress updates.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -158,14 +159,15 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.write_counts_summaries">
-<span class="sig-name descname"><span class="pre">write_counts_summaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#write_counts_summaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_counts_summaries" title="Link to this definition"></a></dt>
-<dd><p>Compute counts for later cross-checks and return (total written, counts dict).</p>
+<span class="sig-name descname"><span class="pre">write_counts_summaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precomputed_depth_totals</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/common.html#write_counts_summaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_counts_summaries" title="Link to this definition"></a></dt>
+<dd><p>Build output counts from selection-stage precomputed depth totals.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
 <li><p><strong>level_limit</strong> (<em>int</em>)</p></li>
 <li><p><strong>input_total</strong> (<em>int</em>)</p></li>
+<li><p><strong>precomputed_depth_totals</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -375,7 +377,7 @@ run_pipeline(cfg)</p>
 <li><p><strong>validate_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>Any</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p></li>
 <li><p><strong>normalize_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>Any</em><em>, </em><em>Any</em><em>]</em><em>]</em>)</p></li>
 <li><p><strong>prepare_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
-<li><p><strong>run_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>None</em><em>]</em>)</p></li>
+<li><p><strong>run_fn</strong> (<em>Callable</em><em>[</em><em>[</em><em>...</em><em>]</em><em>, </em><em>Any</em><em>]</em>)</p></li>
 <li><p><strong>description</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
@@ -402,7 +404,7 @@ run_pipeline(cfg)</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.modes.SelectionMode.run_fn">
-<span class="sig-name descname"><span class="pre">run_fn</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.SelectionMode.run_fn" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">run_fn</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#hipscatalog_gen.pipeline.modes.SelectionMode.run_fn" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">

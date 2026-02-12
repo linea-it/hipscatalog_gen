@@ -218,8 +218,10 @@ threads_per_worker       [optional, default=1] int
 memory_per_worker        [optional, default=&#34;2GB&#34;] str
 slurm                    [optional, default=None] dict
 low_memory_mode          [optional, default=True] bool
-    True  → persist_ddfs=False, avoid_computes_wherever_possible=True
-    False → persist_ddfs=True, avoid_computes_wherever_possible=False
+    DEPRECATED: kept only for backward compatibility and has no effect.
+    The pipeline now always uses:
+      - no DataFrame persistence of large intermediates
+      - avoiding early large computes whenever possible
 diagnostics_mode         [optional, default=&#34;global&#34;]
     &#34;per_step&#34; | &#34;global&#34; | &#34;off&#34;.
 

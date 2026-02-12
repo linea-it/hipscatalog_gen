@@ -110,6 +110,9 @@
 <dt class="sig sig-object py" id="hipscatalog_gen.selection.reduce_topk_by_group_dask">
 <span class="sig-name descname"><span class="pre">reduce_topk_by_group_dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_like</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_per_group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tie_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/selection/common.html#reduce_topk_by_group_dask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.selection.reduce_topk_by_group_dask" title="Link to this definition"></a></dt>
 <dd><p>Keep up to k_per_group rows per group, sorted by score then RA/DEC.</p>
+<p>Uses a two-stage exact strategy:
+1) per-partition local top-k pruning (no global shuffle),
+2) global top-k by group on the pruned collection.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

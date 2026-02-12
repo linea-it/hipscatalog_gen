@@ -81,6 +81,8 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">suppress</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
@@ -125,7 +127,13 @@
     <span class="p">)</span>
     <span class="n">sel_mode</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;selection_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">base</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Config -&gt; lM=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="si">}</span><span class="s2"> selection_mode=</span><span class="si">{</span><span class="n">sel_mode</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">log_fn</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+    <span class="n">log_fn</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="s2">&quot;low_memory_mode&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">log_fn</span><span class="p">(</span>
+            <span class="s2">&quot;[config] cluster.low_memory_mode is deprecated and has no effect. &quot;</span>
+            <span class="s2">&quot;Using fixed policy: persist_ddfs=False and avoid_computes_wherever_possible=True.&quot;</span><span class="p">,</span>
+            <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 
@@ -277,6 +285,7 @@
     <span class="n">level_limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
     <span class="n">diag_ctx</span><span class="p">,</span>
+    <span class="n">log_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute density maps for all depths and write them to disk.</span>
 
@@ -287,21 +296,94 @@
 <span class="sd">        level_limit: Maximum HiPS order to compute.</span>
 <span class="sd">        out_dir: Output directory where FITS files are written.</span>
 <span class="sd">        diag_ctx: Diagnostics context factory (label -&gt; context manager).</span>
+<span class="sd">        log_fn: Optional logging callback for progress updates.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Mapping of depth -&gt; numpy array with counts per HEALPix pixel.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_npix_for_depth</span><span class="p">(</span><span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="mi">12</span> <span class="o">*</span> <span class="p">(</span><span class="mi">4</span> <span class="o">**</span> <span class="nb">int</span><span class="p">(</span><span class="n">depth</span><span class="p">)))</span>
+
     <span class="n">depths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">level_limit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">densmaps</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-
-    <span class="n">delayed_maps</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="n">densmap_for_depth_delayed</span><span class="p">(</span><span class="n">ddf_sel</span><span class="p">,</span> <span class="n">ra_col</span><span class="p">,</span> <span class="n">dec_col</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">depths</span><span class="p">}</span>
+    <span class="n">finest</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">level_limit</span><span class="p">)</span>
 
     <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="s2">&quot;dask_densmaps&quot;</span><span class="p">):</span>
-        <span class="n">computed</span> <span class="o">=</span> <span class="n">dask_compute</span><span class="p">(</span><span class="o">*</span><span class="n">delayed_maps</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="c1"># Single source pass on the finest depth.</span>
+        <span class="k">if</span> <span class="n">log_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log_fn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[densmaps] Computing densmap_o</span><span class="si">{</span><span class="n">finest</span><span class="si">}</span><span class="s2">.fits (single source pass)...&quot;</span><span class="p">,</span>
+                <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">t_finest</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">dens_finest</span> <span class="o">=</span> <span class="n">dask_compute</span><span class="p">(</span><span class="n">densmap_for_depth_delayed</span><span class="p">(</span><span class="n">ddf_sel</span><span class="p">,</span> <span class="n">ra_col</span><span class="p">,</span> <span class="n">dec_col</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">finest</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">densmaps</span><span class="p">[</span><span class="n">finest</span><span class="p">]</span> <span class="o">=</span> <span class="n">dens_finest</span>
+        <span class="k">if</span> <span class="n">log_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log_fn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;[densmaps] Computed densmap_o</span><span class="si">{</span><span class="n">finest</span><span class="si">}</span><span class="s2">.fits in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t_finest</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">dens</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">delayed_maps</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">computed</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="n">densmaps</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">dens</span>
-        <span class="n">write_densmap_fits</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">dens</span><span class="p">)</span>
+        <span class="c1"># If the finest vector shape matches HEALPix expectations, derive lower</span>
+        <span class="c1"># depths by aggregating 4 children per parent in NESTED indexing.</span>
+        <span class="n">expected_finest_npix</span> <span class="o">=</span> <span class="n">_npix_for_depth</span><span class="p">(</span><span class="n">finest</span><span class="p">)</span>
+        <span class="n">can_derive</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">dens_finest</span><span class="p">,</span> <span class="s2">&quot;size&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">==</span> <span class="n">expected_finest_npix</span>
+
+        <span class="k">if</span> <span class="n">can_derive</span><span class="p">:</span>
+            <span class="n">child_counts</span> <span class="o">=</span> <span class="n">dens_finest</span>
+            <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">finest</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">log_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">log_fn</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;[densmaps] Deriving densmap_o</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">.fits from densmap_o</span><span class="si">{</span><span class="n">depth</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.fits...&quot;</span><span class="p">,</span>
+                        <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="n">t_der</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="n">parent_counts</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">child_counts</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent_counts</span>
+                <span class="n">child_counts</span> <span class="o">=</span> <span class="n">parent_counts</span>
+                <span class="k">if</span> <span class="n">log_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">log_fn</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;[densmaps] Derived densmap_o</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">.fits in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t_der</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Defensive fallback for non-standard testing doubles.</span>
+            <span class="k">if</span> <span class="n">log_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">log_fn</span><span class="p">(</span>
+                    <span class="s2">&quot;[densmaps] Finest densmap size does not match expected HEALPix npix; &quot;</span>
+                    <span class="s2">&quot;falling back to per-depth source computation.&quot;</span><span class="p">,</span>
+                    <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="n">depths</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">depth</span> <span class="o">==</span> <span class="n">finest</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">log_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">log_fn</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;[densmaps] Computing densmap_o</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">.fits (fallback source pass)...&quot;</span><span class="p">,</span>
+                        <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="n">t_depth</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">]</span> <span class="o">=</span> <span class="n">dask_compute</span><span class="p">(</span>
+                    <span class="n">densmap_for_depth_delayed</span><span class="p">(</span><span class="n">ddf_sel</span><span class="p">,</span> <span class="n">ra_col</span><span class="p">,</span> <span class="n">dec_col</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">)</span>
+                <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">log_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">log_fn</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;[densmaps] Computed densmap_o</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">.fits in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t_depth</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># Write outputs in increasing depth order for deterministic layout/logs.</span>
+        <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="n">depths</span><span class="p">:</span>
+            <span class="n">t_write</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">write_densmap_fits</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">log_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">log_fn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;[densmaps] Wrote densmap_o</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">.fits in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t_write</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">densmaps</span></div>
 
@@ -469,11 +551,6 @@
         <span class="p">(</span><span class="s2">&quot;cluster.threads_per_worker&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="s2">&quot;threads_per_worker&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
         <span class="p">(</span><span class="s2">&quot;cluster.memory_per_worker&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="s2">&quot;memory_per_worker&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
         <span class="p">(</span><span class="s2">&quot;cluster.low_memory_mode&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="s2">&quot;low_memory_mode&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
-        <span class="p">(</span><span class="s2">&quot;cluster.persist_ddfs&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="s2">&quot;persist_ddfs&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
-        <span class="p">(</span>
-            <span class="s2">&quot;cluster.avoid_computes_wherever_possible&quot;</span><span class="p">,</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="s2">&quot;avoid_computes_wherever_possible&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="p">),</span>
         <span class="p">(</span><span class="s2">&quot;cluster.diagnostics_mode&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="s2">&quot;diagnostics_mode&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
         <span class="p">(</span><span class="s2">&quot;cluster.slurm&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="s2">&quot;slurm&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
         <span class="p">(</span><span class="s2">&quot;# output&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
@@ -581,51 +658,50 @@
 
 <div class="viewcode-block" id="write_counts_summaries">
 <a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.common.write_counts_summaries.html#hipscatalog_gen.pipeline.common.write_counts_summaries">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_counts_summaries</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">level_limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">input_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">log_fn</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute counts for later cross-checks and return (total written, counts dict).&quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_count_rows</span><span class="p">(</span><span class="n">tile_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count rows for one tile file (ignoring header lines).&quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="n">tile_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="c1"># Skip completeness + header lines.</span>
-            <span class="nb">next</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="nb">next</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_counts_summaries</span><span class="p">(</span>
+    <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">level_limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">input_total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">log_fn</span><span class="p">,</span>
+    <span class="n">precomputed_depth_totals</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build output counts from selection-stage precomputed depth totals.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">precomputed_depth_totals</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;Missing precomputed selection write stats; final TSV recount fallback is disabled.&quot;</span>
+        <span class="p">)</span>
 
     <span class="n">depth_totals</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">depth_counts</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">total_all_depths</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">depth_key</span><span class="p">,</span> <span class="n">depth_total</span> <span class="ow">in</span> <span class="n">precomputed_depth_totals</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">d</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">depth_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid depth key in precomputed stats: </span><span class="si">{</span><span class="n">depth_key</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">level_limit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
-        <span class="n">norder_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;Norder</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">norder_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">continue</span>
+        <span class="n">v</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">depth_total</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid depth total in precomputed stats: depth=</span><span class="si">{</span><span class="n">d</span><span class="si">!r}</span><span class="s2"> value=</span><span class="si">{</span><span class="n">depth_total</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Negative depth total in precomputed stats: depth=</span><span class="si">{</span><span class="n">d</span><span class="si">!r}</span><span class="s2"> value=</span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">level_limit</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Depth out of bounds in precomputed stats: depth=</span><span class="si">{</span><span class="n">d</span><span class="si">!r}</span><span class="s2">, level_limit=</span><span class="si">{</span><span class="n">level_limit</span><span class="si">!r}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
-        <span class="n">counts_depth</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">tile_path</span> <span class="ow">in</span> <span class="n">norder_dir</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;Npix*.tsv&quot;</span><span class="p">):</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">tile_path</span><span class="o">.</span><span class="n">name</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Npix&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.tsv&quot;</span><span class="p">):</span>  <span class="c1"># pragma: no cover - rglob filters</span>
-                <span class="k">continue</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">ipix</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;Npix&quot;</span><span class="p">)</span> <span class="p">:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;.tsv&quot;</span><span class="p">)])</span>
-            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">counts_depth</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">ipix</span><span class="p">)]</span> <span class="o">=</span> <span class="n">_count_rows</span><span class="p">(</span><span class="n">tile_path</span><span class="p">)</span>
+        <span class="n">depth_totals</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">counts_depth</span><span class="p">:</span>
-            <span class="n">depth_total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">counts_depth</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-            <span class="n">depth_totals</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span> <span class="o">=</span> <span class="n">depth_total</span>
-            <span class="n">depth_counts</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span> <span class="o">=</span> <span class="n">counts_depth</span>
-            <span class="n">total_all_depths</span> <span class="o">+=</span> <span class="n">depth_total</span>
-
+    <span class="n">total_all_depths</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">depth_totals</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
     <span class="n">output_counts</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_all_depths</span><span class="p">),</span>
         <span class="s2">&quot;depth_totals&quot;</span><span class="p">:</span> <span class="n">depth_totals</span><span class="p">,</span>
-        <span class="s2">&quot;depths&quot;</span><span class="p">:</span> <span class="n">depth_counts</span><span class="p">,</span>
+        <span class="s2">&quot;depths&quot;</span><span class="p">:</span> <span class="p">{},</span>
     <span class="p">}</span>
     <span class="n">input_counts</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">input_total</span><span class="p">)}</span>
 
-    <span class="n">log_fn</span><span class="p">(</span><span class="s2">&quot;[counts] Computed output/input counts.&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">log_fn</span><span class="p">(</span><span class="s2">&quot;[counts] Using precomputed output counts from selection write stage.&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">log_fn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[output] Total rows written: </span><span class="si">{</span><span class="n">total_all_depths</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_all_depths</span><span class="p">),</span> <span class="p">{</span><span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="n">output_counts</span><span class="p">,</span> <span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="n">input_counts</span><span class="p">}</span></div>

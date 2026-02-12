@@ -101,7 +101,7 @@
 <h1>hipscatalog_gen.cluster.runtime.ClusterRuntime<a class="headerlink" href="#hipscatalog-gen-cluster-runtime-clusterruntime" title="Link to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="hipscatalog_gen.cluster.runtime.ClusterRuntime">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ClusterRuntime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cluster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics_mode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/cluster/runtime.html#ClusterRuntime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ClusterRuntime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cluster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics_mode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/cluster/runtime.html#ClusterRuntime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Runtime handles for the Dask cluster.</p>
 <dl class="field-list simple">
@@ -109,22 +109,18 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cluster</strong> (<em>Any</em>)</p></li>
 <li><p><strong>client</strong> (<em>Client</em>)</p></li>
-<li><p><strong>persist_ddfs</strong> (<em>bool</em>)</p></li>
-<li><p><strong>avoid_computes</strong> (<em>bool</em>)</p></li>
 <li><p><strong>diagnostics_mode</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="hipscatalog_gen.cluster.runtime.ClusterRuntime.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cluster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.__init__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cluster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics_mode</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.__init__" title="Link to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cluster</strong> (<em>Any</em>)</p></li>
 <li><p><strong>client</strong> (<em>Client</em>)</p></li>
-<li><p><strong>persist_ddfs</strong> (<em>bool</em>)</p></li>
-<li><p><strong>avoid_computes</strong> (<em>bool</em>)</p></li>
 <li><p><strong>diagnostics_mode</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
@@ -137,7 +133,7 @@
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.__init__" title="hipscatalog_gen.cluster.runtime.ClusterRuntime.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(cluster, client, persist_ddfs, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.__init__" title="hipscatalog_gen.cluster.runtime.ClusterRuntime.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(cluster, client, diagnostics_mode)</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -149,12 +145,6 @@
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.client" title="hipscatalog_gen.cluster.runtime.ClusterRuntime.client"><code class="xref py py-obj docutils literal notranslate"><span class="pre">client</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.persist_ddfs" title="hipscatalog_gen.cluster.runtime.ClusterRuntime.persist_ddfs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">persist_ddfs</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.avoid_computes" title="hipscatalog_gen.cluster.runtime.ClusterRuntime.avoid_computes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">avoid_computes</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.diagnostics_mode" title="hipscatalog_gen.cluster.runtime.ClusterRuntime.diagnostics_mode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diagnostics_mode</span></code></a></p></td>
@@ -170,16 +160,6 @@
 <dl class="py attribute">
 <dt class="sig sig-object py" id="hipscatalog_gen.cluster.runtime.ClusterRuntime.client">
 <span class="sig-name descname"><span class="pre">client</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Client</span></span><a class="headerlink" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.client" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.cluster.runtime.ClusterRuntime.persist_ddfs">
-<span class="sig-name descname"><span class="pre">persist_ddfs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.persist_ddfs" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.cluster.runtime.ClusterRuntime.avoid_computes">
-<span class="sig-name descname"><span class="pre">avoid_computes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><a class="headerlink" href="#hipscatalog_gen.cluster.runtime.ClusterRuntime.avoid_computes" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">

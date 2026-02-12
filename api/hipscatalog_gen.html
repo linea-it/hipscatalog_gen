@@ -85,8 +85,6 @@
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime.cluster"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.cluster</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime.client"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.client</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime.persist_ddfs"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.persist_ddfs</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime.avoid_computes"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.avoid_computes</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime.diagnostics_mode"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.diagnostics_mode</span></code></a></li>
 </ul>
 </li>
@@ -98,8 +96,6 @@
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.ClusterRuntime"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.ClusterRuntime.cluster"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.cluster</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.ClusterRuntime.client"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.client</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.ClusterRuntime.persist_ddfs"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.persist_ddfs</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.ClusterRuntime.avoid_computes"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.avoid_computes</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.ClusterRuntime.diagnostics_mode"><code class="docutils literal notranslate"><span class="pre">ClusterRuntime.diagnostics_mode</span></code></a></li>
 </ul>
 </li>
@@ -811,7 +807,7 @@ order_desc/tie_column/keep_invalid_values (fall back to selection_defaults).</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="hipscatalog_gen.config.ClusterCfg">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ClusterCfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_workers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads_per_worker</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory_per_worker</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slurm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_memory_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persist_ddfs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avoid_computes_wherever_possible</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/config.html#ClusterCfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.config.ClusterCfg" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ClusterCfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_workers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads_per_worker</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">memory_per_worker</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slurm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_memory_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnostics_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/config.html#ClusterCfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.config.ClusterCfg" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Dask cluster configuration.</p>
 <dl class="field-list simple">
@@ -822,9 +818,7 @@ order_desc/tie_column/keep_invalid_values (fall back to selection_defaults).</p>
 <li><p><strong>threads_per_worker</strong> (<em>int</em>)</p></li>
 <li><p><strong>memory_per_worker</strong> (<em>str</em>)</p></li>
 <li><p><strong>slurm</strong> (<em>Dict</em><em> | </em><em>None</em>)</p></li>
-<li><p><strong>low_memory_mode</strong> (<em>bool</em>)</p></li>
-<li><p><strong>persist_ddfs</strong> (<em>bool</em>)</p></li>
-<li><p><strong>avoid_computes_wherever_possible</strong> (<em>bool</em>)</p></li>
+<li><p><strong>low_memory_mode</strong> (<em>bool</em><em> | </em><em>None</em>)</p></li>
 <li><p><strong>diagnostics_mode</strong> (<em>str</em>)</p></li>
 </ul>
 </dd>
@@ -856,17 +850,7 @@ order_desc/tie_column/keep_invalid_values (fall back to selection_defaults).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="hipscatalog_gen.config.ClusterCfg.low_memory_mode">
-<span class="sig-name descname"><span class="pre">low_memory_mode</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#hipscatalog_gen.config.ClusterCfg.low_memory_mode" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.config.ClusterCfg.persist_ddfs">
-<span class="sig-name descname"><span class="pre">persist_ddfs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#hipscatalog_gen.config.ClusterCfg.persist_ddfs" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.config.ClusterCfg.avoid_computes_wherever_possible">
-<span class="sig-name descname"><span class="pre">avoid_computes_wherever_possible</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></span><a class="headerlink" href="#hipscatalog_gen.config.ClusterCfg.avoid_computes_wherever_possible" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">low_memory_mode</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#hipscatalog_gen.config.ClusterCfg.low_memory_mode" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">

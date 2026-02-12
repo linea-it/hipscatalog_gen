@@ -103,6 +103,9 @@
 <dt class="sig sig-object py" id="hipscatalog_gen.selection.common.reduce_topk_by_group_dask">
 <span class="sig-name descname"><span class="pre">reduce_topk_by_group_dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_like</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_per_group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tie_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/selection/common.html#reduce_topk_by_group_dask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.selection.common.reduce_topk_by_group_dask" title="Link to this definition"></a></dt>
 <dd><p>Keep up to k_per_group rows per group, sorted by score then RA/DEC.</p>
+<p>Uses a two-stage exact strategy:
+1) per-partition local top-k pruning (no global shuffle),
+2) global top-k by group on the pruned collection.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -281,10 +284,13 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.selection.slicing.select_by_value_slices">
 <span class="sig-name descname"><span class="pre">select_by_value_slices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remainder_ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densmaps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depths_sel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tie_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_hist_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_nbins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_targets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_diag_ctx_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_diag_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/selection/slicing.html#select_by_value_slices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.selection.slicing.select_by_value_slices" title="Link to this definition"></a></dt>
-<dd><p>Slice by per-depth value ranges and write tiles; expects value_col and densmaps populated.</p>
+<dd><p>Slice by per-depth value ranges and write tiles.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict with per-depth write summaries (currently depth_totals/depth_tiles).</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>remainder_ddf</strong> (<em>Any</em>)</p></li>
 <li><p><strong>densmaps</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>ndarray</em><em>]</em>)</p></li>
 <li><p><strong>depths_sel</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>)</p></li>
@@ -304,8 +310,8 @@
 <li><p><strong>depth_diag_prefix</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, dict[str, int]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -336,7 +342,7 @@
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dd class="field-even"><p>dict[str, dict[str, int]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -392,6 +398,9 @@
 <dt class="sig sig-object py" id="hipscatalog_gen.selection.reduce_topk_by_group_dask">
 <span class="sig-name descname"><span class="pre">reduce_topk_by_group_dask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_like</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_per_group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tie_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/selection/common.html#reduce_topk_by_group_dask"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.selection.reduce_topk_by_group_dask" title="Link to this definition"></a></dt>
 <dd><p>Keep up to k_per_group rows per group, sorted by score then RA/DEC.</p>
+<p>Uses a two-stage exact strategy:
+1) per-partition local top-k pruning (no global shuffle),
+2) global top-k by group on the pruned collection.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -556,7 +565,7 @@
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dd class="field-even"><p>dict[str, dict[str, int]]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -564,10 +573,13 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.selection.select_by_value_slices">
 <span class="sig-name descname"><span class="pre">select_by_value_slices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">remainder_ddf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">densmaps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depths_sel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_cols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order_desc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tie_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_hist_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_nbins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_targets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_diag_ctx_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_diag_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/selection/slicing.html#select_by_value_slices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.selection.select_by_value_slices" title="Link to this definition"></a></dt>
-<dd><p>Slice by per-depth value ranges and write tiles; expects value_col and densmaps populated.</p>
+<dd><p>Slice by per-depth value ranges and write tiles.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict with per-depth write summaries (currently depth_totals/depth_tiles).</p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
 <li><p><strong>remainder_ddf</strong> (<em>Any</em>)</p></li>
 <li><p><strong>densmaps</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>ndarray</em><em>]</em>)</p></li>
 <li><p><strong>depths_sel</strong> (<em>Sequence</em><em>[</em><em>int</em><em>]</em>)</p></li>
@@ -587,8 +599,8 @@
 <li><p><strong>depth_diag_prefix</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>None</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, dict[str, int]]</p>
 </dd>
 </dl>
 </dd></dl>

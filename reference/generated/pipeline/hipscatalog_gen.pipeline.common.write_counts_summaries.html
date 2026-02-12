@@ -115,14 +115,15 @@
 <h1>hipscatalog_gen.pipeline.common.write_counts_summaries<a class="headerlink" href="#hipscatalog-gen-pipeline-common-write-counts-summaries" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.write_counts_summaries">
-<span class="sig-name descname"><span class="pre">write_counts_summaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/pipeline/common.html#write_counts_summaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_counts_summaries" title="Link to this definition"></a></dt>
-<dd><p>Compute counts for later cross-checks and return (total written, counts dict).</p>
+<span class="sig-name descname"><span class="pre">write_counts_summaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precomputed_depth_totals</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/pipeline/common.html#write_counts_summaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.write_counts_summaries" title="Link to this definition"></a></dt>
+<dd><p>Build output counts from selection-stage precomputed depth totals.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>out_dir</strong> (<em>Path</em>)</p></li>
 <li><p><strong>level_limit</strong> (<em>int</em>)</p></li>
 <li><p><strong>input_total</strong> (<em>int</em>)</p></li>
+<li><p><strong>precomputed_depth_totals</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
