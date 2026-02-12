@@ -222,11 +222,15 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
             params=context.selection_params,
         )
         if not isinstance(run_result, dict):
-            return context
+            raise RuntimeError(
+                "Selection stage did not return write stats; final TSV recount fallback is disabled."
+            )
 
         depth_totals_raw = run_result.get("depth_totals")
         if not isinstance(depth_totals_raw, dict):
-            return context
+            raise RuntimeError(
+                "Selection stage did not provide 'depth_totals'; final TSV recount fallback is disabled."
+            )
 
         depth_totals: dict[str, int] = {}
         for k, v in depth_totals_raw.items():
@@ -234,10 +238,12 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
             with suppress(TypeError, ValueError):
                 value_int = int(v)
             if value_int is None:
-                continue
+                raise RuntimeError(f"Invalid depth total emitted by selection stage: key={k!r}, value={v!r}")
+            if value_int < 0:
+                raise RuntimeError(
+                    f"Negative depth total emitted by selection stage: key={k!r}, value={value_int!r}"
+                )
             depth_totals[str(k)] = value_int
-        if not depth_totals:
-            return context
 
         telemetry = dict(context.telemetry)
         telemetry["selection_write_stats"] = {"depth_totals": depth_totals}
@@ -247,13 +253,18 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         """Write per-depth count summaries and store telemetry."""
         if context.input_total is None:
             raise RuntimeError("Pipeline context missing input totals.")  # pragma: no cover
-        precomputed_depth_totals = None
+        precomputed_depth_totals: dict[str, int] | None = None
         if isinstance(context.telemetry, dict):
             sws = context.telemetry.get("selection_write_stats")
             if isinstance(sws, dict):
                 cand = sws.get("depth_totals")
                 if isinstance(cand, dict):
                     precomputed_depth_totals = cand
+        if precomputed_depth_totals is None:
+            raise RuntimeError(
+                "Missing selection_write_stats.depth_totals in telemetry; "
+                "final TSV recount fallback is disabled."
+            )
         total_written, counts_payload = write_counts_summaries(
             context.out_dir,
             context.cfg.algorithm.level_limit,

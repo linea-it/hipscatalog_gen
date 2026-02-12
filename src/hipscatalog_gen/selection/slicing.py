@@ -56,43 +56,8 @@ def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
         return max(minimum, int(default))
 
 
-def _detected_cpu_count() -> int:
-    """Best-effort CPU count for the current process affinity."""
-    try:
-        affinity = os.sched_getaffinity(0)
-        n_aff = int(len(affinity))
-        if n_aff > 0:
-            return n_aff
-    except (AttributeError, OSError):
-        pass
-    n_cpu = os.cpu_count()
-    if n_cpu is None or int(n_cpu) <= 0:
-        return 1
-    return int(n_cpu)
-
-
-def _resolve_bucket_workers(n_buckets: int) -> tuple[int, int, bool]:
-    """Resolve ThreadPool workers from env/defaults and current CPU availability."""
-    n_bk = max(1, int(n_buckets))
-    detected = _detected_cpu_count()
-    raw_env = os.environ.get("HIPSCATALOG_STREAM_BUCKET_WORKERS")
-
-    if raw_env is None:
-        requested = max(1, min(8, detected))
-        from_env = False
-    else:
-        try:
-            requested = max(1, int(raw_env))
-        except Exception:
-            requested = max(1, min(8, detected))
-        from_env = True
-
-    workers = max(1, min(requested, n_bk))
-    return workers, detected, from_env
-
-
 def _resolve_local_scratch_base(out_dir: Path) -> Path:
-    """Choose a local scratch base path for compaction intermediates."""
+    """Choose a local scratch base path for merge intermediates."""
     candidates: list[Path] = []
     for env_name in ("HIPSCATALOG_STREAM_LOCAL_TMPDIR", "SLURM_TMPDIR", "TMPDIR"):
         raw = os.environ.get(env_name)
@@ -108,25 +73,6 @@ def _resolve_local_scratch_base(out_dir: Path) -> Path:
         except OSError:
             pass
     return out_dir
-
-
-def _should_compact_bucket(
-    depth: int,
-    files_in: int,
-    *,
-    mode: str,
-    min_depth: int,
-    min_files: int,
-) -> bool:
-    """Decide whether a bucket should run local compaction."""
-    if files_in <= 1:
-        return False
-    if mode == "on":
-        return True
-    if mode == "off":
-        return False
-    # auto mode
-    return (depth >= min_depth) or (files_in >= min_files)
 
 
 def _merge_files_to_parquet(
@@ -256,6 +202,12 @@ def _detect_worker_nthreads() -> int:
         from dask.distributed import get_worker
 
         worker = get_worker()
+        worker_state = getattr(worker, "state", None)
+        if worker_state is not None:
+            nthreads_state = getattr(worker_state, "nthreads", None)
+            if nthreads_state is not None:
+                return max(1, int(nthreads_state) or 1)
+        # Fallback for older distributed versions where Worker.state may be absent.
         return max(1, int(getattr(worker, "nthreads", 1) or 1))
     except Exception:
         return 1
@@ -306,13 +258,8 @@ def _process_bucket_dir(
     counts: np.ndarray,
     sort_cols: list[str],
     ascending: list[bool],
-    compaction_mode: str,
-    compaction_min_depth: int,
-    compaction_min_files: int,
-    compaction_chunk_size: int,
-    compaction_target_files: int,
 ) -> _BucketWriteStats:
-    """Process one bucket (optional compaction + streaming k-way merge write)."""
+    """Process one bucket (bounded fan-in prep + streaming k-way merge write)."""
     frag_files = sorted(bucket_dir.glob("part_*.parquet"))
     stats = _BucketWriteStats(files_in=len(frag_files), files_out=len(frag_files))
     if not frag_files:
@@ -323,28 +270,16 @@ def _process_bucket_dir(
 
     try:
         merge_max_open_files = _resolve_merge_max_open_files()
-        use_compaction = _should_compact_bucket(
-            depth,
-            stats.files_in,
-            mode=compaction_mode,
-            min_depth=compaction_min_depth,
-            min_files=compaction_min_files,
-        )
         working_files = frag_files
-        force_fd_fan_in = len(working_files) > merge_max_open_files
-        if use_compaction or force_fd_fan_in:
+        if len(working_files) > merge_max_open_files:
             local_scratch_base = _resolve_local_scratch_base(Path(out_dir))
             local_bucket_dir = local_scratch_base / (
                 f"hipscatalog_stream_depth_{depth:02d}_{bucket_dir.name}_{uuid.uuid4().hex}"
             )
             local_bucket_dir.mkdir(parents=True, exist_ok=True)
-            target_files = compaction_target_files
-            chunk_size = compaction_chunk_size
-            if force_fd_fan_in:
-                # compaction_mode may be off, but we still need bounded fan-in
-                # to avoid exhausting file descriptors on workers.
-                target_files = int(max(1, merge_max_open_files))
-                chunk_size = int(max(target_files, min(compaction_chunk_size, merge_max_open_files)))
+            # Keep fan-in safely bounded by worker FD budget.
+            target_files = int(max(1, merge_max_open_files))
+            chunk_size = int(max(2, merge_max_open_files))
             working_files, rounds = _compact_bucket_fragments(
                 frag_files,
                 local_bucket_dir=local_bucket_dir,
@@ -567,22 +502,6 @@ def _stream_write_depth_without_allsky(
         if not bucket_dirs:
             return selected_len, 0, 0
 
-        mode_env = str(os.environ.get("HIPSCATALOG_STREAM_COMPACTION_MODE", "off")).strip().lower()
-        compaction_mode = "off"
-        compaction_min_depth = _env_int("HIPSCATALOG_STREAM_COMPACTION_MIN_DEPTH", 8, minimum=0)
-        compaction_min_files = _env_int("HIPSCATALOG_STREAM_COMPACTION_MIN_FILES", 4096, minimum=1)
-        compaction_chunk_size = _env_int("HIPSCATALOG_STREAM_COMPACTION_CHUNK_SIZE", 128, minimum=2)
-        compaction_target_files = _env_int("HIPSCATALOG_STREAM_COMPACTION_TARGET_FILES", 8, minimum=1)
-        if compaction_chunk_size <= compaction_target_files:
-            compaction_chunk_size = compaction_target_files + 1
-
-        if mode_env != "off":
-            log_fn(
-                f"[stream] depth={depth} forcing compaction_mode='off' (env requested {mode_env!r}).",
-                always=True,
-                depth=depth,
-            )
-
         stats_list: list[_BucketWriteStats] = []
         client = _get_active_dask_client()
         if client is None:
@@ -594,8 +513,7 @@ def _stream_write_depth_without_allsky(
 
         worker_count = int(len(client.scheduler_info().get("workers", {})))
         log_fn(
-            f"[stream] depth={depth} dask bucket submit: workers={worker_count} "
-            f"buckets={len(bucket_dirs)} compaction_mode={compaction_mode}",
+            f"[stream] depth={depth} dask bucket submit: workers={worker_count} buckets={len(bucket_dirs)}",
             always=True,
             depth=depth,
         )
@@ -615,11 +533,6 @@ def _stream_write_depth_without_allsky(
                 counts=counts_payload,
                 sort_cols=sort_cols,
                 ascending=ascending,
-                compaction_mode=compaction_mode,
-                compaction_min_depth=compaction_min_depth,
-                compaction_min_files=compaction_min_files,
-                compaction_chunk_size=compaction_chunk_size,
-                compaction_target_files=compaction_target_files,
                 pure=False,
             )
             for bucket_dir in bucket_dirs
@@ -639,7 +552,7 @@ def _stream_write_depth_without_allsky(
             if files_in_total > 0:
                 reduction = 100.0 * (1.0 - (files_out_total / float(files_in_total)))
             log_fn(
-                f"[stream-compaction] depth={depth} buckets={len(bucket_dirs)} compacted={compacted_buckets} "
+                f"[stream-fan-in] depth={depth} buckets={len(bucket_dirs)} reduced={compacted_buckets} "
                 f"files_in={files_in_total} files_out={files_out_total} reduction={reduction:.1f}% "
                 f"rounds_total={rounds_total} max_bucket_in={max_bucket_in}",
                 always=True,

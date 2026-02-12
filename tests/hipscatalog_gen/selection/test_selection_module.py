@@ -837,7 +837,7 @@ def test_select_by_value_slices_uses_stream_path_without_allsky(monkeypatch, tmp
     assert any("[DEPTH 3] written:" in msg and "tiles_written=3" in msg for msg in logs)
 
 
-def test_stream_write_depth_uses_dask_submit_and_forces_compaction_off(monkeypatch, tmp_path, log_capture):
+def test_stream_write_depth_uses_dask_submit(monkeypatch, tmp_path, log_capture):
     """When a distributed client exists, bucket processing is submitted via client.submit."""
     logs, log_fn = log_capture
     pdf = pd.DataFrame({"RA": [1.0, 2.0], "DEC": [1.0, 2.0], "VAL": [0.2, 0.8]})
@@ -899,7 +899,7 @@ def test_stream_write_depth_uses_dask_submit_and_forces_compaction_off(monkeypat
     assert tiles_written >= 1
     assert rows_written >= 1
     assert fake_client.submissions
-    assert all(s["compaction_mode"] == "off" for s in fake_client.submissions)
+    assert all("compaction_mode" not in s for s in fake_client.submissions)
     assert any("dask bucket submit" in msg for msg in logs)
 
 
@@ -965,11 +965,6 @@ def test_process_bucket_dir_stream_merge_preserves_stable_order(tmp_path):
         counts=counts,
         sort_cols=["VAL", "RA", "DEC"],
         ascending=[False, True, True],
-        compaction_mode="off",
-        compaction_min_depth=8,
-        compaction_min_files=4096,
-        compaction_chunk_size=128,
-        compaction_target_files=8,
     )
 
     assert stats.selected_len == 6
@@ -1012,118 +1007,11 @@ def test_process_bucket_dir_limits_fd_fan_in_with_compaction_round(monkeypatch, 
         counts=counts,
         sort_cols=["VAL", "RA", "DEC"],
         ascending=[False, True, True],
-        compaction_mode="off",
-        compaction_min_depth=8,
-        compaction_min_files=4096,
-        compaction_chunk_size=128,
-        compaction_target_files=8,
     )
 
     assert stats.selected_len == 3
     assert stats.rounds >= 1
     assert stats.compacted is True
-
-
-def test_stream_compaction_auto_gating():
-    """Auto compaction starts at high depth or when bucket fan-out is large."""
-    # Below thresholds -> no compaction.
-    assert (
-        selection_slicing._should_compact_bucket(
-            depth=7,
-            files_in=1500,
-            mode="auto",
-            min_depth=8,
-            min_files=4096,
-        )
-        is False
-    )
-    # Depth threshold reached -> compaction.
-    assert (
-        selection_slicing._should_compact_bucket(
-            depth=8,
-            files_in=1500,
-            mode="auto",
-            min_depth=8,
-            min_files=4096,
-        )
-        is True
-    )
-    # File threshold reached -> compaction even at lower depth.
-    assert (
-        selection_slicing._should_compact_bucket(
-            depth=6,
-            files_in=5000,
-            mode="auto",
-            min_depth=8,
-            min_files=4096,
-        )
-        is True
-    )
-
-
-def test_stream_compaction_mode_overrides():
-    """Explicit on/off modes override adaptive thresholds."""
-    assert (
-        selection_slicing._should_compact_bucket(
-            depth=4,
-            files_in=2,
-            mode="on",
-            min_depth=8,
-            min_files=4096,
-        )
-        is True
-    )
-    assert (
-        selection_slicing._should_compact_bucket(
-            depth=10,
-            files_in=99999,
-            mode="off",
-            min_depth=8,
-            min_files=4096,
-        )
-        is False
-    )
-
-
-def test_detected_cpu_count_prefers_affinity(monkeypatch):
-    """CPU detection uses process affinity when available."""
-    monkeypatch.setattr(selection_slicing.os, "sched_getaffinity", lambda _pid: {0, 1, 2})
-    monkeypatch.setattr(selection_slicing.os, "cpu_count", lambda: 99)
-    assert selection_slicing._detected_cpu_count() == 3
-
-
-def test_detected_cpu_count_fallback(monkeypatch):
-    """CPU detection falls back to os.cpu_count and then to 1."""
-    monkeypatch.setattr(
-        selection_slicing.os,
-        "sched_getaffinity",
-        lambda _pid: (_ for _ in ()).throw(OSError("x")),
-    )
-    monkeypatch.setattr(selection_slicing.os, "cpu_count", lambda: None)
-    assert selection_slicing._detected_cpu_count() == 1
-
-    monkeypatch.setattr(selection_slicing.os, "cpu_count", lambda: 4)
-    assert selection_slicing._detected_cpu_count() == 4
-
-
-def test_resolve_bucket_workers_default_is_adaptive(monkeypatch):
-    """Default workers are capped by both detected CPUs and bucket count."""
-    monkeypatch.delenv("HIPSCATALOG_STREAM_BUCKET_WORKERS", raising=False)
-    monkeypatch.setattr(selection_slicing, "_detected_cpu_count", lambda: 2)
-    workers, detected, from_env = selection_slicing._resolve_bucket_workers(16)
-    assert (workers, detected, from_env) == (2, 2, False)
-
-    monkeypatch.setattr(selection_slicing, "_detected_cpu_count", lambda: 64)
-    workers2, detected2, from_env2 = selection_slicing._resolve_bucket_workers(3)
-    assert (workers2, detected2, from_env2) == (3, 64, False)
-
-
-def test_resolve_bucket_workers_env_allows_override(monkeypatch):
-    """Explicit env override can exceed detected CPU count."""
-    monkeypatch.setenv("HIPSCATALOG_STREAM_BUCKET_WORKERS", "8")
-    monkeypatch.setattr(selection_slicing, "_detected_cpu_count", lambda: 2)
-    workers, detected, from_env = selection_slicing._resolve_bucket_workers(16)
-    assert (workers, detected, from_env) == (8, 2, True)
 
 
 def test_resolve_merge_max_open_files_auto_uses_worker_concurrency(monkeypatch):

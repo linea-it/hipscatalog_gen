@@ -516,36 +516,28 @@ def test_compute_and_write_densmaps(monkeypatch, tmp_path, diag_ctx):
     assert calls  # write_densmap_fits called
 
 
-def test_write_counts_summaries(tmp_path, log_capture):
-    """write_counts_summaries reads tile files and aggregates counts."""
+def test_write_counts_summaries_requires_precomputed_stats(tmp_path, log_capture):
+    """write_counts_summaries fails fast when precomputed stats are missing."""
     _, log_fn = log_capture
-    depth_dir = tmp_path / "Norder1"
-    depth_dir.mkdir()
-    tile_path = depth_dir / "Npix0.tsv"
-    tile_path.write_text("comp\nheader\n1\t2\n3\t4\n", encoding="utf-8")
-    # invalid name branches
-    (depth_dir / "badname.txt").write_text("x", encoding="utf-8")
-    (depth_dir / "Npixbad.tsv").write_text("x", encoding="utf-8")
-
-    total_written, payload = pipeline_common.write_counts_summaries(
-        tmp_path, level_limit=2, input_total=5, log_fn=log_fn
-    )
-    assert total_written == 2
-    assert payload["output"]["total"] == 2
-    assert payload["input"]["total"] == 5
-    assert any("Total rows written: 2" in m for m in log_capture[0])
+    with pytest.raises(RuntimeError, match="fallback is disabled"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=2,
+            input_total=5,
+            log_fn=log_fn,
+            precomputed_depth_totals=None,  # type: ignore[arg-type]
+        )
 
 
 def test_write_counts_summaries_uses_precomputed_depth_totals(tmp_path, log_capture):
     """Precomputed depth totals skip tile scanning and preserve totals payload."""
     logs, log_fn = log_capture
-    # No tile files are required for this path.
     total_written, payload = pipeline_common.write_counts_summaries(
         tmp_path,
         level_limit=4,
         input_total=10,
         log_fn=log_fn,
-        precomputed_depth_totals={"3": 7, "4": 11, "9": 99},  # depth 9 out of range -> ignored
+        precomputed_depth_totals={"3": 7, "4": 11},
     )
 
     assert total_written == 18
@@ -554,6 +546,19 @@ def test_write_counts_summaries_uses_precomputed_depth_totals(tmp_path, log_capt
     assert payload["output"]["depths"] == {}
     assert payload["input"]["total"] == 10
     assert any("Using precomputed output counts" in m for m in logs)
+
+
+def test_write_counts_summaries_rejects_invalid_depth(tmp_path, log_capture):
+    """Invalid depth keys are rejected to avoid silent count corruption."""
+    _, log_fn = log_capture
+    with pytest.raises(RuntimeError, match="Depth out of bounds"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=4,
+            input_total=10,
+            log_fn=log_fn,
+            precomputed_depth_totals={"9": 1},
+        )
 
 
 def test_write_common_static_products_arguments_include_all_input_keys(tmp_path):
@@ -731,7 +736,7 @@ def test_run_pipeline_overwrite_file(monkeypatch, tmp_path, log_capture):
                     SimpleNamespace(mag_min=0.0, mag_max=1.0, sentinel=None),
                 ),
                 "prepare_fn": lambda *args, **kwargs: dummy_ddf,
-                "run_fn": lambda **kwargs: None,
+                "run_fn": lambda **kwargs: {"depth_totals": {}, "depth_tiles": {}},
             }
         ),
     )
@@ -777,7 +782,7 @@ def test_run_pipeline_diagnostics_global(monkeypatch, tmp_path, log_capture):
                     SimpleNamespace(mag_min=0.0, mag_max=1.0, sentinel=None),
                 ),
                 "prepare_fn": lambda *args, **kwargs: dummy_ddf,
-                "run_fn": lambda **kwargs: None,
+                "run_fn": lambda **kwargs: {"depth_totals": {}, "depth_tiles": {}},
             }
         ),
     )
@@ -813,6 +818,53 @@ def test_run_pipeline_diagnostics_global(monkeypatch, tmp_path, log_capture):
     monkeypatch.setattr(main, "write_properties", lambda *_, **__: None)
 
     main.run_pipeline(cfg)
+
+
+def test_run_pipeline_fails_when_selection_does_not_emit_write_stats(monkeypatch, tmp_path, log_capture):
+    """Pipeline fails fast when selection stage omits required write stats."""
+    _, log_fn = log_capture
+    cfg = _cfg_pipeline(tmp_path, selection_mode="mag_global")
+    dummy_ddf = dd.from_pandas(pd.DataFrame({"RA": [0.0], "DEC": [0.0], "MAG": [1.0]}), npartitions=1)
+
+    monkeypatch.setattr(
+        main,
+        "get_selection_mode",
+        lambda name: SimpleNamespace(
+            **{
+                "validate_fn": lambda cfg: None,
+                "normalize_fn": lambda *args, **kwargs: (
+                    dummy_ddf,
+                    SimpleNamespace(mag_min=0.0, mag_max=1.0, sentinel=None),
+                ),
+                "prepare_fn": lambda *args, **kwargs: dummy_ddf,
+                "run_fn": lambda **kwargs: None,
+            }
+        ),
+    )
+    monkeypatch.setattr(main, "setup_structured_logger", lambda *args, **kwargs: (None, log_fn))
+    monkeypatch.setattr(
+        main,
+        "setup_cluster",
+        lambda cfg, report_dir, log_fn: (
+            SimpleNamespace(persist_ddfs=False, avoid_computes=True, diagnostics_mode=""),
+            lambda name: nullcontext(),
+        ),
+    )
+    monkeypatch.setattr(main, "shutdown_cluster", lambda runtime: None)
+    monkeypatch.setattr(main, "validate_common_cfg", lambda cfg: None)
+    monkeypatch.setattr(
+        main,
+        "build_and_prepare_input",
+        lambda *_, **__: (dummy_ddf, "RA", "DEC", ["RA", "DEC"], False, ["p"]),
+    )
+    monkeypatch.setattr(main, "compute_input_total", lambda *_, **__: 1)
+    monkeypatch.setattr(main, "compute_and_write_densmaps", lambda *_, **__: {1: np.ones(1, dtype="int64")})
+    monkeypatch.setattr(main, "write_common_static_products", lambda *_, **__: None)
+    monkeypatch.setattr(main, "write_counts_summaries", lambda *_, **__: (1, {"output": {}, "input": {}}))
+    monkeypatch.setattr(main, "write_properties", lambda *_, **__: None)
+
+    with pytest.raises(RuntimeError, match="did not return write stats"):
+        main.run_pipeline(cfg)
 
 
 def test_run_pipeline_overwrite_guard(tmp_path):

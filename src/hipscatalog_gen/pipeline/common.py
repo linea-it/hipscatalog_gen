@@ -559,83 +559,45 @@ def write_counts_summaries(
     level_limit: int,
     input_total: int,
     log_fn,
-    precomputed_depth_totals: Dict[str, int] | None = None,
+    precomputed_depth_totals: Dict[str, int],
 ) -> tuple[int, dict]:
-    """Compute counts for later cross-checks and return (total written, counts dict)."""
+    """Build output counts from selection-stage precomputed depth totals."""
+    if not isinstance(precomputed_depth_totals, dict):
+        raise RuntimeError(
+            "Missing precomputed selection write stats; final TSV recount fallback is disabled."
+        )
 
-    def _count_rows(tile_path: Path) -> int:
-        """Count rows for one tile file (ignoring header lines)."""
-        with tile_path.open("r", encoding="utf-8") as f:
-            # Skip completeness + header lines.
-            next(f, None)
-            next(f, None)
-            return sum(1 for _ in f)
+    depth_totals: Dict[str, int] = {}
+    for depth_key, depth_total in precomputed_depth_totals.items():
+        d: int | None = None
+        with suppress(TypeError, ValueError):
+            d = int(depth_key)
+        if d is None:
+            raise RuntimeError(f"Invalid depth key in precomputed stats: {depth_key!r}")
 
-    if precomputed_depth_totals:
-        depth_totals: Dict[str, int] = {}
-        for depth_key, depth_total in precomputed_depth_totals.items():
-            d: int | None = None
-            with suppress(TypeError, ValueError):
-                d = int(depth_key)
-            if d is None:
-                continue
+        v: int | None = None
+        with suppress(TypeError, ValueError):
+            v = int(depth_total)
+        if v is None:
+            raise RuntimeError(f"Invalid depth total in precomputed stats: depth={d!r} value={depth_total!r}")
+        if v < 0:
+            raise RuntimeError(f"Negative depth total in precomputed stats: depth={d!r} value={v!r}")
+        if d < 0 or d > int(level_limit):
+            raise RuntimeError(
+                f"Depth out of bounds in precomputed stats: depth={d!r}, level_limit={level_limit!r}"
+            )
 
-            v: int | None = None
-            with suppress(TypeError, ValueError):
-                v = int(depth_total)
-            if v is None:
-                continue
+        depth_totals[str(d)] = int(v)
 
-            if d < 0 or d > int(level_limit):
-                continue
-            depth_totals[str(d)] = max(0, v)
-
-        total_all_depths = int(sum(depth_totals.values()))
-        output_counts = {
-            "total": int(total_all_depths),
-            "depth_totals": depth_totals,
-            "depths": {},
-        }
-        input_counts = {"total": int(input_total)}
-
-        log_fn("[counts] Using precomputed output counts from selection write stage.", always=True)
-        log_fn(f"[output] Total rows written: {total_all_depths}", always=True)
-        return int(total_all_depths), {"output": output_counts, "input": input_counts}
-
-    depth_totals = {}
-    depth_counts: Dict[str, Dict[str, int]] = {}
-    total_all_depths = 0
-
-    for depth in range(0, level_limit + 1):
-        norder_dir = out_dir / f"Norder{depth}"
-        if not norder_dir.exists():
-            continue
-
-        counts_depth: Dict[str, int] = {}
-        for tile_path in norder_dir.rglob("Npix*.tsv"):
-            name = tile_path.name
-            if not name.startswith("Npix") or not name.endswith(".tsv"):  # pragma: no cover - rglob filters
-                continue
-            try:
-                ipix = int(name[len("Npix") : -len(".tsv")])
-            except ValueError:
-                continue
-            counts_depth[str(ipix)] = _count_rows(tile_path)
-
-        if counts_depth:
-            depth_total = int(sum(counts_depth.values()))
-            depth_totals[str(depth)] = depth_total
-            depth_counts[str(depth)] = counts_depth
-            total_all_depths += depth_total
-
+    total_all_depths = int(sum(depth_totals.values()))
     output_counts = {
         "total": int(total_all_depths),
         "depth_totals": depth_totals,
-        "depths": depth_counts,
+        "depths": {},
     }
     input_counts = {"total": int(input_total)}
 
-    log_fn("[counts] Computed output/input counts.", always=True)
+    log_fn("[counts] Using precomputed output counts from selection write stage.", always=True)
     log_fn(f"[output] Total rows written: {total_all_depths}", always=True)
 
     return int(total_all_depths), {"output": output_counts, "input": input_counts}
