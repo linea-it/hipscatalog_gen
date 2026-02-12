@@ -2,14 +2,29 @@
 
 High-level stages
 -----------------
-- `prepare_input`: expand paths, validate RA/DEC, adjust partitions/persistence per cluster settings.
+- `prepare_input`: expand paths, validate RA/DEC, adjust partitions.
 - `input_total`: count rows after validation.
 - `normalize_selection`: create internal columns and compute mode parameters (ranges, sentinels) without mutating `cfg`.
-- `prepare_<mode>`: apply the range filter using normalized parameters and optionally persist.
+- `prepare_<mode>`: apply the range filter using normalized parameters.
 - `densmaps`: compute density maps for all depths and write FITS files.
 - `static_products`: write MOC, metadata.xml, and arguments.
 - `run_<mode>`: slice by depth/score/magnitude and write tiles + Allsky when applicable.
 - `counts` / `properties`: write counts and HiPS properties.
+
+Execution policy (fixed defaults)
+---------------------------------
+- No persistence of large intermediate DataFrames.
+- Avoid early large compute materializations whenever possible.
+- `cluster.low_memory_mode` is deprecated (warning only, no effect).
+- `cluster.persist_ddfs` and `cluster.avoid_computes_wherever_possible` are deprecated and ignored.
+
+Stage-2 streaming writes (`score_global` / `score_density_hybrid`, deeper depths)
+-----------------------------------------------------------------------------
+- Bucket fragment generation stays distributed (`map_partitions`).
+- Bucket processing runs on workers via `Client.submit` (driver stays orchestration-only).
+- Per-bucket merge is streaming k-way merge with bounded fan-in rounds.
+- Fan-in is auto-tuned per worker task from worker concurrency and `RLIMIT_NOFILE`, reducing `EMFILE` (`Too many open files`) risk.
+- An active `dask.distributed` client is required; the pipeline fails fast when absent.
 
 Telemetry (`telemetry.json`)
 ----------------------------
@@ -54,6 +69,8 @@ How to add a new mode
 3) Implement `run_<mode>(remainder_ddf, densmaps, keep_cols, ra_col, dec_col, cfg, out_dir, diag_ctx, log_fn, avoid_computes, params)` for the final selection and writing.
 4) Add an entry to `MODE_REGISTRY` (`src/hipscatalog_gen/pipeline/modes.py`), including a `validate_fn` that surfaces config issues early.
 5) If the mode needs specific parameters, create a dataclass in `src/hipscatalog_gen/pipeline/params.py` to carry them between phases.
+
+Note: `persist_ddfs` and `avoid_computes` remain in the internal mode function signatures for compatibility, but the pipeline currently passes fixed values (`False`/`True`).
 
 Mode scaffold (template)
 ------------------------

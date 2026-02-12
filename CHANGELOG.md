@@ -17,6 +17,7 @@
 - Detailed run benchmarks for these optimizations are tracked in:
   - `benchmarks/records/2026-02-10_des_dr2_score_density_hybrid_topk_two_stage.md`
   - `benchmarks/records/2026-02-10_des_dr2_densmaps_finest_derive.md`
+  - `benchmarks/records/2026-02-12_des_dr2_score_density_hybrid_dask_workers_fanin.md`
 
 ## 0.2.0
 

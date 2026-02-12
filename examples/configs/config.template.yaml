@@ -182,6 +182,11 @@ cluster:
   threads_per_worker: 2
   memory_per_worker: "4GB"
 
+  # Memory/compute policy is fixed by the pipeline:
+  #   - large intermediates are not persisted
+  #   - early large compute() materialization is avoided whenever possible
+  # Deprecated (ignored): low_memory_mode, persist_ddfs, avoid_computes_wherever_possible
+
   # SLURM options (only used if mode: slurm)
   slurm:
     queue: "cpu"
