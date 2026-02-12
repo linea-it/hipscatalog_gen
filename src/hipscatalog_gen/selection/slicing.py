@@ -2,26 +2,31 @@
 
 from __future__ import annotations
 
+import heapq
 import os
 import shutil
 import tempfile
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, Iterator, List, Sequence
 
 import healpy as hp
 import numpy as np
 import pandas as pd
 
-from ..io.output import build_header_line_from_keep
+from ..io.output import build_header_line_from_keep, finalize_write_tiles
 from ..pipeline.common import write_tiles_with_allsky
 from ..utils import _fmt_dur, _get_meta_df, _log_depth_stats
 from .common import add_ipix_column
 from .levels import assign_level_edges
 from .score import compute_score_histogram_ddf
+
+try:  # pragma: no cover - optional parquet backend detail
+    import pyarrow.parquet as _pq
+except Exception:  # pragma: no cover - fallback path covered by runtime checks
+    _pq = None
 
 __all__ = ["select_by_value_slices", "select_by_score_slices"]
 
@@ -179,16 +184,78 @@ def _compact_bucket_fragments(
     return current_files, rounds
 
 
+@dataclass(frozen=True)
+class _ReverseSortValue:
+    """Reverse-order wrapper for descending comparisons in heap keys."""
+
+    value: Any
+
+    def __lt__(self, other: _ReverseSortValue) -> bool:
+        return bool(other.value < self.value)
+
+
+def _sort_component(value: Any, *, ascending: bool) -> tuple[int, Any]:
+    """Build a heap-sortable component matching pandas sort semantics."""
+    if pd.isna(value):
+        # Keep NaNs at the end regardless of ascending/descending.
+        return (1, 0)
+    if ascending:
+        return (0, value)
+    try:
+        return (0, -value)
+    except Exception:
+        return (0, _ReverseSortValue(value))
+
+
+def _row_sort_key(
+    row: tuple[Any, ...], *, key_indices: list[int], key_ascending: list[bool]
+) -> tuple[Any, ...]:
+    """Compute global merge key for one streamed parquet row."""
+    return tuple(
+        _sort_component(row[idx], ascending=asc) for idx, asc in zip(key_indices, key_ascending, strict=True)
+    )
+
+
+def _iter_parquet_rows(file_path: Path, *, columns: list[str]) -> Iterator[tuple[Any, ...]]:
+    """Yield row tuples from one parquet file in streaming batches."""
+    if _pq is None:
+        pdf = pd.read_parquet(file_path, columns=columns)
+        yield from pdf.itertuples(index=False, name=None)
+        return
+
+    pf = _pq.ParquetFile(file_path)
+    for batch in pf.iter_batches(columns=columns, batch_size=8192):
+        pdf = batch.to_pandas()
+        if len(pdf) == 0:
+            continue
+        yield from pdf.itertuples(index=False, name=None)
+
+
+def _next_or_none(it: Iterator[tuple[Any, ...]]) -> tuple[Any, ...] | None:
+    """Return next item from an iterator or None when exhausted."""
+    try:
+        return next(it)
+    except StopIteration:
+        return None
+
+
+def _get_active_dask_client():
+    """Return active distributed Client, or None when unavailable."""
+    try:
+        from dask.distributed import get_client
+
+        return get_client()
+    except Exception:
+        return None
+
+
 def _process_bucket_dir(
     *,
     bucket_dir: Path,
     depth: int,
     out_dir: Path,
     header_line: str,
-    ra_col: str,
-    dec_col: str,
     counts: np.ndarray,
-    order_desc: bool,
     sort_cols: list[str],
     ascending: list[bool],
     compaction_mode: str,
@@ -196,19 +263,15 @@ def _process_bucket_dir(
     compaction_min_files: int,
     compaction_chunk_size: int,
     compaction_target_files: int,
-    local_scratch_base: Path,
-    log_fn,
 ) -> _BucketWriteStats:
-    """Process one bucket (optional local compaction + final tile write)."""
+    """Process one bucket (optional compaction + streaming k-way merge write)."""
     frag_files = sorted(bucket_dir.glob("part_*.parquet"))
     stats = _BucketWriteStats(files_in=len(frag_files), files_out=len(frag_files))
     if not frag_files:
         shutil.rmtree(bucket_dir, ignore_errors=True)
         return stats
 
-    local_bucket_dir = local_scratch_base / (
-        f"hipscatalog_stream_depth_{depth:02d}_{bucket_dir.name}_{uuid.uuid4().hex}"
-    )
+    local_bucket_dir: Path | None = None
 
     try:
         use_compaction = _should_compact_bucket(
@@ -220,6 +283,10 @@ def _process_bucket_dir(
         )
         working_files = frag_files
         if use_compaction:
+            local_scratch_base = _resolve_local_scratch_base(Path(out_dir))
+            local_bucket_dir = local_scratch_base / (
+                f"hipscatalog_stream_depth_{depth:02d}_{bucket_dir.name}_{uuid.uuid4().hex}"
+            )
             local_bucket_dir.mkdir(parents=True, exist_ok=True)
             working_files, rounds = _compact_bucket_fragments(
                 frag_files,
@@ -233,35 +300,108 @@ def _process_bucket_dir(
             stats.files_out = int(len(working_files))
             stats.compacted = stats.rounds > 0
 
-        bucket_df = pd.concat((pd.read_parquet(fp) for fp in working_files), ignore_index=True)
-        if len(bucket_df) == 0:
+        if not working_files:
             return stats
 
-        bucket_df = bucket_df.sort_values(
-            ["__ipix__", *sort_cols],
-            ascending=[True, *ascending],
-            kind="mergesort",
-        )
-        stats.selected_len = int(len(bucket_df))
+        if _pq is not None:
+            schema_cols = [str(c) for c in _pq.ParquetFile(working_files[0]).schema_arrow.names]
+        else:
+            schema_cols = list(pd.read_parquet(working_files[0]).columns)
 
-        written_per_ipix, _ = write_tiles_with_allsky(
-            out_dir=out_dir,
-            depth=depth,
-            header_line=header_line,
-            ra_col=ra_col,
-            dec_col=dec_col,
-            counts=counts,
-            selected=bucket_df,
-            order_desc=order_desc,
-            allsky_needed=False,
-            log_fn=log_fn,
-        )
-        if written_per_ipix:
-            stats.tiles_written = int(len(written_per_ipix))
-            stats.rows_written = int(sum(written_per_ipix.values()))
+        required = ["__ipix__", *sort_cols]
+        missing = [c for c in required if c not in schema_cols]
+        if missing:
+            raise KeyError(f"missing columns in bucket fragments: {missing!r}")
+
+        header_cols = header_line.strip("\n").split("\t")
+        internal = {"__ipix__", "__score__", "__icov__"}
+        tile_cols = [c for c in header_cols if c not in internal and c in schema_cols]
+
+        read_cols = list(dict.fromkeys(["__ipix__", *sort_cols, *tile_cols]))
+        ipix_idx = read_cols.index("__ipix__")
+        key_cols = ["__ipix__", *sort_cols]
+        key_indices = [read_cols.index(c) for c in key_cols]
+        key_ascending = [True, *ascending]
+        tile_indices = [read_cols.index(c) for c in tile_cols]
+
+        streams: list[Iterator[tuple[Any, ...]]] = []
+        heap: list[tuple[tuple[Any, ...], int, tuple[Any, ...]]] = []
+        for rank, fp in enumerate(working_files):
+            row_it = iter(_iter_parquet_rows(fp, columns=read_cols))
+            streams.append(row_it)
+            first_row = _next_or_none(row_it)
+            if first_row is None:
+                continue
+            heapq.heappush(
+                heap,
+                (
+                    _row_sort_key(first_row, key_indices=key_indices, key_ascending=key_ascending),
+                    rank,
+                    first_row,
+                ),
+            )
+
+        current_ipix: int | None = None
+        current_rows: list[tuple[Any, ...]] = []
+
+        def _flush_current_ipix() -> None:
+            nonlocal current_rows, current_ipix
+            if current_ipix is None or not current_rows:
+                return
+            ip = int(current_ipix)
+            if ip < 0 or ip >= len(counts):
+                current_rows = []
+                return
+            selected_ipix = pd.DataFrame(current_rows, columns=tile_cols)
+            selected_ipix["__ipix__"] = np.int64(ip)
+            written_per_ipix, _ = finalize_write_tiles(
+                out_dir=out_dir,
+                depth=depth,
+                header_line=header_line,
+                ra_col="",
+                dec_col="",
+                counts=counts,
+                selected=selected_ipix,
+                order_desc=False,
+                allsky_collect=False,
+            )
+            if written_per_ipix:
+                stats.tiles_written += int(len(written_per_ipix))
+                stats.rows_written += int(sum(written_per_ipix.values()))
+            current_rows = []
+
+        while heap:
+            _, rank, row = heapq.heappop(heap)
+            ip = int(row[ipix_idx])
+
+            if current_ipix is None:
+                current_ipix = ip
+            elif ip != current_ipix:
+                _flush_current_ipix()
+                current_ipix = ip
+
+            stats.selected_len += 1
+            if tile_indices:
+                current_rows.append(tuple(row[idx] for idx in tile_indices))
+            else:
+                current_rows.append(tuple())
+
+            nxt = _next_or_none(streams[rank])
+            if nxt is not None:
+                heapq.heappush(
+                    heap,
+                    (
+                        _row_sort_key(nxt, key_indices=key_indices, key_ascending=key_ascending),
+                        rank,
+                        nxt,
+                    ),
+                )
+
+        _flush_current_ipix()
         return stats
     finally:
-        shutil.rmtree(local_bucket_dir, ignore_errors=True)
+        if local_bucket_dir is not None:
+            shutil.rmtree(local_bucket_dir, ignore_errors=True)
         shutil.rmtree(bucket_dir, ignore_errors=True)
 
 
@@ -370,8 +510,8 @@ def _stream_write_depth_without_allsky(
         if not bucket_dirs:
             return selected_len, 0, 0
 
-        mode_env = str(os.environ.get("HIPSCATALOG_STREAM_COMPACTION_MODE", "auto")).strip().lower()
-        compaction_mode = mode_env if mode_env in {"auto", "on", "off"} else "auto"
+        mode_env = str(os.environ.get("HIPSCATALOG_STREAM_COMPACTION_MODE", "off")).strip().lower()
+        compaction_mode = "off"
         compaction_min_depth = _env_int("HIPSCATALOG_STREAM_COMPACTION_MIN_DEPTH", 8, minimum=0)
         compaction_min_files = _env_int("HIPSCATALOG_STREAM_COMPACTION_MIN_FILES", 4096, minimum=1)
         compaction_chunk_size = _env_int("HIPSCATALOG_STREAM_COMPACTION_CHUNK_SIZE", 128, minimum=2)
@@ -379,29 +519,23 @@ def _stream_write_depth_without_allsky(
         if compaction_chunk_size <= compaction_target_files:
             compaction_chunk_size = compaction_target_files + 1
 
-        max_workers, detected_cpus, workers_from_env = _resolve_bucket_workers(len(bucket_dirs))
-        if workers_from_env and max_workers > detected_cpus:
+        if mode_env != "off":
             log_fn(
-                f"[stream] depth={depth} requested bucket workers exceed detected CPU availability: "
-                f"workers={max_workers} detected_cpus={detected_cpus} "
-                "(oversubscription may reduce performance).",
+                f"[stream] depth={depth} forcing compaction_mode='off' (env requested {mode_env!r}).",
                 always=True,
                 depth=depth,
             )
-        local_scratch_base = _resolve_local_scratch_base(Path(out_dir))
-        log_fn(
-            f"[stream] depth={depth} ThreadPoolExecutor setup: workers={max_workers} "
-            f"detected_cpus={detected_cpus} workers_source={'env' if workers_from_env else 'auto'} "
-            f"buckets={len(bucket_dirs)} compaction_mode={compaction_mode} "
-            f"min_depth={compaction_min_depth} min_files={compaction_min_files} "
-            f"chunk_size={compaction_chunk_size} target_files={compaction_target_files} "
-            f"scratch={str(local_scratch_base)!r}",
-            always=True,
-            depth=depth,
-        )
 
         stats_list: list[_BucketWriteStats] = []
-        if max_workers == 1:
+        client = _get_active_dask_client()
+        if client is None:
+            log_fn(
+                f"[stream] depth={depth} no active dask.distributed client; "
+                f"running bucket merges sequentially on driver. buckets={len(bucket_dirs)} "
+                f"compaction_mode={compaction_mode}",
+                always=True,
+                depth=depth,
+            )
             for bucket_dir in bucket_dirs:
                 stats_list.append(
                     _process_bucket_dir(
@@ -409,10 +543,7 @@ def _stream_write_depth_without_allsky(
                         depth=depth,
                         out_dir=Path(out_dir),
                         header_line=header_line,
-                        ra_col=ra_col,
-                        dec_col=dec_col,
                         counts=counts,
-                        order_desc=order_desc,
                         sort_cols=sort_cols,
                         ascending=ascending,
                         compaction_mode=compaction_mode,
@@ -420,37 +551,42 @@ def _stream_write_depth_without_allsky(
                         compaction_min_files=compaction_min_files,
                         compaction_chunk_size=compaction_chunk_size,
                         compaction_target_files=compaction_target_files,
-                        local_scratch_base=local_scratch_base,
-                        log_fn=log_fn,
                     )
                 )
         else:
-            with ThreadPoolExecutor(max_workers=max_workers) as ex:
-                futures = [
-                    ex.submit(
-                        _process_bucket_dir,
-                        bucket_dir=bucket_dir,
-                        depth=depth,
-                        out_dir=Path(out_dir),
-                        header_line=header_line,
-                        ra_col=ra_col,
-                        dec_col=dec_col,
-                        counts=counts,
-                        order_desc=order_desc,
-                        sort_cols=sort_cols,
-                        ascending=ascending,
-                        compaction_mode=compaction_mode,
-                        compaction_min_depth=compaction_min_depth,
-                        compaction_min_files=compaction_min_files,
-                        compaction_chunk_size=compaction_chunk_size,
-                        compaction_target_files=compaction_target_files,
-                        local_scratch_base=local_scratch_base,
-                        log_fn=log_fn,
-                    )
-                    for bucket_dir in bucket_dirs
-                ]
-                for fut in as_completed(futures):
-                    stats_list.append(fut.result())
+            worker_count = int(len(client.scheduler_info().get("workers", {})))
+            log_fn(
+                f"[stream] depth={depth} dask bucket submit: workers={worker_count} "
+                f"buckets={len(bucket_dirs)} compaction_mode={compaction_mode}",
+                always=True,
+                depth=depth,
+            )
+            counts_payload: Any = counts
+            try:
+                counts_payload = client.scatter(counts, broadcast=True)
+            except Exception:
+                counts_payload = counts
+
+            futures = [
+                client.submit(
+                    _process_bucket_dir,
+                    bucket_dir=bucket_dir,
+                    depth=depth,
+                    out_dir=Path(out_dir),
+                    header_line=header_line,
+                    counts=counts_payload,
+                    sort_cols=sort_cols,
+                    ascending=ascending,
+                    compaction_mode=compaction_mode,
+                    compaction_min_depth=compaction_min_depth,
+                    compaction_min_files=compaction_min_files,
+                    compaction_chunk_size=compaction_chunk_size,
+                    compaction_target_files=compaction_target_files,
+                    pure=False,
+                )
+                for bucket_dir in bucket_dirs
+            ]
+            stats_list = list(client.gather(futures))
 
         tiles_written = int(sum(s.tiles_written for s in stats_list))
         rows_written = int(sum(s.rows_written for s in stats_list))

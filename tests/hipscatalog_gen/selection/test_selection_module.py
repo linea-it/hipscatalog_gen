@@ -835,6 +835,128 @@ def test_select_by_value_slices_uses_stream_path_without_allsky(monkeypatch, tmp
     assert any("[DEPTH 3] written:" in msg and "tiles_written=3" in msg for msg in logs)
 
 
+def test_stream_write_depth_uses_dask_submit_and_forces_compaction_off(monkeypatch, tmp_path, log_capture):
+    """When a distributed client exists, bucket processing is submitted via client.submit."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [1.0, 2.0], "DEC": [1.0, 2.0], "VAL": [0.2, 0.8]})
+    ddf = dd.from_pandas(pdf, npartitions=2)
+    counts = np.ones(hp.nside2npix(8), dtype="int64")
+
+    class _FakeFuture:
+        def __init__(self, value):
+            self.value = value
+
+    class _FakeClient:
+        def __init__(self):
+            self.submissions: list[dict[str, Any]] = []
+
+        def scheduler_info(self):
+            return {"workers": {"w1": {}, "w2": {}}}
+
+        def scatter(self, value, broadcast=False):
+            return value
+
+        def submit(self, fn, *args, **kwargs):
+            kwargs = dict(kwargs)
+            kwargs.pop("pure", None)
+            self.submissions.append(kwargs)
+            return _FakeFuture(fn(*args, **kwargs))
+
+        def gather(self, futures):
+            return [f.value for f in futures]
+
+    fake_client = _FakeClient()
+    monkeypatch.setattr(selection_slicing, "_get_active_dask_client", lambda: fake_client)
+
+    def fake_process_bucket_dir(**kwargs):
+        return selection_slicing._BucketWriteStats(
+            selected_len=1,
+            tiles_written=1,
+            rows_written=1,
+            files_in=1,
+            files_out=1,
+        )
+
+    monkeypatch.setattr(selection_slicing, "_process_bucket_dir", fake_process_bucket_dir)
+
+    selected_len, tiles_written, rows_written = selection_slicing._stream_write_depth_without_allsky(
+        depth_ddf=ddf,
+        depth=3,
+        value_col="VAL",
+        order_desc=False,
+        tie_col=None,
+        ra_col="RA",
+        dec_col="DEC",
+        out_dir=tmp_path,
+        header_line="RA\tDEC\tVAL\n",
+        counts=counts,
+        log_fn=log_fn,
+    )
+
+    assert selected_len == 2
+    assert tiles_written >= 1
+    assert rows_written >= 1
+    assert fake_client.submissions
+    assert all(s["compaction_mode"] == "off" for s in fake_client.submissions)
+    assert any("dask bucket submit" in msg for msg in logs)
+
+
+def test_process_bucket_dir_stream_merge_preserves_stable_order(tmp_path):
+    """K-way merge keeps global order and stable tie ordering across files."""
+    out_dir = tmp_path / "out"
+    bucket_dir = tmp_path / "bucket_0000"
+    bucket_dir.mkdir(parents=True, exist_ok=True)
+
+    part0 = pd.DataFrame(
+        {
+            "__ipix__": [3, 3, 3],
+            "VAL": [10.0, 8.0, 7.0],
+            "RA": [1.0, 2.0, 5.0],
+            "DEC": [0.0, 0.0, 0.0],
+            "OBJID": [1, 2, 101],
+        }
+    )
+    part1 = pd.DataFrame(
+        {
+            "__ipix__": [3, 3, 3],
+            "VAL": [9.0, 8.0, 7.0],
+            "RA": [0.0, 1.0, 5.0],
+            "DEC": [0.0, 1.0, 0.0],
+            "OBJID": [3, 4, 202],
+        }
+    )
+
+    part0.to_parquet(bucket_dir / "part_00000000_a.parquet", index=False)
+    part1.to_parquet(bucket_dir / "part_00000001_b.parquet", index=False)
+
+    counts = np.full(hp.nside2npix(8), 100, dtype="int64")
+    stats = selection_slicing._process_bucket_dir(
+        bucket_dir=bucket_dir,
+        depth=3,
+        out_dir=out_dir,
+        header_line="OBJID\tRA\tDEC\tVAL\n",
+        counts=counts,
+        sort_cols=["VAL", "RA", "DEC"],
+        ascending=[False, True, True],
+        compaction_mode="off",
+        compaction_min_depth=8,
+        compaction_min_files=4096,
+        compaction_chunk_size=128,
+        compaction_target_files=8,
+    )
+
+    assert stats.selected_len == 6
+    tile_path = out_dir / "Norder3" / "Dir0" / "Npix3.tsv"
+    assert tile_path.exists()
+
+    with tile_path.open("r", encoding="utf-8") as f:
+        lines = [ln.strip() for ln in f.readlines()]
+
+    data_rows = lines[2:]
+    objids = [int(row.split("\t")[0]) for row in data_rows]
+    assert objids == [1, 3, 4, 2, 101, 202]
+
+
 def test_stream_compaction_auto_gating():
     """Auto compaction starts at high depth or when bucket fan-out is large."""
     # Below thresholds -> no compaction.
