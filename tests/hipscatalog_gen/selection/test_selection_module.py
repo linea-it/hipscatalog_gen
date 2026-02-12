@@ -901,6 +901,31 @@ def test_stream_write_depth_uses_dask_submit_and_forces_compaction_off(monkeypat
     assert any("dask bucket submit" in msg for msg in logs)
 
 
+def test_stream_write_depth_requires_active_dask_client(monkeypatch, tmp_path, log_capture):
+    """Streaming bucket merge fails fast when no distributed Client is active."""
+    _, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [1.0], "DEC": [1.0], "VAL": [0.2]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    counts = np.ones(hp.nside2npix(8), dtype="int64")
+
+    monkeypatch.setattr(selection_slicing, "_get_active_dask_client", lambda: None)
+
+    with pytest.raises(RuntimeError, match="No active dask.distributed Client found"):
+        selection_slicing._stream_write_depth_without_allsky(
+            depth_ddf=ddf,
+            depth=3,
+            value_col="VAL",
+            order_desc=False,
+            tie_col=None,
+            ra_col="RA",
+            dec_col="DEC",
+            out_dir=tmp_path,
+            header_line="RA\tDEC\tVAL\n",
+            counts=counts,
+            log_fn=log_fn,
+        )
+
+
 def test_process_bucket_dir_stream_merge_preserves_stable_order(tmp_path):
     """K-way merge keeps global order and stable tie ordering across files."""
     out_dir = tmp_path / "out"

@@ -74,6 +74,31 @@ def _read_data_rows(tsv_path: Path) -> int:
     return max(0, len(lines) - 2)
 
 
+def _install_fake_distributed_client(monkeypatch) -> None:
+    """Install a synchronous fake distributed Client for stream bucket tests."""
+
+    class _FakeFuture:
+        def __init__(self, value):
+            self.value = value
+
+    class _FakeClient:
+        def scheduler_info(self):
+            return {"workers": {"w1": {}, "w2": {}}}
+
+        def scatter(self, value, broadcast=False):
+            return value
+
+        def submit(self, fn, *args, **kwargs):
+            kwargs = dict(kwargs)
+            kwargs.pop("pure", None)
+            return _FakeFuture(fn(*args, **kwargs))
+
+        def gather(self, futures):
+            return [f.value for f in futures]
+
+    monkeypatch.setattr(selection_slicing, "_get_active_dask_client", lambda: _FakeClient())
+
+
 def test_run_selection_no_objects_creates_no_outputs(tmp_path, diag_ctx, log_capture, monkeypatch):
     """Tests that the selection exits early when no rows fall inside the range."""
     _, log_fn = log_capture
@@ -191,7 +216,7 @@ def test_run_selection_skips_empty_depth(monkeypatch, tmp_path, diag_ctx, log_ca
     assert any("no rows in slice" in msg for msg in logs)
 
 
-def test_run_selection_depth_without_allsky(tmp_path, diag_ctx, log_capture):
+def test_run_selection_depth_without_allsky(tmp_path, diag_ctx, log_capture, monkeypatch):
     """Tests that depths >2 do not write Allsky.tsv while still writing tiles."""
     _, log_fn = log_capture
     pdf = pd.DataFrame(
@@ -204,6 +229,7 @@ def test_run_selection_depth_without_allsky(tmp_path, diag_ctx, log_capture):
     ddf = dd.from_pandas(pdf, npartitions=1)
     cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=3)
     densmaps = _densmaps_for_depths([1, 2, 3])
+    _install_fake_distributed_client(monkeypatch)
 
     run_mag_global_selection(
         remainder_ddf=ddf,
@@ -488,6 +514,7 @@ def test_run_selection_allsky_only_depths_1_2(tmp_path, diag_ctx, log_capture, m
     ddf = dd.from_pandas(pdf, npartitions=2)
     cfg = _cfg(mag_min=17.0, mag_max=20.0, level_limit=4)
     densmaps = _densmaps_for_depths([1, 2, 3, 4])
+    _install_fake_distributed_client(monkeypatch)
 
     # Force slices that allocate rows across all depths so tiles exist and Allsky is written for 1/2.
     monkeypatch.setattr(

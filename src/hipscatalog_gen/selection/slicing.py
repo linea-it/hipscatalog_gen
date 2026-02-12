@@ -529,64 +529,45 @@ def _stream_write_depth_without_allsky(
         stats_list: list[_BucketWriteStats] = []
         client = _get_active_dask_client()
         if client is None:
-            log_fn(
-                f"[stream] depth={depth} no active dask.distributed client; "
-                f"running bucket merges sequentially on driver. buckets={len(bucket_dirs)} "
-                f"compaction_mode={compaction_mode}",
-                always=True,
-                depth=depth,
+            raise RuntimeError(
+                "No active dask.distributed Client found for streaming bucket merge. "
+                "Start a Client (local cluster or SLURM-backed cluster) before running "
+                f"streamed depth writes (depth={depth}, buckets={len(bucket_dirs)})."
             )
-            for bucket_dir in bucket_dirs:
-                stats_list.append(
-                    _process_bucket_dir(
-                        bucket_dir=bucket_dir,
-                        depth=depth,
-                        out_dir=Path(out_dir),
-                        header_line=header_line,
-                        counts=counts,
-                        sort_cols=sort_cols,
-                        ascending=ascending,
-                        compaction_mode=compaction_mode,
-                        compaction_min_depth=compaction_min_depth,
-                        compaction_min_files=compaction_min_files,
-                        compaction_chunk_size=compaction_chunk_size,
-                        compaction_target_files=compaction_target_files,
-                    )
-                )
-        else:
-            worker_count = int(len(client.scheduler_info().get("workers", {})))
-            log_fn(
-                f"[stream] depth={depth} dask bucket submit: workers={worker_count} "
-                f"buckets={len(bucket_dirs)} compaction_mode={compaction_mode}",
-                always=True,
-                depth=depth,
-            )
-            counts_payload: Any = counts
-            try:
-                counts_payload = client.scatter(counts, broadcast=True)
-            except Exception:
-                counts_payload = counts
 
-            futures = [
-                client.submit(
-                    _process_bucket_dir,
-                    bucket_dir=bucket_dir,
-                    depth=depth,
-                    out_dir=Path(out_dir),
-                    header_line=header_line,
-                    counts=counts_payload,
-                    sort_cols=sort_cols,
-                    ascending=ascending,
-                    compaction_mode=compaction_mode,
-                    compaction_min_depth=compaction_min_depth,
-                    compaction_min_files=compaction_min_files,
-                    compaction_chunk_size=compaction_chunk_size,
-                    compaction_target_files=compaction_target_files,
-                    pure=False,
-                )
-                for bucket_dir in bucket_dirs
-            ]
-            stats_list = list(client.gather(futures))
+        worker_count = int(len(client.scheduler_info().get("workers", {})))
+        log_fn(
+            f"[stream] depth={depth} dask bucket submit: workers={worker_count} "
+            f"buckets={len(bucket_dirs)} compaction_mode={compaction_mode}",
+            always=True,
+            depth=depth,
+        )
+        counts_payload: Any = counts
+        try:
+            counts_payload = client.scatter(counts, broadcast=True)
+        except Exception:
+            counts_payload = counts
+
+        futures = [
+            client.submit(
+                _process_bucket_dir,
+                bucket_dir=bucket_dir,
+                depth=depth,
+                out_dir=Path(out_dir),
+                header_line=header_line,
+                counts=counts_payload,
+                sort_cols=sort_cols,
+                ascending=ascending,
+                compaction_mode=compaction_mode,
+                compaction_min_depth=compaction_min_depth,
+                compaction_min_files=compaction_min_files,
+                compaction_chunk_size=compaction_chunk_size,
+                compaction_target_files=compaction_target_files,
+                pure=False,
+            )
+            for bucket_dir in bucket_dirs
+        ]
+        stats_list = list(client.gather(futures))
 
         tiles_written = int(sum(s.tiles_written for s in stats_list))
         rows_written = int(sum(s.rows_written for s in stats_list))
