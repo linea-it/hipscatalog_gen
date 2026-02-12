@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import heapq
 import os
+import resource
 import shutil
 import tempfile
 import time
@@ -249,6 +250,53 @@ def _get_active_dask_client():
         return None
 
 
+def _detect_worker_nthreads() -> int:
+    """Best-effort detection of per-process worker task concurrency."""
+    try:
+        from dask.distributed import get_worker
+
+        worker = get_worker()
+        return max(1, int(getattr(worker, "nthreads", 1) or 1))
+    except Exception:
+        return 1
+
+
+def _resolve_merge_max_open_files() -> int:
+    """Resolve cap for simultaneous parquet files opened by one bucket task.
+
+    Auto mode adapts to worker FD limits and task concurrency (nthreads).
+    Manual override via HIPSCATALOG_STREAM_MERGE_MAX_OPEN_FILES is still honored
+    but clipped to a safe upper bound derived from RLIMIT_NOFILE.
+    """
+    raw_override = os.environ.get("HIPSCATALOG_STREAM_MERGE_MAX_OPEN_FILES")
+    override_val: int | None = None
+    if raw_override is not None:
+        try:
+            override_val = max(2, int(raw_override))
+        except Exception:
+            override_val = None
+
+    try:
+        soft_limit, _ = resource.getrlimit(resource.RLIMIT_NOFILE)
+    except Exception:
+        return override_val if override_val is not None else 32
+
+    reserve_default = max(128, int(soft_limit // 4))
+    reserve = _env_int("HIPSCATALOG_STREAM_MERGE_FD_RESERVE", reserve_default, minimum=8)
+    available = max(8, int(soft_limit) - int(reserve))
+
+    nthreads = _detect_worker_nthreads()
+
+    # Per-task budget inside one worker process. Keep a conservative margin
+    # because each task opens additional descriptors beyond parquet fragments.
+    per_task_budget = max(8, available // nthreads)
+    auto_cap = max(8, min(128, per_task_budget // 2))
+
+    if override_val is not None:
+        return int(max(2, min(override_val, per_task_budget)))
+    return int(auto_cap)
+
+
 def _process_bucket_dir(
     *,
     bucket_dir: Path,
@@ -274,6 +322,7 @@ def _process_bucket_dir(
     local_bucket_dir: Path | None = None
 
     try:
+        merge_max_open_files = _resolve_merge_max_open_files()
         use_compaction = _should_compact_bucket(
             depth,
             stats.files_in,
@@ -282,19 +331,27 @@ def _process_bucket_dir(
             min_files=compaction_min_files,
         )
         working_files = frag_files
-        if use_compaction:
+        force_fd_fan_in = len(working_files) > merge_max_open_files
+        if use_compaction or force_fd_fan_in:
             local_scratch_base = _resolve_local_scratch_base(Path(out_dir))
             local_bucket_dir = local_scratch_base / (
                 f"hipscatalog_stream_depth_{depth:02d}_{bucket_dir.name}_{uuid.uuid4().hex}"
             )
             local_bucket_dir.mkdir(parents=True, exist_ok=True)
+            target_files = compaction_target_files
+            chunk_size = compaction_chunk_size
+            if force_fd_fan_in:
+                # compaction_mode may be off, but we still need bounded fan-in
+                # to avoid exhausting file descriptors on workers.
+                target_files = int(max(1, merge_max_open_files))
+                chunk_size = int(max(target_files, min(compaction_chunk_size, merge_max_open_files)))
             working_files, rounds = _compact_bucket_fragments(
                 frag_files,
                 local_bucket_dir=local_bucket_dir,
                 sort_cols=sort_cols,
                 ascending=ascending,
-                chunk_size=compaction_chunk_size,
-                target_files=compaction_target_files,
+                chunk_size=chunk_size,
+                target_files=target_files,
             )
             stats.rounds = int(rounds)
             stats.files_out = int(len(working_files))

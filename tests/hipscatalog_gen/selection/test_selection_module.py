@@ -982,6 +982,46 @@ def test_process_bucket_dir_stream_merge_preserves_stable_order(tmp_path):
     assert objids == [1, 3, 4, 2, 101, 202]
 
 
+def test_process_bucket_dir_limits_fd_fan_in_with_compaction_round(monkeypatch, tmp_path):
+    """Even with compaction off, merge fan-in is reduced to stay under FD cap."""
+    out_dir = tmp_path / "out"
+    bucket_dir = tmp_path / "bucket_0000"
+    bucket_dir.mkdir(parents=True, exist_ok=True)
+
+    for idx in range(3):
+        pd.DataFrame(
+            {
+                "__ipix__": [3],
+                "VAL": [10.0 - float(idx)],
+                "RA": [float(idx)],
+                "DEC": [0.0],
+                "OBJID": [idx + 1],
+            }
+        ).to_parquet(bucket_dir / f"part_{idx:08d}.parquet", index=False)
+
+    monkeypatch.setattr(selection_slicing, "_resolve_merge_max_open_files", lambda: 2)
+
+    counts = np.full(hp.nside2npix(8), 100, dtype="int64")
+    stats = selection_slicing._process_bucket_dir(
+        bucket_dir=bucket_dir,
+        depth=3,
+        out_dir=out_dir,
+        header_line="OBJID\tRA\tDEC\tVAL\n",
+        counts=counts,
+        sort_cols=["VAL", "RA", "DEC"],
+        ascending=[False, True, True],
+        compaction_mode="off",
+        compaction_min_depth=8,
+        compaction_min_files=4096,
+        compaction_chunk_size=128,
+        compaction_target_files=8,
+    )
+
+    assert stats.selected_len == 3
+    assert stats.rounds >= 1
+    assert stats.compacted is True
+
+
 def test_stream_compaction_auto_gating():
     """Auto compaction starts at high depth or when bucket fan-out is large."""
     # Below thresholds -> no compaction.
@@ -1082,6 +1122,24 @@ def test_resolve_bucket_workers_env_allows_override(monkeypatch):
     monkeypatch.setattr(selection_slicing, "_detected_cpu_count", lambda: 2)
     workers, detected, from_env = selection_slicing._resolve_bucket_workers(16)
     assert (workers, detected, from_env) == (8, 2, True)
+
+
+def test_resolve_merge_max_open_files_auto_uses_worker_concurrency(monkeypatch):
+    """Auto merge FD cap considers worker nthreads and RLIMIT_NOFILE."""
+    monkeypatch.delenv("HIPSCATALOG_STREAM_MERGE_MAX_OPEN_FILES", raising=False)
+    monkeypatch.delenv("HIPSCATALOG_STREAM_MERGE_FD_RESERVE", raising=False)
+    monkeypatch.setattr(selection_slicing.resource, "getrlimit", lambda _rl: (256, 256))
+    monkeypatch.setattr(selection_slicing, "_detect_worker_nthreads", lambda: 8)
+    assert selection_slicing._resolve_merge_max_open_files() == 8
+
+
+def test_resolve_merge_max_open_files_override_is_clipped(monkeypatch):
+    """Manual override is clipped by per-task FD budget."""
+    monkeypatch.setenv("HIPSCATALOG_STREAM_MERGE_MAX_OPEN_FILES", "1000")
+    monkeypatch.delenv("HIPSCATALOG_STREAM_MERGE_FD_RESERVE", raising=False)
+    monkeypatch.setattr(selection_slicing.resource, "getrlimit", lambda _rl: (200, 200))
+    monkeypatch.setattr(selection_slicing, "_detect_worker_nthreads", lambda: 4)
+    assert selection_slicing._resolve_merge_max_open_files() == 18
 
 
 def test_select_by_value_slices_histogram_path(monkeypatch, tmp_path, diag_ctx, log_capture):
