@@ -294,14 +294,14 @@
 <span class="s2">keep  [optional, default=None] list[str] or null</span>
 <span class="s2">    Controls which columns are kept in the HiPS tiles:</span>
 <span class="s2">      - Not set / null (default):</span>
-<span class="s2">          Keep all input columns; RA/DEC, score expression deps, and mag/flux</span>
-<span class="s2">          (if mag_global) are ordered first.</span>
+<span class="s2">          Keep all input columns preserving original input order.</span>
 <span class="s2">      - Empty list []:</span>
 <span class="s2">          Keep only the essential set: RA, DEC, score deps, and mag/flux</span>
-<span class="s2">          (if mag_global).</span>
+<span class="s2">          (if mag_global), with RA/DEC first.</span>
 <span class="s2">      - Non-empty list:</span>
-<span class="s2">          Keep the essential set plus all explicitly listed columns (filtered</span>
-<span class="s2">          by availability).</span>
+<span class="s2">          Use the provided keep order when it already contains all essential</span>
+<span class="s2">          columns. Otherwise, prepend missing essential columns before the keep</span>
+<span class="s2">          order (with RA/DEC first if they are missing).</span>
 
 <span class="s2">algorithm (block-based)</span>
 <span class="s2">-----------------------</span>

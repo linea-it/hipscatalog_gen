@@ -103,6 +103,54 @@
 <span class="c1"># =============================================================================</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_unique_available</span><span class="p">(</span><span class="n">cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">available_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return unique columns in input order, filtered by availability.&quot;&quot;&quot;</span>
+    <span class="n">avail</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">available_cols</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">avail</span> <span class="ow">and</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_keep_columns_order</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">available_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">ra_name</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">dec_name</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">must_keep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">requested_keep_cfg</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve final output column order based on columns.keep semantics.&quot;&quot;&quot;</span>
+    <span class="n">must_keep_unique</span> <span class="o">=</span> <span class="n">_unique_available</span><span class="p">(</span><span class="n">must_keep</span><span class="p">,</span> <span class="n">available_cols</span><span class="p">)</span>
+
+    <span class="c1"># keep omitted/null -&gt; preserve input catalog order.</span>
+    <span class="k">if</span> <span class="n">requested_keep_cfg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">available_cols</span><span class="p">)</span>
+
+    <span class="n">requested_keep_unique</span> <span class="o">=</span> <span class="n">_unique_available</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">requested_keep_cfg</span><span class="p">),</span> <span class="n">available_cols</span><span class="p">)</span>
+
+    <span class="c1"># keep provided but empty -&gt; RA/DEC first, then remaining required dependencies.</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">requested_keep_cfg</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">lead</span> <span class="o">=</span> <span class="n">_unique_available</span><span class="p">([</span><span class="n">ra_name</span><span class="p">,</span> <span class="n">dec_name</span><span class="p">],</span> <span class="n">available_cols</span><span class="p">)</span>
+        <span class="n">tail</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">must_keep_unique</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lead</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">lead</span><span class="p">,</span> <span class="o">*</span><span class="n">tail</span><span class="p">]</span>
+
+    <span class="c1"># keep provided and non-empty:</span>
+    <span class="c1"># - if keep already contains all required columns, keep order wins;</span>
+    <span class="c1"># - otherwise required missing columns go first, then keep order.</span>
+    <span class="n">missing_required</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">must_keep_unique</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">requested_keep_unique</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">missing_required</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">requested_keep_unique</span>
+
+    <span class="c1"># Special case: if RA/DEC are missing from keep, they lead the missing block.</span>
+    <span class="n">lead_missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ra_name</span><span class="p">,</span> <span class="n">dec_name</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">missing_required</span><span class="p">]</span>
+    <span class="n">rest_missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">missing_required</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lead_missing</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="n">lead_missing</span><span class="p">,</span> <span class="o">*</span><span class="n">rest_missing</span><span class="p">,</span> <span class="o">*</span><span class="n">requested_keep_unique</span><span class="p">]</span>
+
+
 <div class="viewcode-block" id="_build_input_ddf">
 <a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.input._build_input_ddf.html#hipscatalog_gen.io.input._build_input_ddf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_input_ddf</span><span class="p">(</span><span class="n">paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
@@ -198,8 +246,6 @@
         <span class="n">RA_NAME</span> <span class="o">=</span> <span class="n">ra_col</span>
         <span class="n">DEC_NAME</span> <span class="o">=</span> <span class="n">dec_col</span>
 
-        <span class="c1"># Build keep_cols in a deterministic order:</span>
-        <span class="c1">#   RA, DEC, score dependencies, then requested extras (if any).</span>
         <span class="n">score_dependencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">score_tokens</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">available_cols</span><span class="p">]</span>
 
         <span class="n">must_keep_resolved</span> <span class="o">=</span> <span class="p">[</span><span class="n">RA_NAME</span><span class="p">,</span> <span class="n">DEC_NAME</span><span class="p">,</span> <span class="o">*</span><span class="n">score_dependencies</span><span class="p">]</span>
@@ -208,19 +254,13 @@
         <span class="k">if</span> <span class="n">flux_col_cfg</span> <span class="ow">and</span> <span class="n">flux_col_cfg</span> <span class="ow">in</span> <span class="n">available_cols</span><span class="p">:</span>
             <span class="n">must_keep_resolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flux_col_cfg</span><span class="p">)</span>
 
-        <span class="c1"># When keep_all_columns is True, we still put RA/DEC (and deps) first,</span>
-        <span class="c1"># but preserve all remaining columns from the catalog.</span>
-        <span class="k">if</span> <span class="n">keep_all_columns</span><span class="p">:</span>
-            <span class="n">candidate</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">available_cols</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">must_keep_resolved</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">candidate</span> <span class="o">=</span> <span class="n">requested_keep</span>  <span class="c1"># only include if explicitly provided</span>
-
-        <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">keep_cols_out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">[</span><span class="o">*</span><span class="n">must_keep_resolved</span><span class="p">,</span> <span class="o">*</span><span class="n">candidate</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">available_cols</span> <span class="ow">and</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-                <span class="n">keep_cols_out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">keep_cols_out</span> <span class="o">=</span> <span class="n">_resolve_keep_columns_order</span><span class="p">(</span>
+            <span class="n">available_cols</span><span class="o">=</span><span class="n">available_cols</span><span class="p">,</span>
+            <span class="n">ra_name</span><span class="o">=</span><span class="n">RA_NAME</span><span class="p">,</span>
+            <span class="n">dec_name</span><span class="o">=</span><span class="n">DEC_NAME</span><span class="p">,</span>
+            <span class="n">must_keep</span><span class="o">=</span><span class="n">must_keep_resolved</span><span class="p">,</span>
+            <span class="n">requested_keep_cfg</span><span class="o">=</span><span class="n">requested_keep_cfg</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># Sub-select via LSDB API; returns a new Catalog. Convert to a Dask DF-friendly</span>
         <span class="c1"># object to keep meta valid for future Dask releases.</span>
@@ -272,7 +312,6 @@
     <span class="n">score_dependencies</span> <span class="o">=</span> <span class="n">_score_deps</span><span class="p">(</span><span class="n">active_score_expr</span><span class="p">,</span> <span class="n">available_cols</span><span class="p">)</span>
 
     <span class="n">requested_keep_cfg</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">keep</span>
-    <span class="n">requested_keep</span> <span class="o">=</span> <span class="n">requested_keep_cfg</span> <span class="ow">or</span> <span class="p">[]</span>
 
     <span class="n">flux_col_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;flux_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
@@ -282,16 +321,13 @@
     <span class="k">if</span> <span class="n">flux_col_cfg</span> <span class="ow">and</span> <span class="n">flux_col_cfg</span> <span class="ow">in</span> <span class="n">available_cols</span><span class="p">:</span>
         <span class="n">must_keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flux_col_cfg</span><span class="p">)</span>
 
-    <span class="c1"># If columns.keep is None, preserve all columns:</span>
-    <span class="c1"># RA/DEC and score deps first, then all remaining columns.</span>
-    <span class="n">candidate</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">available_cols</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">must_keep</span><span class="p">]</span> <span class="k">if</span> <span class="n">keep_all_columns</span> <span class="k">else</span> <span class="n">requested_keep</span>
-
-    <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="n">keep_cols_out_2</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">[</span><span class="o">*</span><span class="n">must_keep</span><span class="p">,</span> <span class="o">*</span><span class="n">candidate</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">available_cols</span> <span class="ow">and</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
-            <span class="n">keep_cols_out_2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="n">keep_cols_out_2</span> <span class="o">=</span> <span class="n">_resolve_keep_columns_order</span><span class="p">(</span>
+        <span class="n">available_cols</span><span class="o">=</span><span class="n">available_cols</span><span class="p">,</span>
+        <span class="n">ra_name</span><span class="o">=</span><span class="n">RA_NAME</span><span class="p">,</span>
+        <span class="n">dec_name</span><span class="o">=</span><span class="n">DEC_NAME</span><span class="p">,</span>
+        <span class="n">must_keep</span><span class="o">=</span><span class="n">must_keep</span><span class="p">,</span>
+        <span class="n">requested_keep_cfg</span><span class="o">=</span><span class="n">requested_keep_cfg</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">ddf</span> <span class="o">=</span> <span class="n">ddf0</span><span class="p">[</span><span class="n">keep_cols_out_2</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">ddf</span><span class="p">,</span> <span class="n">RA_NAME</span><span class="p">,</span> <span class="n">DEC_NAME</span><span class="p">,</span> <span class="n">keep_cols_out_2</span></div>
