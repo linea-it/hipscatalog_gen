@@ -45,6 +45,7 @@ class AlgoOpts:
 
     score_density_hybrid block:
         score_column; score_min/max; adaptive_range; hist_nbins;
+        density_up_to_depth;
         optional n_1/n_2/n_3 (or k_1/k_2/k_3) targets; density_bias_n1/n2/n3;
         order_desc/tie_column/keep_invalid_values (fall back to selection_defaults).
     """
@@ -104,6 +105,7 @@ class AlgoOpts:
     sdh_k_1: int | None = None  # optional “per active tile” alias for sdh_n_1
     sdh_k_2: int | None = None  # optional “per active tile” alias for sdh_n_2
     sdh_k_3: int | None = None  # optional “per active tile” alias for sdh_n_3
+    sdh_density_up_to_depth: int = 3
     sdh_density_bias_n1: float = 1.0
     sdh_density_bias_n2: float = 1.0
     sdh_density_bias_n3: float = 1.0
@@ -249,6 +251,8 @@ score_density_hybrid.score_column   [required] str (column or expression)
 score_density_hybrid.score_min/max  [optional] float
 score_density_hybrid.adaptive_range [optional, default=selection_defaults.adaptive_range or \"complete\"]
 score_density_hybrid.hist_nbins     [optional, default=selection_defaults.hist_nbins or 2048]
+score_density_hybrid.density_up_to_depth [optional, default=3]
+    Max depth handled by stage-1 density pass (clamped to level_limit).
 score_density_hybrid.k_1/k_2/k_3    [optional] int, \"per active tile\" aliases for n_*
 score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)
 score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]
@@ -526,6 +530,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             sdh_n_1=sdh_n_1,
             sdh_n_2=sdh_n_2,
             sdh_n_3=sdh_n_3,
+            sdh_density_up_to_depth=int(sdh_cfg.get("density_up_to_depth", 3)),
             sdh_density_bias_n1=float(sdh_cfg.get("density_bias_n1", defaults.get("density_bias_n1", 1.0))),
             sdh_density_bias_n2=float(sdh_cfg.get("density_bias_n2", defaults.get("density_bias_n2", 1.0))),
             sdh_density_bias_n3=float(sdh_cfg.get("density_bias_n3", defaults.get("density_bias_n3", 1.0))),
@@ -600,6 +605,10 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
         algo.sdh_score_adaptive_range = score_range_mode
         if int(getattr(algo, "sdh_score_hist_nbins", 2048)) <= 0:
             raise ValueError("algorithm.sdh_score_hist_nbins must be a positive integer.")
+        density_up_to_depth = int(getattr(algo, "sdh_density_up_to_depth", 3))
+        if density_up_to_depth < 1:
+            raise ValueError("algorithm.sdh_density_up_to_depth must be >= 1.")
+        algo.sdh_density_up_to_depth = density_up_to_depth
         for name in ("sdh_density_bias_n1", "sdh_density_bias_n2", "sdh_density_bias_n3"):
             val = float(getattr(algo, name, 0.0))
             if val < 0.0 or val > 1.0:

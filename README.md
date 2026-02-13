@@ -19,7 +19,7 @@ The pipeline supports three selection modes, configured in the YAML file under a
 
 - **mag_global**   — global magnitude-complete selection.
 - **score_global** — global selection driven by an arbitrary score/expression.
-- **score_density_hybrid** — density-driven depths 1–3 with score-based distribution afterwards.
+- **score_density_hybrid** — density-driven depths 1..`density_up_to_depth` (default 3) with score-based distribution afterwards.
 
 -------------------------------------------------------------------------------
 
@@ -157,7 +157,7 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - **mag_global**: magnitude-complete slices across all depths.
 - mag_global hist_peak default bounds: when `adaptive_range=hist_peak` and `mag_min`/`mag_max` are not provided, the histogram range clips the global min/max to [-2, 40] (mag_min clipped to >= -2; mag_max from the peak within [-2, min(global_max, 40)]).
 - **score_global**: score-based slices across all depths.
-- **score_density_hybrid**: density-driven tiles for depths 1–3, then score slices for deeper levels.
+- **score_density_hybrid**: density-driven tiles for depths 1..`density_up_to_depth` (default 3), then score slices for deeper levels.
 - For deeper streamed depths, bucket processing runs on Dask workers (`Client.submit`) and keeps the driver lightweight (orchestration only).
 - Stream merge uses bounded fan-in (auto-tuned from worker concurrency + `RLIMIT_NOFILE`) to reduce `EMFILE` (`Too many open files`) risk.
 - Ordering and ties: `order_desc` controls ascending/descending (default ascending); optional `tie_column` breaks ties before falling back to RA/DEC.

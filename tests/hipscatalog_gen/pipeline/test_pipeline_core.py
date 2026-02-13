@@ -65,6 +65,7 @@ def _cfg_pipeline(tmp_path: Path, **algo_overrides) -> SimpleNamespace:
         sdh_n_1=None,
         sdh_n_2=None,
         sdh_n_3=None,
+        sdh_density_up_to_depth=3,
         sdh_density_bias_n1=0.0,
         sdh_density_bias_n2=0.0,
         sdh_density_bias_n3=0.0,
@@ -181,6 +182,11 @@ def test_validation_helpers_errors():
     )
     with pytest.raises(ValueError):
         validation.validate_score_density_hybrid_cfg(neg_k3)
+    bad_stage1_depth = SimpleNamespace(
+        algorithm=SimpleNamespace(sdh_score_column="S", sdh_score_hist_nbins=4, sdh_density_up_to_depth=0)
+    )
+    with pytest.raises(ValueError):
+        validation.validate_score_density_hybrid_cfg(bad_stage1_depth)
 
     cfg_common_fields = SimpleNamespace(
         algorithm=SimpleNamespace(level_limit=1, moc_order=1),
@@ -690,6 +696,7 @@ def test_write_common_static_products_arguments_include_all_input_keys(tmp_path)
     assert "mag_global.k_1: null" in args_text
     assert "score_global.k_1: null" in args_text
     assert "score_density_hybrid.k_1: null" in args_text
+    assert "score_density_hybrid.density_up_to_depth: 3" in args_text
     assert "cluster.low_memory_mode: null" in args_text
     assert "output.overwrite: true" in args_text
 

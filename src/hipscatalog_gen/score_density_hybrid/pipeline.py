@@ -196,9 +196,10 @@ def _targets_stage1_by_depth(
     n_tot_score: float,
     provided: Dict[int, float],
     log_fn,
+    stage1_depth_max: int = 3,
 ) -> Dict[int, int]:
-    """Redistribute stage-1 totals across depths 1–3 using active tiles."""
-    depths_stage1 = sorted([d for d in base_targets if d <= 3])
+    """Redistribute stage-1 totals across configured density depths."""
+    depths_stage1 = sorted([d for d in base_targets if d <= stage1_depth_max])
     if not depths_stage1:
         return {}
 
@@ -412,11 +413,17 @@ def run_score_density_hybrid_selection(
     score_min = float(params.score_min)
     score_max = float(params.score_max)
     depths_sel = list(range(1, cfg.algorithm.level_limit + 1))
+    stage1_depth_max = min(
+        int(getattr(algo, "sdh_density_up_to_depth", 3)),
+        int(cfg.algorithm.level_limit),
+    )
+    if stage1_depth_max < 1:
+        raise ValueError("score_density_hybrid: density_up_to_depth must be >= 1.")
 
     header_line = build_header_line_from_keep(keep_cols)
 
     # ------------------------------------------------------------------
-    # Stage 1: density-driven for depths 1–3
+    # Stage 1: density-driven up to configured depth
     # ------------------------------------------------------------------
     with diag_ctx("dask_sdh_score_hist_initial"):
         hist, score_edges_hist, n_tot_score = compute_score_histogram_ddf(
@@ -443,6 +450,8 @@ def run_score_density_hybrid_selection(
 
     fixed_targets_map: Dict[int, Any] = {}
     for d in (1, 2, 3):
+        if d > stage1_depth_max:
+            continue
         n_val = getattr(algo, f"sdh_n_{d}", None)
         k_val = getattr(algo, f"sdh_k_{d}", None)
         if (n_val is not None) and (k_val is not None):
@@ -478,9 +487,10 @@ def run_score_density_hybrid_selection(
         n_tot_score=float(n_tot_score),
         provided=fixed_targets_clean,
         log_fn=log_fn,
+        stage1_depth_max=stage1_depth_max,
     )
     log_fn(
-        "[selection] score_density_hybrid stage 1 targets (depth 1–3): "
+        f"[selection] score_density_hybrid stage 1 targets (depth 1–{stage1_depth_max}): "
         + ", ".join(f"{d}: {stage1_totals.get(d, 0)}" for d in sorted(stage1_totals)),
         always=True,
     )
@@ -491,7 +501,7 @@ def run_score_density_hybrid_selection(
     stage1_depth_totals: dict[str, int] = {}
     stage1_depth_tiles: dict[str, int] = {}
 
-    for depth in [d for d in depths_sel if d <= 3]:
+    for depth in [d for d in depths_sel if d <= stage1_depth_max]:
         depth_t0 = time.time()
         depth_total = int(stage1_totals.get(depth, 0))
         if depth_total <= 0:
@@ -499,7 +509,7 @@ def run_score_density_hybrid_selection(
             continue
 
         counts = densmaps[depth]
-        bias = float(getattr(algo, f"sdh_density_bias_n{depth}", 0.0))
+        bias = float(getattr(algo, f"sdh_density_bias_n{depth}", 1.0))
         targets_per_tile_map = targets_per_tile(counts, depth_total, bias)
         if not targets_per_tile_map:
             log_fn(
@@ -569,7 +579,7 @@ def run_score_density_hybrid_selection(
     # ------------------------------------------------------------------
     # Stage 2: remaining depths via score_global logic on the remainder
     # ------------------------------------------------------------------
-    remaining_depths = [d for d in depths_sel if d > 3]
+    remaining_depths = [d for d in depths_sel if d > stage1_depth_max]
     if not remaining_depths:
         return {"depth_totals": stage1_depth_totals, "depth_tiles": stage1_depth_tiles}
 

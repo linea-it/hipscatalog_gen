@@ -63,7 +63,7 @@ MODE_REGISTRY: Dict[str, SelectionMode] = {
         normalize_fn=normalize_score_density_hybrid,
         prepare_fn=prepare_score_density_hybrid,
         run_fn=run_score_density_hybrid_selection,
-        description="Density-driven depths 1–3, score-based distribution afterwards.",
+        description="Density-driven depths 1..density_up_to_depth (default 3), score-based afterwards.",
     ),
 }
 

@@ -439,6 +439,7 @@ def write_common_static_products(
         ("score_density_hybrid.keep_invalid_values", getattr(cfg.algorithm, "sdh_keep_invalid_values", None)),
         ("score_density_hybrid.tie_column", getattr(cfg.algorithm, "sdh_tie_column", None)),
         ("score_density_hybrid.order_desc", getattr(cfg.algorithm, "sdh_order_desc", None)),
+        ("score_density_hybrid.density_up_to_depth", getattr(cfg.algorithm, "sdh_density_up_to_depth", None)),
         ("score_density_hybrid.n_1", getattr(cfg.algorithm, "sdh_n_1", None)),
         ("score_density_hybrid.n_2", getattr(cfg.algorithm, "sdh_n_2", None)),
         ("score_density_hybrid.n_3", getattr(cfg.algorithm, "sdh_n_3", None)),

@@ -163,6 +163,7 @@ algorithm:
     #score_max: null              # Optional upper bound (auto if null)
     adaptive_range: "complete"    # "complete" | "hist_peak"
     #hist_nbins: 2048              # Histogram bins for score_density_hybrid
+    #density_up_to_depth: 3         # Stage-1 density pass runs from depth 1 up to this depth
     #density_bias_n1: 1.0          # Density bias for Norder 1 (0.0 uniform, 1.0 follows densmap)
     #density_bias_n2: 1.0          # Density bias for Norder 2
     #density_bias_n3: 1.0          # Density bias for Norder 3
