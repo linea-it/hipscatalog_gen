@@ -276,7 +276,7 @@
     <span class="n">n_tot_score</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">provided</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">log_fn</span><span class="p">,</span>
-    <span class="n">stage1_depth_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">stage1_depth_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Redistribute stage-1 totals across configured density depths.&quot;&quot;&quot;</span>
     <span class="n">depths_stage1</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">base_targets</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;=</span> <span class="n">stage1_depth_max</span><span class="p">])</span>
@@ -499,7 +499,7 @@
     <span class="n">score_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">score_max</span><span class="p">)</span>
     <span class="n">depths_sel</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">stage1_depth_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
-        <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_density_up_to_depth&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span>
+        <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_density_up_to_depth&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
         <span class="nb">int</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">stage1_depth_max</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
