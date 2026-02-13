@@ -276,9 +276,10 @@
     <span class="n">n_tot_score</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">provided</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
     <span class="n">log_fn</span><span class="p">,</span>
+    <span class="n">stage1_depth_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Redistribute stage-1 totals across depths 1–3 using active tiles.&quot;&quot;&quot;</span>
-    <span class="n">depths_stage1</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">base_targets</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">])</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Redistribute stage-1 totals across configured density depths.&quot;&quot;&quot;</span>
+    <span class="n">depths_stage1</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">base_targets</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;=</span> <span class="n">stage1_depth_max</span><span class="p">])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">depths_stage1</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{}</span>
 
@@ -497,11 +498,17 @@
     <span class="n">score_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">score_min</span><span class="p">)</span>
     <span class="n">score_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">score_max</span><span class="p">)</span>
     <span class="n">depths_sel</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">stage1_depth_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+        <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_density_up_to_depth&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span>
+        <span class="nb">int</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">stage1_depth_max</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;score_density_hybrid: density_up_to_depth must be &gt;= 1.&quot;</span><span class="p">)</span>
 
     <span class="n">header_line</span> <span class="o">=</span> <span class="n">build_header_line_from_keep</span><span class="p">(</span><span class="n">keep_cols</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># Stage 1: density-driven for depths 1–3</span>
+    <span class="c1"># Stage 1: density-driven up to configured depth</span>
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="s2">&quot;dask_sdh_score_hist_initial&quot;</span><span class="p">):</span>
         <span class="n">hist</span><span class="p">,</span> <span class="n">score_edges_hist</span><span class="p">,</span> <span class="n">n_tot_score</span> <span class="o">=</span> <span class="n">compute_score_histogram_ddf</span><span class="p">(</span>
@@ -528,6 +535,8 @@
 
     <span class="n">fixed_targets_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">stage1_depth_max</span><span class="p">:</span>
+            <span class="k">continue</span>
         <span class="n">n_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sdh_n_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">k_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sdh_k_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">n_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">k_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
@@ -563,9 +572,10 @@
         <span class="n">n_tot_score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">n_tot_score</span><span class="p">),</span>
         <span class="n">provided</span><span class="o">=</span><span class="n">fixed_targets_clean</span><span class="p">,</span>
         <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
+        <span class="n">stage1_depth_max</span><span class="o">=</span><span class="n">stage1_depth_max</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">log_fn</span><span class="p">(</span>
-        <span class="s2">&quot;[selection] score_density_hybrid stage 1 targets (depth 1–3): &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;[selection] score_density_hybrid stage 1 targets (depth 1–</span><span class="si">{</span><span class="n">stage1_depth_max</span><span class="si">}</span><span class="s2">): &quot;</span>
         <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">stage1_totals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">stage1_totals</span><span class="p">)),</span>
         <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
@@ -576,7 +586,7 @@
     <span class="n">stage1_depth_totals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">stage1_depth_tiles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">depths_sel</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">depths_sel</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;=</span> <span class="n">stage1_depth_max</span><span class="p">]:</span>
         <span class="n">depth_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">depth_total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">stage1_totals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">depth_total</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
@@ -584,7 +594,7 @@
             <span class="k">continue</span>
 
         <span class="n">counts</span> <span class="o">=</span> <span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">]</span>
-        <span class="n">bias</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sdh_density_bias_n</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sdh_density_bias_n</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
         <span class="n">targets_per_tile_map</span> <span class="o">=</span> <span class="n">targets_per_tile</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">depth_total</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">targets_per_tile_map</span><span class="p">:</span>
             <span class="n">log_fn</span><span class="p">(</span>
@@ -654,7 +664,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Stage 2: remaining depths via score_global logic on the remainder</span>
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="n">remaining_depths</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">depths_sel</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">remaining_depths</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">depths_sel</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">stage1_depth_max</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">remaining_depths</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">:</span> <span class="n">stage1_depth_totals</span><span class="p">,</span> <span class="s2">&quot;depth_tiles&quot;</span><span class="p">:</span> <span class="n">stage1_depth_tiles</span><span class="p">}</span>
 

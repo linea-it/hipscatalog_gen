@@ -85,7 +85,7 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">mag_global</span></code>: magnitude-complete selection (see <code class="docutils literal notranslate"><span class="pre">algorithm.mag_global.*</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">mag_global</span></code> hist_peak defaults: when no <code class="docutils literal notranslate"><span class="pre">mag_min</span></code>/<code class="docutils literal notranslate"><span class="pre">mag_max</span></code> are provided, the histogram range clips global min/max to [-2, 40] (min clipped to &gt;= -2; max from the peak within [-2, min(global_max, 40)]).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">score_global</span></code>: selection driven by an arbitrary score/expression (see <code class="docutils literal notranslate"><span class="pre">algorithm.score_global.*</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">score_density_hybrid</span></code>: density-driven depths 1–3 with score-driven remainder (see <code class="docutils literal notranslate"><span class="pre">algorithm.score_density_hybrid.*</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">score_density_hybrid</span></code>: density-driven depths 1..``density_up_to_depth`` (default 3) with score-driven remainder (see <code class="docutils literal notranslate"><span class="pre">algorithm.score_density_hybrid.*</span></code>).</p></li>
 </ul>
 </li>
 <li><p>Runs locally or on SLURM-backed Dask clusters; outputs full HiPS layouts (tiles, all-sky, MOC, metadata, density maps).</p></li>
