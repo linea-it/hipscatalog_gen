@@ -1,12 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 - Fix densmap scalability for large catalogs by replacing dense per-partition aggregation with sparse histogram reduction in a bounded fan-in tree, preventing oversized gather tasks at high depths.
 - Compute only the finest densmap from source data and derive lower orders by exact NESTED parent-child aggregation (4 children -> 1 parent), reducing repeated catalog scans; keep per-depth progress logs (`Computing/Derived/Wrote densmap_o*.fits`).
 - Optimize `score_density_hybrid` stage-1 per-tile top-k with an exact two-stage strategy (local prune + global reduce), reducing shuffle volume and improving runtime on large catalogs.
 - Add `score_density_hybrid.density_up_to_depth` (default `3`) to control how far stage-1 density selection runs before switching to score-based stage-2.
-- Make stage-2 depth writing (`depth >= 3`, no Allsky) streaming-based with bucketed temporary fragments, avoiding `depth_ddf.compute()` materialization on the driver and reducing distributed-filesystem metadata pressure.
+- Make stage-2 depth writing (no Allsky) streaming-based with bucketed temporary fragments, avoiding `depth_ddf.compute()` materialization on the driver and reducing distributed-filesystem metadata pressure.
 - Run stage-2 bucket processing on distributed workers (`Client.submit`) so compute/IO stay on workers and the driver remains orchestration-only.
 - Require an active `dask.distributed` client for streamed stage-2 writes; fail fast when absent instead of silently degrading to local execution.
 - Auto-tune merge fan-in per worker task using `RLIMIT_NOFILE` and worker concurrency, and bound fan-in rounds to prevent `EMFILE` (`Too many open files`) during high-depth bucket merges.
