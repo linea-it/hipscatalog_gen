@@ -140,6 +140,35 @@ def test_build_input_ddf_hats_keep_all(monkeypatch):
     assert list(ddf_out.columns) == keep_cols
 
 
+def test_build_input_ddf_hats_keep_none_preserves_catalog_order(monkeypatch):
+    """HATS input with keep=None preserves source catalog column order."""
+    pdf = pd.DataFrame({"SCORE": [0.5], "DEC": [2.0], "RA": [1.0], "EXTRA": [7]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    call_args: dict[str, Any] = {}
+
+    class FakeCatalog:
+        def __init__(self, columns: list[str]):
+            self.columns = columns
+
+        def __getitem__(self, cols: list[str]):
+            return ddf[cols]
+
+    def fake_open(path: str, columns: list[str] | None = None):
+        call_args["columns"] = columns
+        cols = list(pdf.columns) if columns is None else list(columns)
+        return FakeCatalog(cols)
+
+    monkeypatch.setattr(io_input.lsdb, "open_catalog", fake_open)
+
+    cfg = _base_cfg("hats", selection_mode="score_global", score_column="SCORE")
+    ddf_out, ra, dec, keep_cols = _build_input_ddf(["/tmp/cat.hats"], cfg)
+
+    assert call_args["columns"] is None
+    assert (ra, dec) == ("RA", "DEC")
+    assert keep_cols == ["SCORE", "DEC", "RA", "EXTRA"]
+    assert list(ddf_out.columns) == keep_cols
+
+
 def test_build_input_ddf_hats_subset(monkeypatch):
     """HATS input requests explicit columns when keep is provided."""
     pdf = pd.DataFrame({"RA": [1.0], "DEC": [2.0], "SCORE": [3.0], "EXTRA": [4.0]})
@@ -252,6 +281,47 @@ def test_build_input_ddf_parquet_and_csv(tmp_path):
     ddf_parquet2, ra2, dec2, keep_cols2 = _build_input_ddf([str(pq_path2)], cfg_parquet2)
     assert keep_cols2 == ["RA", "DEC", "MAG", "FLUX"]
     assert ddf_parquet2.compute().equals(pq_pdf2[keep_cols2])
+
+
+def test_build_input_ddf_keep_none_preserves_input_order(tmp_path):
+    """keep=None preserves input order for non-HATS inputs."""
+    pdf = pd.DataFrame({"ID": [9], "DEC": [1.0], "RA": [2.0], "SCORE": [3.0], "EXTRA": [4.0]})
+    path = tmp_path / "ordered.parquet"
+    pdf.to_parquet(path, index=False)
+
+    cfg = _base_cfg("parquet", keep=None, selection_mode="score_global", score_column="SCORE")
+    ddf_out, ra, dec, keep_cols = _build_input_ddf([str(path)], cfg)
+
+    assert (ra, dec) == ("RA", "DEC")
+    assert keep_cols == list(pdf.columns)
+    pd.testing.assert_frame_equal(ddf_out.compute(), pdf[keep_cols], check_dtype=False)
+
+
+def test_build_input_ddf_keep_non_empty_complete_follows_keep_order(tmp_path):
+    """When keep includes all required columns, final order follows keep exactly."""
+    pdf = pd.DataFrame({"RA": [2.0], "DEC": [1.0], "SCORE": [3.0], "EXTRA": [4.0]})
+    path = tmp_path / "keep_complete.parquet"
+    pdf.to_parquet(path, index=False)
+
+    keep = ["EXTRA", "RA", "DEC", "SCORE"]
+    cfg = _base_cfg("parquet", keep=keep, selection_mode="score_global", score_column="SCORE")
+    ddf_out, _, _, keep_cols = _build_input_ddf([str(path)], cfg)
+
+    assert keep_cols == keep
+    pd.testing.assert_frame_equal(ddf_out.compute(), pdf[keep], check_dtype=False)
+
+
+def test_build_input_ddf_keep_non_empty_missing_required_prepends_missing(tmp_path):
+    """Missing required columns are prepended; missing RA/DEC lead that block."""
+    pdf = pd.DataFrame({"EXTRA": [4.0], "SCORE": [3.0], "RA": [2.0], "DEC": [1.0]})
+    path = tmp_path / "keep_missing.parquet"
+    pdf.to_parquet(path, index=False)
+
+    cfg = _base_cfg("parquet", keep=["EXTRA"], selection_mode="score_global", score_column="SCORE")
+    ddf_out, _, _, keep_cols = _build_input_ddf([str(path)], cfg)
+
+    assert keep_cols == ["RA", "DEC", "SCORE", "EXTRA"]
+    pd.testing.assert_frame_equal(ddf_out.compute(), pdf[keep_cols], check_dtype=False)
 
 
 def test_build_input_ddf_tsv_no_header(tmp_path):

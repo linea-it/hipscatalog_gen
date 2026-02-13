@@ -199,14 +199,14 @@ dec   [required] str
 keep  [optional, default=None] list[str] or null
     Controls which columns are kept in the HiPS tiles:
       - Not set / null (default):
-          Keep all input columns; RA/DEC, score expression deps, and mag/flux
-          (if mag_global) are ordered first.
+          Keep all input columns preserving original input order.
       - Empty list []:
           Keep only the essential set: RA, DEC, score deps, and mag/flux
-          (if mag_global).
+          (if mag_global), with RA/DEC first.
       - Non-empty list:
-          Keep the essential set plus all explicitly listed columns (filtered
-          by availability).
+          Use the provided keep order when it already contains all essential
+          columns. Otherwise, prepend missing essential columns before the keep
+          order (with RA/DEC first if they are missing).
 
 algorithm (block-based)
 -----------------------
