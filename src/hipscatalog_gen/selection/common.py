@@ -54,13 +54,19 @@ def reduce_topk_by_group_dask(
     dec_col: str,
     tie_col: str | None = None,
 ):
-    """Keep up to k_per_group rows per group, sorted by score then RA/DEC."""
+    """Keep up to k_per_group rows per group, sorted by score then RA/DEC.
+
+    Uses a two-stage exact strategy:
+    1) per-partition local top-k pruning (no global shuffle),
+    2) global top-k by group on the pruned collection.
+    """
     if not k_per_group:
         empty_meta = _get_meta_df(ddf_like)
         return ddf_like.map_partitions(lambda pdf: pdf.iloc[0:0], meta=empty_meta)
 
     asc = not order_desc
     k_map = {int(k): int(v) for k, v in k_per_group.items()}
+    groups_allowed = set(k_map.keys())
 
     def _take_topk(group: pd.DataFrame) -> pd.DataFrame:
         """Select the top-k rows for a single group."""
@@ -84,12 +90,44 @@ def reduce_topk_by_group_dask(
         group_sorted = group.sort_values(sort_cols, ascending=ascending, kind="mergesort")
         return group_sorted.head(k)
 
+    def _local_topk_partition(pdf: pd.DataFrame) -> pd.DataFrame:
+        """Exact local pruning: keep only per-group top-k within this partition."""
+        if pdf.empty:
+            return pdf.iloc[0:0]
+
+        # Drop groups that are not requested for this depth.
+        pdf = pdf[pdf[group_col].isin(groups_allowed)]
+        if pdf.empty:
+            return pdf.iloc[0:0]
+        sort_cols = [group_col, score_col]
+        ascending = [True, asc]
+        if tie_col and tie_col in pdf.columns:
+            sort_cols.append(tie_col)
+            ascending.append(True)
+        if ra_col in pdf.columns:
+            sort_cols.append(ra_col)
+            ascending.append(True)
+        if dec_col in pdf.columns:
+            sort_cols.append(dec_col)
+            ascending.append(True)
+
+        pdf_sorted = pdf.sort_values(sort_cols, ascending=ascending, kind="mergesort")
+        rank_in_group = pdf_sorted.groupby(group_col, sort=False).cumcount()
+        k_by_row = pdf_sorted[group_col].map(k_map).fillna(0).astype("int64")
+        keep_mask = rank_in_group.to_numpy() < k_by_row.to_numpy()
+        return pdf_sorted.loc[keep_mask]
+
     meta = _get_meta_df(ddf_like)
     cols_all = list(meta.columns)
 
     base = _get_dask_base(ddf_like, require_groupby=True)
     if hasattr(base, "groupby"):
         cols_all = list(meta.columns)
+        if hasattr(base, "map_partitions"):
+            pruned = base.map_partitions(_local_topk_partition, meta=meta)
+            return pruned.groupby(group_col, group_keys=False)[cols_all].apply(_take_topk, meta=meta)
+        # Compatibility fallback for test doubles / non-Dask backends that
+        # implement groupby-apply but not map_partitions.
         return base.groupby(group_col, group_keys=False)[cols_all].apply(_take_topk, meta=meta)
 
     return ddf_like

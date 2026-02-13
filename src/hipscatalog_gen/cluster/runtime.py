@@ -44,8 +44,6 @@ class ClusterRuntime:
 
     cluster: Any
     client: Client
-    persist_ddfs: bool
-    avoid_computes: bool
     diagnostics_mode: str
 
 
@@ -83,10 +81,24 @@ def setup_cluster(
             raise ImportError("dask-jobqueue is required for mode='slurm'")
         sl = cfg.slurm or {}
         job_directives = sl.get("job_extra_directives", sl.get("job_extra", []))
+        queue = sl.get("queue", "cpu_dev")
+        account = sl.get("account", None)
+
+        log_fn(
+            "[cluster] Starting Dask SLURM cluster: "
+            f"n_workers={cfg.n_workers} threads_per_worker={cfg.threads_per_worker} "
+            f"memory_per_worker={cfg.memory_per_worker}",
+            True,
+        )
+        log_fn(
+            f"[cluster] SLURM directives: queue={queue!r} account={account!r} "
+            f"job_extra_directives={job_directives!r}",
+            True,
+        )
 
         cluster = SLURMCluster(
-            queue=sl.get("queue", "cpu_dev"),
-            account=sl.get("account", None),
+            queue=queue,
+            account=account,
             cores=cfg.threads_per_worker,
             processes=1,
             memory=cfg.memory_per_worker,
@@ -95,6 +107,12 @@ def setup_cluster(
         cluster.scale(cfg.n_workers)
         client = Client(cluster)
     else:
+        log_fn(
+            "[cluster] Starting Dask local cluster: "
+            f"n_workers={cfg.n_workers} threads_per_worker={cfg.threads_per_worker} "
+            f"memory_per_worker={cfg.memory_per_worker}",
+            True,
+        )
         cluster = LocalCluster(
             n_workers=cfg.n_workers,
             threads_per_worker=cfg.threads_per_worker,
@@ -107,25 +125,11 @@ def setup_cluster(
     # ------------------------------------------------------------------
     # Memory vs. compute policy
     # ------------------------------------------------------------------
-    persist_ddfs = bool(getattr(cfg, "persist_ddfs", False))
-    avoid_computes = bool(getattr(cfg, "avoid_computes_wherever_possible", True))
-
-    if persist_ddfs:
-        log_fn("[cluster] persist_ddfs=True → will persist large intermediates in memory", True)
-    else:
-        log_fn("[cluster] persist_ddfs=False (lower memory consumption)", True)
-
-    if avoid_computes:
-        log_fn(
-            "[cluster] avoid_computes_wherever_possible=True → will try to avoid large .compute() calls "
-            "whenever possible (using more Dask-native operations) (lower memory consumption)",
-            True,
-        )
-    else:
-        log_fn(
-            "[cluster] avoid_computes_wherever_possible=False → keep standard behaviour for computes.",
-            True,
-        )
+    log_fn("[cluster] persist_ddfs=False (fixed policy)", True)
+    log_fn(
+        "[cluster] avoid_computes_wherever_possible=True (fixed policy)",
+        True,
+    )
 
     diagnostics_mode = getattr(cfg, "diagnostics_mode", "per_step")
 
@@ -149,8 +153,6 @@ def setup_cluster(
     runtime = ClusterRuntime(
         cluster=cluster,
         client=client,
-        persist_ddfs=persist_ddfs,
-        avoid_computes=avoid_computes,
         diagnostics_mode=str(diagnostics_mode),
     )
 

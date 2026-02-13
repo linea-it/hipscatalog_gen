@@ -61,22 +61,21 @@ def test_load_config_from_file(tmp_path):
     cfg = load_config(str(cfg_path))
     assert isinstance(cfg, Config)
     assert cfg.algorithm.moc_order == cfg.algorithm.level_limit == 3
-    assert cfg.cluster.persist_ddfs is False
-    assert cfg.cluster.avoid_computes_wherever_possible is True
+    assert cfg.cluster.low_memory_mode is None
 
 
-def test_build_config_low_memory_overrides():
-    """Cluster policy derived from low_memory_mode can be overridden."""
+def test_build_config_low_memory_mode_is_deprecated():
+    """low_memory_mode is accepted only for deprecation signaling."""
     cfg_dict = _base_cfg_dict()
     cfg_dict["cluster"] = {"low_memory_mode": False}
-    cfg = load_config_from_dict(cfg_dict)
+    with pytest.warns(DeprecationWarning, match="low_memory_mode is deprecated"):
+        cfg = load_config_from_dict(cfg_dict)
     assert cfg.cluster.low_memory_mode is False
-    assert cfg.cluster.persist_ddfs is True
-    assert cfg.cluster.avoid_computes_wherever_possible is False
 
     cfg_dict["cluster"]["persist_ddfs"] = False
-    cfg = load_config_from_dict(cfg_dict)
-    assert cfg.cluster.persist_ddfs is False
+    with pytest.warns(DeprecationWarning, match="persist_ddfs is deprecated and ignored"):
+        cfg2 = load_config_from_dict(cfg_dict)
+    assert cfg2.cluster.low_memory_mode is False
 
 
 def test_build_config_moc_order_clamped():
@@ -180,14 +179,28 @@ def test_build_config_sdh_validations():
         load_config_from_dict(cfg_dict)
 
     cfg_dict = _base_cfg_dict("score_density_hybrid")
+    cfg_dict["algorithm"]["score_density_hybrid"] = {"score_column": "S", "density_up_to_depth": 0}
+    with pytest.raises(ValueError):
+        load_config_from_dict(cfg_dict)
+
+    cfg_dict = _base_cfg_dict("score_density_hybrid")
     cfg_dict["algorithm"]["score_density_hybrid"] = {
         "score_column": "S",
         "adaptive_range": "hist_peak",
         "hist_nbins": 10,
+        "density_up_to_depth": 4,
         "density_bias_n1": 0.5,
     }
     cfg = load_config_from_dict(cfg_dict)
     assert cfg.algorithm.sdh_density_bias_n1 == 0.5
+    assert cfg.algorithm.sdh_density_up_to_depth == 4
+
+
+def test_build_config_sdh_density_up_to_depth_default():
+    """score_density_hybrid defaults density_up_to_depth to 4."""
+    cfg_dict = _base_cfg_dict("score_density_hybrid")
+    cfg = load_config_from_dict(cfg_dict)
+    assert cfg.algorithm.sdh_density_up_to_depth == 4
 
 
 def test_build_config_numeric_fields_convert_and_raise():
@@ -405,3 +418,41 @@ def test_cli_serve_dispatch_custom_flags(monkeypatch):
     )
     cli.main(["serve", "--out", "/tmp/out", "--host", "127.0.0.2", "--port", "9001", "--no-browser"])
     assert calls == [{"out_dir": "/tmp/out", "host": "127.0.0.2", "port": 9001, "open_browser": False}]
+
+
+def test_serve_output_dir_rejects_missing_path(tmp_path):
+    """_serve_output_dir requires an existing directory."""
+    missing = tmp_path / "does_not_exist"
+    with pytest.raises(ValueError, match="existing directory"):
+        cli._serve_output_dir(str(missing), open_browser=False)
+
+
+def test_serve_output_dir_keyboard_interrupt_closes_server(monkeypatch, tmp_path, capsys):
+    """Server helper closes HTTP server on Ctrl+C and prints status lines."""
+    created: list[Any] = []
+
+    class _FakeHTTPServer:
+        def __init__(self, addr, handler):
+            self.addr = addr
+            self.handler = handler
+            self.closed = False
+            created.append(self)
+
+        def serve_forever(self):
+            raise KeyboardInterrupt
+
+        def server_close(self):
+            self.closed = True
+
+    monkeypatch.setattr(cli, "ThreadingHTTPServer", _FakeHTTPServer)
+    monkeypatch.setattr(
+        cli.webbrowser, "open", lambda _url: (_ for _ in ()).throw(RuntimeError("no-browser"))
+    )
+
+    cli._serve_output_dir(str(tmp_path), host="127.0.0.1", port=8765, open_browser=True)
+
+    out = capsys.readouterr().out
+    assert "Serving" in out
+    assert "Open: http://127.0.0.1:8765/index.html" in out
+    assert "Server stopped." in out
+    assert created and created[0].closed is True

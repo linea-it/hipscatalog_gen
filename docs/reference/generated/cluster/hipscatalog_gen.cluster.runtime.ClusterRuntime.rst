@@ -25,8 +25,6 @@
    
       ~ClusterRuntime.cluster
       ~ClusterRuntime.client
-      ~ClusterRuntime.persist_ddfs
-      ~ClusterRuntime.avoid_computes
       ~ClusterRuntime.diagnostics_mode
    
    

@@ -188,7 +188,7 @@ def run_score_global_selection(
     log_fn,
     avoid_computes: bool = True,
     params: ScoreGlobalParams | None = None,
-) -> None:
+) -> dict[str, dict[str, int]]:
     """Execute the score_global selection path and write tiles.
 
     Args:
@@ -229,7 +229,7 @@ def run_score_global_selection(
         if (d in depths_sel) and (n_val is not None):
             fixed_targets[d] = float(n_val)
 
-    select_by_score_slices(
+    return select_by_score_slices(
         remainder_ddf=remainder_ddf,
         densmaps=densmaps,
         depths_sel=depths_sel,

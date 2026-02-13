@@ -119,6 +119,8 @@ def _log_depth_stats(
     candidates_len: int | None = None,
     selected_len: int | None = None,
     written: Dict[int, int] | None = None,
+    tiles_written: int | None = None,
+    rows_written: int | None = None,
     remainder_len: int | None = None,
 ) -> None:
     """Log a compact one-line summary for a depth and pipeline phase.
@@ -131,6 +133,8 @@ def _log_depth_stats(
         candidates_len: Optional number of candidate rows.
         selected_len: Optional number of selected rows.
         written: Optional mapping tile_index -> rows_written.
+        tiles_written: Optional number of tiles written (alternative to ``written``).
+        rows_written: Optional number of rows written (alternative to ``written``).
         remainder_len: Optional number of remainder rows.
     """
     parts: List[str] = []
@@ -143,10 +147,13 @@ def _log_depth_stats(
     if selected_len is not None:
         parts.append(f"selected={selected_len}")
     if written is not None:
-        rows_written = int(sum(written.values())) if written else 0
-        tiles_written = int(len(written)) if written else 0
-        parts.append(f"tiles_written={tiles_written}")
-        parts.append(f"rows_written={rows_written}")
+        rows_written_calc = int(sum(written.values())) if written else 0
+        tiles_written_calc = int(len(written)) if written else 0
+        parts.append(f"tiles_written={tiles_written_calc}")
+        parts.append(f"rows_written={rows_written_calc}")
+    elif tiles_written is not None or rows_written is not None:
+        parts.append(f"tiles_written={int(tiles_written or 0)}")
+        parts.append(f"rows_written={int(rows_written or 0)}")
     if remainder_len is not None:
         parts.append(f"remainder={remainder_len}")
 

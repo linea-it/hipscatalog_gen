@@ -19,7 +19,7 @@ The pipeline supports three selection modes, configured in the YAML file under a
 
 - **mag_global**   — global magnitude-complete selection.
 - **score_global** — global selection driven by an arbitrary score/expression.
-- **score_density_hybrid** — density-driven depths 1–3 with score-based distribution afterwards.
+- **score_density_hybrid** — density-driven depths 1..`density_up_to_depth` (default 4) with score-based distribution afterwards.
 
 -------------------------------------------------------------------------------
 
@@ -27,9 +27,13 @@ The pipeline supports three selection modes, configured in the YAML file under a
 
 Install from PyPI into a fresh environment and run with a config file:
 
-    python -m venv .venv          # or use conda
-    source .venv/bin/activate
+    conda create -n hipscatalog-gen "python>=3.11"
+    conda activate hipscatalog-gen
     pip install hipscatalog-gen
+
+If you do not have Conda yet, install it first using the official docs:
+- Conda install guide: https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
+- Miniconda install guide: https://www.anaconda.com/docs/getting-started/miniconda/install
 
 Fetch the example template and adapt it to your catalog:
 
@@ -49,8 +53,8 @@ For local development (editable install + tooling):
 
     git clone https://github.com/linea-it/hipscatalog_gen.git
     cd hipscatalog_gen
-    conda create -n hipscatalog-gen python=3.13
-    conda activate hipscatalog-gen
+    conda create -n hipscatalog-gen-dev "python>=3.11"
+    conda activate hipscatalog-gen-dev
     pip install -e .[dev]
 
 Optionally expose the env as a Jupyter kernel:
@@ -84,6 +88,15 @@ Selection modes live under ``algorithm.selection_mode``:
 Mode-specific parameters live inside blocks ``algorithm.mag_global``, ``algorithm.score_global``, and
 ``algorithm.score_density_hybrid`` (with optional shared defaults in ``algorithm.selection_defaults``).
 
+Cluster memory policy (current behavior):
+
+- The pipeline now uses fixed defaults optimized for large catalogs:
+  - no persistence of large intermediate DataFrames
+  - avoid early large compute materializations whenever possible
+- ``cluster.low_memory_mode`` is deprecated (accepted only with warning, no effect).
+- ``cluster.persist_ddfs`` and ``cluster.avoid_computes_wherever_possible`` are deprecated and ignored.
+- For streamed stage-2 writes (deeper depths), an active ``dask.distributed`` client is required.
+
 -------------------------------------------------------------------------------
 
 ## Running
@@ -108,6 +121,9 @@ Run with a config file:
 
     hipscatalog-gen --config config.yaml
     # or: python -m hipscatalog_gen.cli --config config.yaml
+
+No dedicated ``sbatch`` wrapper script is required. For HPC usage, set
+``cluster.mode: slurm`` in the YAML and run the same command above.
 
 Validate a config without running:
 
@@ -141,7 +157,9 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - **mag_global**: magnitude-complete slices across all depths.
 - mag_global hist_peak default bounds: when `adaptive_range=hist_peak` and `mag_min`/`mag_max` are not provided, the histogram range clips the global min/max to [-2, 40] (mag_min clipped to >= -2; mag_max from the peak within [-2, min(global_max, 40)]).
 - **score_global**: score-based slices across all depths.
-- **score_density_hybrid**: density-driven tiles for depths 1–3, then score slices for deeper levels.
+- **score_density_hybrid**: density-driven tiles for depths 1..`density_up_to_depth` (default 4), then score slices for deeper levels.
+- For deeper streamed depths, bucket processing runs on Dask workers (`Client.submit`) and keeps the driver lightweight (orchestration only).
+- Stream merge uses bounded fan-in (auto-tuned from worker concurrency + `RLIMIT_NOFILE`) to reduce `EMFILE` (`Too many open files`) risk.
 - Ordering and ties: `order_desc` controls ascending/descending (default ascending); optional `tie_column` breaks ties before falling back to RA/DEC.
 - Invalids: `keep_invalid_values` (per mode or in `selection_defaults`) can map NaN/Inf to a sentinel when `adaptive_range=complete`, sending them to the last slice; rejected for `hist_peak`.
 
@@ -174,7 +192,7 @@ The mag-global mode builds on an idea originally suggested by **Julia Gschwend**
 
 If you use this package in your research, please cite:
 
-Silva, L. L. C., et al. (2025). *hipscatalog-gen: A Python HiPS Catalog Pipeline*.
+Silva, L. L. C., et al. (2026). *hipscatalog-gen: A Python HiPS Catalog Pipeline*.
 LIneA – Laboratório Interinstitucional de e-Astronomia.
 Available at: https://github.com/linea-it/hipscatalog_gen
 

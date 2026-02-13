@@ -62,8 +62,6 @@ def test_setup_cluster_local_with_per_step_diagnostics(tmp_path, monkeypatch, lo
         n_workers=2,
         threads_per_worker=3,
         memory_per_worker="4GB",
-        persist_ddfs=True,
-        avoid_computes_wherever_possible=False,
         diagnostics_mode="per_step",
     )
 
@@ -71,8 +69,6 @@ def test_setup_cluster_local_with_per_step_diagnostics(tmp_path, monkeypatch, lo
 
     assert isinstance(runtime_obj.cluster, FakeCluster)
     assert isinstance(runtime_obj.client, FakeClient)
-    assert runtime_obj.persist_ddfs is True
-    assert runtime_obj.avoid_computes is False
     assert runtime_obj.diagnostics_mode == "per_step"
 
     assert created["local_cluster_kwargs"] == {
@@ -82,8 +78,8 @@ def test_setup_cluster_local_with_per_step_diagnostics(tmp_path, monkeypatch, lo
     }
     assert created["client_cluster"] is runtime_obj.cluster
     assert any("Dask dashboard" in msg for msg in logs)
-    assert any("persist_ddfs=True" in msg for msg in logs)
-    assert any("avoid_computes_wherever_possible=False" in msg for msg in logs)
+    assert any("persist_ddfs=False (fixed policy)" in msg for msg in logs)
+    assert any("avoid_computes_wherever_possible=True (fixed policy)" in msg for msg in logs)
 
     with diag_ctx_factory("step1") as ctx:
         assert ctx == "report_ctx"
@@ -204,8 +200,6 @@ def test_shutdown_cluster_swallows_exceptions():
     runtime_obj = runtime.ClusterRuntime(
         cluster=bad_cluster,
         client=bad_client,
-        persist_ddfs=False,
-        avoid_computes=False,
         diagnostics_mode="off",
     )
 

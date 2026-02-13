@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import glob
 import json
+import time
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -47,6 +49,12 @@ def log_prologue(cfg: Any, out_dir: Path, log_fn) -> None:
     sel_mode = (getattr(cfg.algorithm, "selection_mode", "") or "").lower()
     base = f"Config -> lM={cfg.algorithm.level_limit} selection_mode={sel_mode}"
     log_fn(base, always=True)
+    if getattr(cfg.cluster, "low_memory_mode", None) is not None:
+        log_fn(
+            "[config] cluster.low_memory_mode is deprecated and has no effect. "
+            "Using fixed policy: persist_ddfs=False and avoid_computes_wherever_possible=True.",
+            always=True,
+        )
 
 
 def log_epilogue(
@@ -186,6 +194,7 @@ def compute_and_write_densmaps(
     level_limit: int,
     out_dir: Path,
     diag_ctx,
+    log_fn=None,
 ) -> Dict[int, np.ndarray]:
     """Compute density maps for all depths and write them to disk.
 
@@ -196,21 +205,94 @@ def compute_and_write_densmaps(
         level_limit: Maximum HiPS order to compute.
         out_dir: Output directory where FITS files are written.
         diag_ctx: Diagnostics context factory (label -> context manager).
+        log_fn: Optional logging callback for progress updates.
 
     Returns:
         Mapping of depth -> numpy array with counts per HEALPix pixel.
     """
+
+    def _npix_for_depth(depth: int) -> int:
+        return int(12 * (4 ** int(depth)))
+
     depths = list(range(0, level_limit + 1))
     densmaps: Dict[int, np.ndarray] = {}
-
-    delayed_maps = {d: densmap_for_depth_delayed(ddf_sel, ra_col, dec_col, depth=d) for d in depths}
+    finest = int(level_limit)
 
     with diag_ctx("dask_densmaps"):
-        computed = dask_compute(*delayed_maps.values())
+        # Single source pass on the finest depth.
+        if log_fn is not None:
+            log_fn(
+                f"[densmaps] Computing densmap_o{finest}.fits (single source pass)...",
+                always=True,
+            )
+        t_finest = time.time()
+        dens_finest = dask_compute(densmap_for_depth_delayed(ddf_sel, ra_col, dec_col, depth=finest))[0]
+        densmaps[finest] = dens_finest
+        if log_fn is not None:
+            log_fn(
+                f"[densmaps] Computed densmap_o{finest}.fits in {_fmt_dur(time.time() - t_finest)}",
+                always=True,
+            )
 
-    for d, dens in zip(delayed_maps.keys(), computed, strict=False):
-        densmaps[d] = dens
-        write_densmap_fits(out_dir, d, dens)
+        # If the finest vector shape matches HEALPix expectations, derive lower
+        # depths by aggregating 4 children per parent in NESTED indexing.
+        expected_finest_npix = _npix_for_depth(finest)
+        can_derive = int(getattr(dens_finest, "size", -1)) == expected_finest_npix
+
+        if can_derive:
+            child_counts = dens_finest
+            for depth in range(finest - 1, -1, -1):
+                if log_fn is not None:
+                    log_fn(
+                        f"[densmaps] Deriving densmap_o{depth}.fits from densmap_o{depth + 1}.fits...",
+                        always=True,
+                    )
+                t_der = time.time()
+                parent_counts = (
+                    np.asarray(child_counts, dtype=np.int64).reshape(-1, 4).sum(axis=1, dtype=np.int64)
+                )
+                densmaps[depth] = parent_counts
+                child_counts = parent_counts
+                if log_fn is not None:
+                    log_fn(
+                        f"[densmaps] Derived densmap_o{depth}.fits in {_fmt_dur(time.time() - t_der)}",
+                        always=True,
+                    )
+        else:
+            # Defensive fallback for non-standard testing doubles.
+            if log_fn is not None:
+                log_fn(
+                    "[densmaps] Finest densmap size does not match expected HEALPix npix; "
+                    "falling back to per-depth source computation.",
+                    always=True,
+                )
+            for depth in depths:
+                if depth == finest:
+                    continue
+                if log_fn is not None:
+                    log_fn(
+                        f"[densmaps] Computing densmap_o{depth}.fits (fallback source pass)...",
+                        always=True,
+                    )
+                t_depth = time.time()
+                densmaps[depth] = dask_compute(
+                    densmap_for_depth_delayed(ddf_sel, ra_col, dec_col, depth=depth)
+                )[0]
+                if log_fn is not None:
+                    log_fn(
+                        f"[densmaps] Computed densmap_o{depth}.fits in {_fmt_dur(time.time() - t_depth)}",
+                        always=True,
+                    )
+
+        # Write outputs in increasing depth order for deterministic layout/logs.
+        for depth in depths:
+            t_write = time.time()
+            write_densmap_fits(out_dir, depth, densmaps[depth])
+            if log_fn is not None:
+                log_fn(
+                    f"[densmaps] Wrote densmap_o{depth}.fits in {_fmt_dur(time.time() - t_write)}",
+                    always=True,
+                )
 
     return densmaps
 
@@ -357,6 +439,7 @@ def write_common_static_products(
         ("score_density_hybrid.keep_invalid_values", getattr(cfg.algorithm, "sdh_keep_invalid_values", None)),
         ("score_density_hybrid.tie_column", getattr(cfg.algorithm, "sdh_tie_column", None)),
         ("score_density_hybrid.order_desc", getattr(cfg.algorithm, "sdh_order_desc", None)),
+        ("score_density_hybrid.density_up_to_depth", getattr(cfg.algorithm, "sdh_density_up_to_depth", None)),
         ("score_density_hybrid.n_1", getattr(cfg.algorithm, "sdh_n_1", None)),
         ("score_density_hybrid.n_2", getattr(cfg.algorithm, "sdh_n_2", None)),
         ("score_density_hybrid.n_3", getattr(cfg.algorithm, "sdh_n_3", None)),
@@ -372,11 +455,6 @@ def write_common_static_products(
         ("cluster.threads_per_worker", getattr(cfg.cluster, "threads_per_worker", None)),
         ("cluster.memory_per_worker", getattr(cfg.cluster, "memory_per_worker", None)),
         ("cluster.low_memory_mode", getattr(cfg.cluster, "low_memory_mode", None)),
-        ("cluster.persist_ddfs", getattr(cfg.cluster, "persist_ddfs", None)),
-        (
-            "cluster.avoid_computes_wherever_possible",
-            getattr(cfg.cluster, "avoid_computes_wherever_possible", None),
-        ),
         ("cluster.diagnostics_mode", getattr(cfg.cluster, "diagnostics_mode", None)),
         ("cluster.slurm", getattr(cfg.cluster, "slurm", None)),
         ("# output", None),
@@ -478,51 +556,50 @@ def write_tiles_with_allsky(
     return written_per_ipix, allsky_df
 
 
-def write_counts_summaries(out_dir: Path, level_limit: int, input_total: int, log_fn) -> tuple[int, dict]:
-    """Compute counts for later cross-checks and return (total written, counts dict)."""
-
-    def _count_rows(tile_path: Path) -> int:
-        """Count rows for one tile file (ignoring header lines)."""
-        with tile_path.open("r", encoding="utf-8") as f:
-            # Skip completeness + header lines.
-            next(f, None)
-            next(f, None)
-            return sum(1 for _ in f)
+def write_counts_summaries(
+    out_dir: Path,
+    level_limit: int,
+    input_total: int,
+    log_fn,
+    precomputed_depth_totals: Dict[str, int],
+) -> tuple[int, dict]:
+    """Build output counts from selection-stage precomputed depth totals."""
+    if not isinstance(precomputed_depth_totals, dict):
+        raise RuntimeError(
+            "Missing precomputed selection write stats; final TSV recount fallback is disabled."
+        )
 
     depth_totals: Dict[str, int] = {}
-    depth_counts: Dict[str, Dict[str, int]] = {}
-    total_all_depths = 0
+    for depth_key, depth_total in precomputed_depth_totals.items():
+        d: int | None = None
+        with suppress(TypeError, ValueError):
+            d = int(depth_key)
+        if d is None:
+            raise RuntimeError(f"Invalid depth key in precomputed stats: {depth_key!r}")
 
-    for depth in range(0, level_limit + 1):
-        norder_dir = out_dir / f"Norder{depth}"
-        if not norder_dir.exists():
-            continue
+        v: int | None = None
+        with suppress(TypeError, ValueError):
+            v = int(depth_total)
+        if v is None:
+            raise RuntimeError(f"Invalid depth total in precomputed stats: depth={d!r} value={depth_total!r}")
+        if v < 0:
+            raise RuntimeError(f"Negative depth total in precomputed stats: depth={d!r} value={v!r}")
+        if d < 0 or d > int(level_limit):
+            raise RuntimeError(
+                f"Depth out of bounds in precomputed stats: depth={d!r}, level_limit={level_limit!r}"
+            )
 
-        counts_depth: Dict[str, int] = {}
-        for tile_path in norder_dir.rglob("Npix*.tsv"):
-            name = tile_path.name
-            if not name.startswith("Npix") or not name.endswith(".tsv"):  # pragma: no cover - rglob filters
-                continue
-            try:
-                ipix = int(name[len("Npix") : -len(".tsv")])
-            except ValueError:
-                continue
-            counts_depth[str(ipix)] = _count_rows(tile_path)
+        depth_totals[str(d)] = int(v)
 
-        if counts_depth:
-            depth_total = int(sum(counts_depth.values()))
-            depth_totals[str(depth)] = depth_total
-            depth_counts[str(depth)] = counts_depth
-            total_all_depths += depth_total
-
+    total_all_depths = int(sum(depth_totals.values()))
     output_counts = {
         "total": int(total_all_depths),
         "depth_totals": depth_totals,
-        "depths": depth_counts,
+        "depths": {},
     }
     input_counts = {"total": int(input_total)}
 
-    log_fn("[counts] Computed output/input counts.", always=True)
+    log_fn("[counts] Using precomputed output counts from selection write stage.", always=True)
     log_fn(f"[output] Total rows written: {total_all_depths}", always=True)
 
     return int(total_all_depths), {"output": output_counts, "input": input_counts}

@@ -26,6 +26,54 @@ __all__ = [
 # =============================================================================
 
 
+def _unique_available(cols: List[Any], available_cols: List[Any]) -> List[Any]:
+    """Return unique columns in input order, filtered by availability."""
+    avail = set(available_cols)
+    out: List[Any] = []
+    seen: set[Any] = set()
+    for c in cols:
+        if c in avail and c not in seen:
+            out.append(c)
+            seen.add(c)
+    return out
+
+
+def _resolve_keep_columns_order(
+    *,
+    available_cols: List[Any],
+    ra_name: Any,
+    dec_name: Any,
+    must_keep: List[Any],
+    requested_keep_cfg: List[Any] | None,
+) -> List[Any]:
+    """Resolve final output column order based on columns.keep semantics."""
+    must_keep_unique = _unique_available(must_keep, available_cols)
+
+    # keep omitted/null -> preserve input catalog order.
+    if requested_keep_cfg is None:
+        return list(available_cols)
+
+    requested_keep_unique = _unique_available(list(requested_keep_cfg), available_cols)
+
+    # keep provided but empty -> RA/DEC first, then remaining required dependencies.
+    if len(requested_keep_cfg) == 0:
+        lead = _unique_available([ra_name, dec_name], available_cols)
+        tail = [c for c in must_keep_unique if c not in lead]
+        return [*lead, *tail]
+
+    # keep provided and non-empty:
+    # - if keep already contains all required columns, keep order wins;
+    # - otherwise required missing columns go first, then keep order.
+    missing_required = [c for c in must_keep_unique if c not in requested_keep_unique]
+    if not missing_required:
+        return requested_keep_unique
+
+    # Special case: if RA/DEC are missing from keep, they lead the missing block.
+    lead_missing = [c for c in (ra_name, dec_name) if c in missing_required]
+    rest_missing = [c for c in missing_required if c not in lead_missing]
+    return [*lead_missing, *rest_missing, *requested_keep_unique]
+
+
 def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List[str]]:
     """Build the main input collection for the pipeline.
 
@@ -119,8 +167,6 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
         RA_NAME = ra_col
         DEC_NAME = dec_col
 
-        # Build keep_cols in a deterministic order:
-        #   RA, DEC, score dependencies, then requested extras (if any).
         score_dependencies = [c for c in score_tokens if c in available_cols]
 
         must_keep_resolved = [RA_NAME, DEC_NAME, *score_dependencies]
@@ -129,19 +175,13 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
         if flux_col_cfg and flux_col_cfg in available_cols:
             must_keep_resolved.append(flux_col_cfg)
 
-        # When keep_all_columns is True, we still put RA/DEC (and deps) first,
-        # but preserve all remaining columns from the catalog.
-        if keep_all_columns:
-            candidate = [c for c in available_cols if c not in must_keep_resolved]
-        else:
-            candidate = requested_keep  # only include if explicitly provided
-
-        seen = set()
-        keep_cols_out: List[str] = []
-        for c in [*must_keep_resolved, *candidate]:
-            if c in available_cols and c not in seen:
-                keep_cols_out.append(c)
-                seen.add(c)
+        keep_cols_out = _resolve_keep_columns_order(
+            available_cols=available_cols,
+            ra_name=RA_NAME,
+            dec_name=DEC_NAME,
+            must_keep=must_keep_resolved,
+            requested_keep_cfg=requested_keep_cfg,
+        )
 
         # Sub-select via LSDB API; returns a new Catalog. Convert to a Dask DF-friendly
         # object to keep meta valid for future Dask releases.
@@ -193,7 +233,6 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     score_dependencies = _score_deps(active_score_expr, available_cols)
 
     requested_keep_cfg = cfg.columns.keep
-    requested_keep = requested_keep_cfg or []
 
     flux_col_cfg = getattr(cfg.algorithm, "flux_column", None)
 
@@ -203,16 +242,13 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     if flux_col_cfg and flux_col_cfg in available_cols:
         must_keep.append(flux_col_cfg)
 
-    # If columns.keep is None, preserve all columns:
-    # RA/DEC and score deps first, then all remaining columns.
-    candidate = [c for c in available_cols if c not in must_keep] if keep_all_columns else requested_keep
-
-    seen = set()
-    keep_cols_out_2: List[str] = []
-    for c in [*must_keep, *candidate]:
-        if c in available_cols and c not in seen:
-            keep_cols_out_2.append(c)
-            seen.add(c)
+    keep_cols_out_2 = _resolve_keep_columns_order(
+        available_cols=available_cols,
+        ra_name=RA_NAME,
+        dec_name=DEC_NAME,
+        must_keep=must_keep,
+        requested_keep_cfg=requested_keep_cfg,
+    )
 
     ddf = ddf0[keep_cols_out_2]
     return ddf, RA_NAME, DEC_NAME, keep_cols_out_2

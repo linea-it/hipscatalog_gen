@@ -65,6 +65,7 @@ def _cfg_pipeline(tmp_path: Path, **algo_overrides) -> SimpleNamespace:
         sdh_n_1=None,
         sdh_n_2=None,
         sdh_n_3=None,
+        sdh_density_up_to_depth=4,
         sdh_density_bias_n1=0.0,
         sdh_density_bias_n2=0.0,
         sdh_density_bias_n3=0.0,
@@ -181,6 +182,11 @@ def test_validation_helpers_errors():
     )
     with pytest.raises(ValueError):
         validation.validate_score_density_hybrid_cfg(neg_k3)
+    bad_stage1_depth = SimpleNamespace(
+        algorithm=SimpleNamespace(sdh_score_column="S", sdh_score_hist_nbins=4, sdh_density_up_to_depth=0)
+    )
+    with pytest.raises(ValueError):
+        validation.validate_score_density_hybrid_cfg(bad_stage1_depth)
 
     cfg_common_fields = SimpleNamespace(
         algorithm=SimpleNamespace(level_limit=1, moc_order=1),
@@ -516,24 +522,155 @@ def test_compute_and_write_densmaps(monkeypatch, tmp_path, diag_ctx):
     assert calls  # write_densmap_fits called
 
 
-def test_write_counts_summaries(tmp_path, log_capture):
-    """write_counts_summaries reads tile files and aggregates counts."""
-    _, log_fn = log_capture
-    depth_dir = tmp_path / "Norder1"
-    depth_dir.mkdir()
-    tile_path = depth_dir / "Npix0.tsv"
-    tile_path.write_text("comp\nheader\n1\t2\n3\t4\n", encoding="utf-8")
-    # invalid name branches
-    (depth_dir / "badname.txt").write_text("x", encoding="utf-8")
-    (depth_dir / "Npixbad.tsv").write_text("x", encoding="utf-8")
+def test_compute_and_write_densmaps_logs_derive_path(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """When finest npix matches expected shape, lower depths are derived and logged."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    level_limit = 2
+    finest_npix = int(12 * (4**level_limit))
 
-    total_written, payload = pipeline_common.write_counts_summaries(
-        tmp_path, level_limit=2, input_total=5, log_fn=log_fn
+    monkeypatch.setattr(
+        pipeline_common,
+        "densmap_for_depth_delayed",
+        lambda *args, **kwargs: pipeline_common.dask_delayed(lambda: np.ones(finest_npix, dtype="int64"))(),
     )
-    assert total_written == 2
-    assert payload["output"]["total"] == 2
-    assert payload["input"]["total"] == 5
-    assert any("Total rows written: 2" in m for m in log_capture[0])
+    written_depths: list[int] = []
+    monkeypatch.setattr(
+        pipeline_common,
+        "write_densmap_fits",
+        lambda _out_dir, depth, _dens: written_depths.append(int(depth)),
+    )
+
+    densmaps = pipeline_common.compute_and_write_densmaps(
+        ddf,
+        "RA",
+        "DEC",
+        level_limit=level_limit,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    assert sorted(densmaps.keys()) == [0, 1, 2]
+    assert written_depths == [0, 1, 2]
+    assert any("Computing densmap_o2" in msg for msg in logs)
+    assert any("Deriving densmap_o1" in msg for msg in logs)
+    assert any("Derived densmap_o0" in msg for msg in logs)
+    assert any("Wrote densmap_o2" in msg for msg in logs)
+
+
+def test_compute_and_write_densmaps_logs_fallback_path(monkeypatch, tmp_path, diag_ctx, log_capture):
+    """Unexpected finest size triggers per-depth fallback computation with logs."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0]})
+    ddf = dd.from_pandas(pdf, npartitions=1)
+
+    def fake_densmap(*_args, **kwargs):
+        depth = int(kwargs["depth"])
+        return pipeline_common.dask_delayed(lambda: np.full(depth + 1, 1, dtype="int64"))()
+
+    monkeypatch.setattr(pipeline_common, "densmap_for_depth_delayed", fake_densmap)
+    monkeypatch.setattr(pipeline_common, "write_densmap_fits", lambda *args, **kwargs: None)
+
+    densmaps = pipeline_common.compute_and_write_densmaps(
+        ddf,
+        "RA",
+        "DEC",
+        level_limit=1,
+        out_dir=tmp_path,
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+    )
+
+    assert sorted(densmaps.keys()) == [0, 1]
+    assert any("falling back to per-depth source computation" in msg for msg in logs)
+    assert any("Computing densmap_o0" in msg for msg in logs)
+    assert any("Computed densmap_o0" in msg for msg in logs)
+
+
+def test_write_counts_summaries_requires_precomputed_stats(tmp_path, log_capture):
+    """write_counts_summaries fails fast when precomputed stats are missing."""
+    _, log_fn = log_capture
+    with pytest.raises(RuntimeError, match="fallback is disabled"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=2,
+            input_total=5,
+            log_fn=log_fn,
+            precomputed_depth_totals=None,  # type: ignore[arg-type]
+        )
+
+
+def test_write_counts_summaries_uses_precomputed_depth_totals(tmp_path, log_capture):
+    """Precomputed depth totals skip tile scanning and preserve totals payload."""
+    logs, log_fn = log_capture
+    total_written, payload = pipeline_common.write_counts_summaries(
+        tmp_path,
+        level_limit=4,
+        input_total=10,
+        log_fn=log_fn,
+        precomputed_depth_totals={"3": 7, "4": 11},
+    )
+
+    assert total_written == 18
+    assert payload["output"]["total"] == 18
+    assert payload["output"]["depth_totals"] == {"3": 7, "4": 11}
+    assert payload["output"]["depths"] == {}
+    assert payload["input"]["total"] == 10
+    assert any("Using precomputed output counts" in m for m in logs)
+
+
+def test_write_counts_summaries_rejects_invalid_depth(tmp_path, log_capture):
+    """Invalid depth keys are rejected to avoid silent count corruption."""
+    _, log_fn = log_capture
+    with pytest.raises(RuntimeError, match="Depth out of bounds"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=4,
+            input_total=10,
+            log_fn=log_fn,
+            precomputed_depth_totals={"9": 1},
+        )
+
+
+def test_write_counts_summaries_rejects_invalid_depth_key(tmp_path, log_capture):
+    """Non-integer depth keys are rejected in precomputed selection stats."""
+    _, log_fn = log_capture
+    with pytest.raises(RuntimeError, match="Invalid depth key"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=4,
+            input_total=10,
+            log_fn=log_fn,
+            precomputed_depth_totals={"depth-x": 1},
+        )
+
+
+def test_write_counts_summaries_rejects_invalid_depth_total(tmp_path, log_capture):
+    """Depth totals must be integer-like values."""
+    _, log_fn = log_capture
+    with pytest.raises(RuntimeError, match="Invalid depth total"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=4,
+            input_total=10,
+            log_fn=log_fn,
+            precomputed_depth_totals={"1": "bad"},
+        )
+
+
+def test_write_counts_summaries_rejects_negative_depth_total(tmp_path, log_capture):
+    """Negative depth totals are rejected to avoid telemetry corruption."""
+    _, log_fn = log_capture
+    with pytest.raises(RuntimeError, match="Negative depth total"):
+        pipeline_common.write_counts_summaries(
+            tmp_path,
+            level_limit=4,
+            input_total=10,
+            log_fn=log_fn,
+            precomputed_depth_totals={"1": -3},
+        )
 
 
 def test_write_common_static_products_arguments_include_all_input_keys(tmp_path):
@@ -559,6 +696,7 @@ def test_write_common_static_products_arguments_include_all_input_keys(tmp_path)
     assert "mag_global.k_1: null" in args_text
     assert "score_global.k_1: null" in args_text
     assert "score_density_hybrid.k_1: null" in args_text
+    assert "score_density_hybrid.density_up_to_depth: 4" in args_text
     assert "cluster.low_memory_mode: null" in args_text
     assert "output.overwrite: true" in args_text
 
@@ -641,7 +779,7 @@ def test_run_pipeline_happy_path(monkeypatch, tmp_path, log_capture):
 
         def run_fn(self, **kwargs):
             self.run_called = True
-            return None
+            return {"depth_totals": {"1": 1}, "depth_tiles": {"1": 1}}
 
     dummy_mode = DummyMode()
     monkeypatch.setattr(
@@ -676,11 +814,18 @@ def test_run_pipeline_happy_path(monkeypatch, tmp_path, log_capture):
     monkeypatch.setattr(main, "compute_input_total", lambda *_, **__: 1)
     monkeypatch.setattr(main, "compute_and_write_densmaps", lambda *_, **__: {1: np.ones(1, dtype="int64")})
     monkeypatch.setattr(main, "write_common_static_products", lambda *_, **__: None)
-    monkeypatch.setattr(main, "write_counts_summaries", lambda *_, **__: (1, {"output": {}, "input": {}}))
+    captured_counts_kwargs: dict[str, object] = {}
+
+    def fake_write_counts_summaries(*args, **kwargs):
+        captured_counts_kwargs.update(kwargs)
+        return (1, {"output": {}, "input": {}})
+
+    monkeypatch.setattr(main, "write_counts_summaries", fake_write_counts_summaries)
     monkeypatch.setattr(main, "write_properties", lambda *_, **__: None)
 
     main.run_pipeline(cfg)
     assert dummy_mode.normalize_called and dummy_mode.prepare_called and dummy_mode.run_called
+    assert captured_counts_kwargs.get("precomputed_depth_totals") == {"1": 1}
     assert any("START HiPS" in m for m in logs)
 
 
@@ -704,7 +849,7 @@ def test_run_pipeline_overwrite_file(monkeypatch, tmp_path, log_capture):
                     SimpleNamespace(mag_min=0.0, mag_max=1.0, sentinel=None),
                 ),
                 "prepare_fn": lambda *args, **kwargs: dummy_ddf,
-                "run_fn": lambda **kwargs: None,
+                "run_fn": lambda **kwargs: {"depth_totals": {}, "depth_tiles": {}},
             }
         ),
     )
@@ -750,7 +895,7 @@ def test_run_pipeline_diagnostics_global(monkeypatch, tmp_path, log_capture):
                     SimpleNamespace(mag_min=0.0, mag_max=1.0, sentinel=None),
                 ),
                 "prepare_fn": lambda *args, **kwargs: dummy_ddf,
-                "run_fn": lambda **kwargs: None,
+                "run_fn": lambda **kwargs: {"depth_totals": {}, "depth_tiles": {}},
             }
         ),
     )
@@ -786,6 +931,53 @@ def test_run_pipeline_diagnostics_global(monkeypatch, tmp_path, log_capture):
     monkeypatch.setattr(main, "write_properties", lambda *_, **__: None)
 
     main.run_pipeline(cfg)
+
+
+def test_run_pipeline_fails_when_selection_does_not_emit_write_stats(monkeypatch, tmp_path, log_capture):
+    """Pipeline fails fast when selection stage omits required write stats."""
+    _, log_fn = log_capture
+    cfg = _cfg_pipeline(tmp_path, selection_mode="mag_global")
+    dummy_ddf = dd.from_pandas(pd.DataFrame({"RA": [0.0], "DEC": [0.0], "MAG": [1.0]}), npartitions=1)
+
+    monkeypatch.setattr(
+        main,
+        "get_selection_mode",
+        lambda name: SimpleNamespace(
+            **{
+                "validate_fn": lambda cfg: None,
+                "normalize_fn": lambda *args, **kwargs: (
+                    dummy_ddf,
+                    SimpleNamespace(mag_min=0.0, mag_max=1.0, sentinel=None),
+                ),
+                "prepare_fn": lambda *args, **kwargs: dummy_ddf,
+                "run_fn": lambda **kwargs: None,
+            }
+        ),
+    )
+    monkeypatch.setattr(main, "setup_structured_logger", lambda *args, **kwargs: (None, log_fn))
+    monkeypatch.setattr(
+        main,
+        "setup_cluster",
+        lambda cfg, report_dir, log_fn: (
+            SimpleNamespace(persist_ddfs=False, avoid_computes=True, diagnostics_mode=""),
+            lambda name: nullcontext(),
+        ),
+    )
+    monkeypatch.setattr(main, "shutdown_cluster", lambda runtime: None)
+    monkeypatch.setattr(main, "validate_common_cfg", lambda cfg: None)
+    monkeypatch.setattr(
+        main,
+        "build_and_prepare_input",
+        lambda *_, **__: (dummy_ddf, "RA", "DEC", ["RA", "DEC"], False, ["p"]),
+    )
+    monkeypatch.setattr(main, "compute_input_total", lambda *_, **__: 1)
+    monkeypatch.setattr(main, "compute_and_write_densmaps", lambda *_, **__: {1: np.ones(1, dtype="int64")})
+    monkeypatch.setattr(main, "write_common_static_products", lambda *_, **__: None)
+    monkeypatch.setattr(main, "write_counts_summaries", lambda *_, **__: (1, {"output": {}, "input": {}}))
+    monkeypatch.setattr(main, "write_properties", lambda *_, **__: None)
+
+    with pytest.raises(RuntimeError, match="did not return write stats"):
+        main.run_pipeline(cfg)
 
 
 def test_run_pipeline_overwrite_guard(tmp_path):

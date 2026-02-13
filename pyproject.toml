@@ -1,6 +1,6 @@
 [project]
 name = "hipscatalog-gen"
-version = "0.2.0"
+version = "0.3.0"
 license = "MIT"
 license-files = ["LICENSE"]
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -28,6 +28,7 @@ dependencies = [
   "pyarrow>=14,<24",
   "dask>=2026.1.0,<2027.0",
   "distributed>=2026.1.0,<2027.0",
+  "dask-jobqueue>=0.8,<1.0",
   "astropy>=6,<8",
   "healpy>=1.17,<2.0",
   "mocpy>=0.12,<1.0",
@@ -48,6 +49,7 @@ hipscatalog-gen = "hipscatalog_gen.cli:main"
 
 # ==== EXTRAS (infra opcional) ====
 [project.optional-dependencies]
+# Backward-compatible alias; dask-jobqueue is now part of core dependencies.
 slurm = [
   "dask-jobqueue>=0.8,<1.0",
 ]
