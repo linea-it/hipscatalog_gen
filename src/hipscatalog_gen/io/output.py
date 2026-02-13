@@ -159,9 +159,17 @@ def finalize_write_tiles(
             f.write(header_line)
 
         # Sanitize string columns (NestedFrame-safe: operate column by column).
+        # On object columns containing only nulls, pandas replace(regex=True)
+        # may hit a NumPy vectorize(empty) path and raise ValueError.
         obj_cols = list(g_tile.select_dtypes(include=["object", "string"]).columns)
         for col in obj_cols:
-            g_tile[col] = g_tile[col].replace({r"[\t\r\n]": " "}, regex=True)
+            col_values = g_tile[col]
+            non_null_mask = col_values.notna()
+            if not bool(non_null_mask.any()):
+                continue
+            g_tile.loc[non_null_mask, col] = (
+                col_values.loc[non_null_mask].astype("string").str.replace(r"[\t\r\n]", " ", regex=True)
+            )
 
         # 2) Append rows.
         g_tile.to_csv(

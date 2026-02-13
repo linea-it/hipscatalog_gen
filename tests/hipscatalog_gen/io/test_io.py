@@ -475,6 +475,38 @@ def test_finalize_write_tiles_writes_and_collects(tmp_path):
     assert allsky_df is not None and len(allsky_df) == 3
 
 
+def test_finalize_write_tiles_handles_all_null_object_column(tmp_path):
+    """All-null object columns should not raise during regex sanitization."""
+    counts = np.array([2, 1], dtype="int64")
+    selected = pd.DataFrame(
+        {
+            "__ipix__": [0, 0, 1],
+            "RA": [10.0, 20.0, 30.0],
+            "DEC": [0.0, 1.0, 2.0],
+            "NAME": [None, None, "a\nb"],
+        }
+    )
+    header_line = "RA\tDEC\tNAME\n"
+    written, allsky_df = finalize_write_tiles(
+        tmp_path,
+        depth=1,
+        header_line=header_line,
+        ra_col="RA",
+        dec_col="DEC",
+        counts=counts,
+        selected=selected,
+        order_desc=False,
+        allsky_collect=False,
+    )
+
+    tile0 = tmp_path / "Norder1" / "Dir0" / "Npix0.tsv"
+    tile1 = tmp_path / "Norder1" / "Dir0" / "Npix1.tsv"
+    assert tile0.exists() and tile1.exists()
+    assert written == {0: 2, 1: 1}
+    assert allsky_df is None
+    assert "a b" in tile1.read_text(encoding="utf-8")
+
+
 def test_finalize_write_tiles_skips_out_of_range(tmp_path):
     """Tiles with invalid ipix are skipped."""
     counts = np.array([1], dtype="int64")
