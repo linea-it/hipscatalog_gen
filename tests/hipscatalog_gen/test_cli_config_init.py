@@ -197,10 +197,10 @@ def test_build_config_sdh_validations():
 
 
 def test_build_config_sdh_density_up_to_depth_default():
-    """score_density_hybrid defaults density_up_to_depth to 3."""
+    """score_density_hybrid defaults density_up_to_depth to 4."""
     cfg_dict = _base_cfg_dict("score_density_hybrid")
     cfg = load_config_from_dict(cfg_dict)
-    assert cfg.algorithm.sdh_density_up_to_depth == 3
+    assert cfg.algorithm.sdh_density_up_to_depth == 4
 
 
 def test_build_config_numeric_fields_convert_and_raise():

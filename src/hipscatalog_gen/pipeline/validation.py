@@ -50,7 +50,7 @@ def validate_score_density_hybrid_cfg(cfg: Any) -> None:
         raise ValueError("score_density_hybrid: algorithm.sdh_score_column (or score_column) is required.")
     if int(getattr(algo, "sdh_score_hist_nbins", getattr(algo, "score_hist_nbins", 0))) <= 0:
         raise ValueError("score_density_hybrid: sdh_score_hist_nbins must be positive.")
-    if int(getattr(algo, "sdh_density_up_to_depth", 3)) < 1:
+    if int(getattr(algo, "sdh_density_up_to_depth", 4)) < 1:
         raise ValueError("score_density_hybrid: sdh_density_up_to_depth must be >= 1.")
     _validate_nk_pairs("score_density_hybrid", algo, prefix="sdh_")
 

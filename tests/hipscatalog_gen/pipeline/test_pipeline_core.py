@@ -65,7 +65,7 @@ def _cfg_pipeline(tmp_path: Path, **algo_overrides) -> SimpleNamespace:
         sdh_n_1=None,
         sdh_n_2=None,
         sdh_n_3=None,
-        sdh_density_up_to_depth=3,
+        sdh_density_up_to_depth=4,
         sdh_density_bias_n1=0.0,
         sdh_density_bias_n2=0.0,
         sdh_density_bias_n3=0.0,
@@ -696,7 +696,7 @@ def test_write_common_static_products_arguments_include_all_input_keys(tmp_path)
     assert "mag_global.k_1: null" in args_text
     assert "score_global.k_1: null" in args_text
     assert "score_density_hybrid.k_1: null" in args_text
-    assert "score_density_hybrid.density_up_to_depth: 3" in args_text
+    assert "score_density_hybrid.density_up_to_depth: 4" in args_text
     assert "cluster.low_memory_mode: null" in args_text
     assert "output.overwrite: true" in args_text
 

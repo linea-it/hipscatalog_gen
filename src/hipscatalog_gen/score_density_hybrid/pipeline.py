@@ -196,7 +196,7 @@ def _targets_stage1_by_depth(
     n_tot_score: float,
     provided: Dict[int, float],
     log_fn,
-    stage1_depth_max: int = 3,
+    stage1_depth_max: int = 4,
 ) -> Dict[int, int]:
     """Redistribute stage-1 totals across configured density depths."""
     depths_stage1 = sorted([d for d in base_targets if d <= stage1_depth_max])
@@ -414,7 +414,7 @@ def run_score_density_hybrid_selection(
     score_max = float(params.score_max)
     depths_sel = list(range(1, cfg.algorithm.level_limit + 1))
     stage1_depth_max = min(
-        int(getattr(algo, "sdh_density_up_to_depth", 3)),
+        int(getattr(algo, "sdh_density_up_to_depth", 4)),
         int(cfg.algorithm.level_limit),
     )
     if stage1_depth_max < 1:

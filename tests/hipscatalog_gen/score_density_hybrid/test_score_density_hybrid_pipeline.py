@@ -52,7 +52,7 @@ def _cfg(**overrides) -> SimpleNamespace:
         sdh_k_1=None,
         sdh_k_2=None,
         sdh_k_3=None,
-        sdh_density_up_to_depth=3,
+        sdh_density_up_to_depth=4,
         sdh_density_bias_n1=0.0,
         sdh_density_bias_n2=0.0,
         sdh_density_bias_n3=0.0,
@@ -604,13 +604,14 @@ def test_run_selection_stage1_and_stage2(monkeypatch, diag_ctx, log_capture):
     )
     ddf = dd.from_pandas(pdf, npartitions=2)
     cfg = _cfg(
-        level_limit=4, sdh_k_1=0.5, sdh_order_desc=True, sdh_tie_column="TIE", sdh_n_2=None, sdh_k_2=None
+        level_limit=5, sdh_k_1=0.5, sdh_order_desc=True, sdh_tie_column="TIE", sdh_n_2=None, sdh_k_2=None
     )
     densmaps = {
         1: np.ones(hp.nside2npix(2), dtype="int64"),
         2: np.ones(hp.nside2npix(4), dtype="int64"),
         3: np.ones(hp.nside2npix(8), dtype="int64"),
         4: np.ones(hp.nside2npix(16), dtype="int64"),
+        5: np.ones(hp.nside2npix(32), dtype="int64"),
     }
     params = SimpleNamespace(score_min=0.0, score_max=3.0, sentinel=None)
 
@@ -620,7 +621,7 @@ def test_run_selection_stage1_and_stage2(monkeypatch, diag_ctx, log_capture):
     )
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline.assign_level_edges",
-        lambda **kwargs: (np.array([0.0, 1.0, 2.0, 3.0, 4.0]), np.array([1.0, 0.0, 0.0, 0.0])),
+        lambda **kwargs: (np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]), np.array([1.0, 0.0, 0.0, 0.0, 0.0])),
     )
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline._targets_stage1_by_depth",
@@ -670,7 +671,7 @@ def test_run_selection_stage1_and_stage2(monkeypatch, diag_ctx, log_capture):
 
     assert captured_writes  # stage1 wrote something
     assert captured_writes[0]["order_desc"] is True
-    assert captured_stage2 and captured_stage2[0]["depths_sel"] == [4]
+    assert captured_stage2 and captured_stage2[0]["depths_sel"] == [5]
 
 
 def test_run_selection_density_up_to_depth_overrides_stage_split(monkeypatch, diag_ctx, log_capture):
@@ -758,13 +759,14 @@ def test_run_selection_merges_stage2_depth_stats(monkeypatch, diag_ctx, log_capt
         }
     )
     ddf = dd.from_pandas(pdf, npartitions=1)
-    cfg = _cfg(level_limit=4, sdh_k_1=0.5)
+    cfg = _cfg(level_limit=5, sdh_k_1=0.5)
     params = SimpleNamespace(score_min=0.0, score_max=3.0, sentinel=None)
     densmaps = {
         1: np.ones(hp.nside2npix(2), dtype="int64"),
         2: np.ones(hp.nside2npix(4), dtype="int64"),
         3: np.ones(hp.nside2npix(8), dtype="int64"),
         4: np.ones(hp.nside2npix(16), dtype="int64"),
+        5: np.ones(hp.nside2npix(32), dtype="int64"),
     }
 
     monkeypatch.setattr(
@@ -773,7 +775,7 @@ def test_run_selection_merges_stage2_depth_stats(monkeypatch, diag_ctx, log_capt
     )
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline.assign_level_edges",
-        lambda **kwargs: (np.array([0.0, 1.0, 2.0, 3.0, 4.0]), np.array([1.0, 0.0, 0.0, 0.0])),
+        lambda **kwargs: (np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]), np.array([1.0, 0.0, 0.0, 0.0, 0.0])),
     )
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline._targets_stage1_by_depth",
@@ -797,7 +799,7 @@ def test_run_selection_merges_stage2_depth_stats(monkeypatch, diag_ctx, log_capt
     )
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline.select_by_score_slices",
-        lambda **kwargs: {"depth_totals": {"4": 7}, "depth_tiles": {"4": 3}},
+        lambda **kwargs: {"depth_totals": {"5": 7}, "depth_tiles": {"5": 3}},
     )
 
     summary = sdh_pipeline.run_score_density_hybrid_selection(
@@ -813,5 +815,5 @@ def test_run_selection_merges_stage2_depth_stats(monkeypatch, diag_ctx, log_capt
         params=params,
     )
 
-    assert summary["depth_totals"]["4"] == 7
-    assert summary["depth_tiles"]["4"] == 3
+    assert summary["depth_totals"]["5"] == 7
+    assert summary["depth_tiles"]["5"] == 3

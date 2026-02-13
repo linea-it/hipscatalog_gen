@@ -152,7 +152,7 @@ algorithm:
     #score_max: null                # Optional upper bound (auto if null)
     adaptive_range: "complete"      # "complete" | "hist_peak"
     hist_nbins: 2048                # Histogram bins for score_density_hybrid
-    #density_up_to_depth: 3         # Stage-1 density pass runs from depth 1 up to this depth
+    #density_up_to_depth: 4         # Stage-1 density pass runs from depth 1 up to this depth
     #k_1: null                      # Optional targets per active tile for depths 1..3 (alias for n_*)
     #k_2: null
     #k_3: null
