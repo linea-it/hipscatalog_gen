@@ -35,7 +35,7 @@ jobs:
       run: |
         python -m pytest --cov=hipscatalog_gen --cov-report=xml --cov-fail-under=80
     - name: Upload coverage report to codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage.xml
