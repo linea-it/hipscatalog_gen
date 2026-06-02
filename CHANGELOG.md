@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1
+
+- Split structured pipeline console logs between stdout and stderr so regular progress messages and error records remain independent in SLURM output files.
+- Add a unit test covering stdout/stderr routing for structured pipeline logging.
+- Fix mypy compatibility for optional `pyarrow.parquet` imports in sliced selection writes.
+- Keep the PyYAML import ignore compatible across typed and untyped environments.
+- Pin the development mypy dependency to `1.19.1` to avoid the `mypy 2.1.0` internal error observed in pre-commit CI.
+
 ## 0.3.0
 
 - Fix densmap scalability for large catalogs by replacing dense per-partition aggregation with sparse histogram reduction in a bounded fan-in tree, preventing oversized gather tasks at high depths.
