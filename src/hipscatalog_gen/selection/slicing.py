@@ -24,10 +24,13 @@ from .common import add_ipix_column
 from .levels import assign_level_edges
 from .score import compute_score_histogram_ddf
 
+_pq: Any | None
 try:  # pragma: no cover - optional parquet backend detail
-    import pyarrow.parquet as _pq
+    import pyarrow.parquet as _pyarrow_parquet
 except Exception:  # pragma: no cover - fallback path covered by runtime checks
     _pq = None
+else:
+    _pq = _pyarrow_parquet
 
 __all__ = ["select_by_value_slices", "select_by_score_slices"]
 
