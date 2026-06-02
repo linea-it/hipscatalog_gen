@@ -60,7 +60,7 @@ dev = [
   "asv[virtualenv]==0.6.5",
   "jupyter",
   "nbconvert>=7.16.6,<8",
-  "mypy",
+  "mypy==1.19.1",
   "pre-commit",
   "pytest",
   "pytest-cov",
