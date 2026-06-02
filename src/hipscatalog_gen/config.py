@@ -6,7 +6,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping
 
-import yaml  # type: ignore[import-untyped]
+import yaml  # type: ignore[import-untyped, unused-ignore]
 
 __all__ = [
     "AlgoOpts",
