@@ -4,11 +4,23 @@ from __future__ import annotations
 
 import json
 import logging
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
 LogFn = Callable[[str, bool], None]
+
+
+class _MaxLevelFilter(logging.Filter):
+    """Allow records below a maximum logging level."""
+
+    def __init__(self, level: int) -> None:
+        super().__init__()
+        self.level = level
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.levelno < self.level
 
 
 @dataclass
@@ -59,9 +71,15 @@ def setup_structured_logger(
         json_handler.setFormatter(_JsonFormatter())
         logger.addHandler(json_handler)
 
-    sh = logging.StreamHandler()
-    sh.setFormatter(formatter)
-    logger.addHandler(sh)
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    stdout_handler.addFilter(_MaxLevelFilter(logging.ERROR))
+    logger.addHandler(stdout_handler)
+
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(logging.ERROR)
+    stderr_handler.setFormatter(formatter)
+    logger.addHandler(stderr_handler)
 
     log_ctx = LogContext()
 

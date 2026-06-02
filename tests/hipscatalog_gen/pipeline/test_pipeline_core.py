@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from contextlib import nullcontext
 from pathlib import Path
@@ -264,6 +265,26 @@ def test_logging_utils_writes_files(tmp_path):
     assert (tmp_path / "process.log").exists()
     assert (tmp_path / "process.jsonl").exists()
     assert "hello" in (tmp_path / "process.log").read_text()
+
+
+def test_logging_utils_splits_stdout_and_stderr(tmp_path, capsys):
+    """Structured logger routes regular logs to stdout and errors to stderr."""
+    _log_ctx, log_fn = logging_utils.setup_structured_logger(tmp_path, "mag_global")
+    log_fn("regular message", always=True)
+
+    captured = capsys.readouterr()
+    assert "regular message" in captured.out
+    assert "regular message" not in captured.err
+
+    logger = logging.getLogger("hipscatalog_gen.pipeline")
+    logger.error(
+        "error message",
+        extra={"selection_mode": "mag_global", "stage": None, "depth": None},
+    )
+
+    captured = capsys.readouterr()
+    assert "error message" not in captured.out
+    assert "error message" in captured.err
 
 
 def test_structure_run_stages_tracks_stage_and_telemetry(diag_ctx, log_capture):
