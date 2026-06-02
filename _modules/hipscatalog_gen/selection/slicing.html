@@ -101,10 +101,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.levels</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_level_edges</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.score</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_score_histogram_ddf</span>
 
+<span class="n">_pq</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span>
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: no cover - optional parquet backend detail</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">pyarrow.parquet</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_pq</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pyarrow.parquet</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_pyarrow_parquet</span>
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover - fallback path covered by runtime checks</span>
     <span class="n">_pq</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">_pq</span> <span class="o">=</span> <span class="n">_pyarrow_parquet</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;select_by_value_slices&quot;</span><span class="p">,</span> <span class="s2">&quot;select_by_score_slices&quot;</span><span class="p">]</span>
 
