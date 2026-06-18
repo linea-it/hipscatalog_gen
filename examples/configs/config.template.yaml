@@ -198,7 +198,7 @@ cluster:
     # - "--constraint=..."
     # - "--qos=..."
     # - "--mem=0"   # use all node memory if allowed
-
+    interface: "ib0"
   # Dask performance reports:
   # "none" → disabled, "local" → per-depth, "global" → full pipeline
   diagnostics_mode: global

@@ -83,10 +83,12 @@ def setup_cluster(
         job_directives = sl.get("job_extra_directives", sl.get("job_extra", []))
         queue = sl.get("queue", "cpu_dev")
         account = sl.get("account", None)
+        interface = sl.get("interface", None)
 
         log_fn(
             "[cluster] Starting Dask SLURM cluster: "
             f"n_workers={cfg.n_workers} threads_per_worker={cfg.threads_per_worker} "
+            f"interface={interface!r} "
             f"memory_per_worker={cfg.memory_per_worker}",
             True,
         )
@@ -103,6 +105,7 @@ def setup_cluster(
             processes=1,
             memory=cfg.memory_per_worker,
             job_extra_directives=job_directives,
+            interface=interface,
         )
         cluster.scale(cfg.n_workers)
         client = Client(cluster)
