@@ -1,1 +1,1 @@
-{"regressions": []}
+{"regressions": [["benchmark_config.ConfigBenchmark.time_load_and_validate_config", "graphs/Cython/branch-HEAD/build/machine-gh-runner/packaging/python-3.12/benchmark_config.ConfigBenchmark.time_load_and_validate_config.json", {"python": "3.12"}, null, 0.0015564631428576703, 0.0013669198750001499, [[null, 199, 0.0013669198750001499, 0.0015564631428576703]]]]}
