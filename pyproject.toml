@@ -57,7 +57,7 @@ s3 = [
   "s3fs>=2024.6,<2027.0",
 ]
 dev = [
-  "asv[virtualenv]==0.6.5",
+  "asv[virtualenv]==0.6.6",
   "jupyter",
   "nbconvert>=7.16.6,<8",
   "mypy==1.19.1",
