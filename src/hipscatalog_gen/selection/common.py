@@ -13,6 +13,13 @@ from ..utils import _get_dask_base, _get_meta_df
 __all__ = ["targets_per_tile", "reduce_topk_by_group_dask", "add_ipix_column"]
 
 
+def _as_plain_pandas_frame(pdf: pd.DataFrame) -> pd.DataFrame:
+    """Return a plain pandas DataFrame, avoiding backend sort/groupby overrides."""
+    if type(pdf) is pd.DataFrame:
+        return pdf
+    return pd.DataFrame(pdf)
+
+
 def targets_per_tile(counts_depth: np.ndarray, depth_total: int, bias: float) -> Dict[int, int]:
     """Distribute depth_total across active tiles with optional density bias."""
     if depth_total <= 0:
@@ -70,6 +77,7 @@ def reduce_topk_by_group_dask(
 
     def _take_topk(group: pd.DataFrame) -> pd.DataFrame:
         """Select the top-k rows for a single group."""
+        group = _as_plain_pandas_frame(group)
         if group.empty:
             return group
         g_id = int(group[group_col].iloc[0])
@@ -92,6 +100,7 @@ def reduce_topk_by_group_dask(
 
     def _local_topk_partition(pdf: pd.DataFrame) -> pd.DataFrame:
         """Exact local pruning: keep only per-group top-k within this partition."""
+        pdf = _as_plain_pandas_frame(pdf)
         if pdf.empty:
             return pdf.iloc[0:0]
 

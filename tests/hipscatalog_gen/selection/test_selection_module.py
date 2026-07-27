@@ -666,6 +666,31 @@ def test_reduce_topk_by_group_dask_handles_empty_and_missing(monkeypatch):
     )
 
 
+def test_reduce_topk_by_group_dask_plain_pandas_conversion():
+    """Top-k helpers avoid DataFrame subclass sort_values overrides."""
+
+    class BrokenSortFrame(pd.DataFrame):
+        @property
+        def _constructor(self):
+            return BrokenSortFrame
+
+        def sort_values(self, *args, **kwargs):
+            raise ValueError("backend sort_values should not be used")
+
+    broken = BrokenSortFrame(
+        {
+            "group": [1, 1, 2],
+            "score": [2.0, 1.0, 3.0],
+            "RA": [0.2, 0.1, 0.3],
+            "DEC": [0.0, 0.0, 0.0],
+        }
+    )
+
+    plain = selection_common._as_plain_pandas_frame(broken)
+    assert type(plain) is pd.DataFrame
+    assert plain.sort_values(["group", "score"]) is not None
+
+
 def test_add_ipix_column_handles_empty_and_nonempty():
     """add_ipix_column returns int64 __ipix__ and tolerates empty frames."""
     pdf = pd.DataFrame({"RA": [0.0, 90.0], "DEC": [0.0, 0.0]})
