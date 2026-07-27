@@ -688,7 +688,8 @@ def test_reduce_topk_by_group_dask_plain_pandas_conversion():
 
     plain = selection_common._as_plain_pandas_frame(broken)
     assert type(plain) is pd.DataFrame
-    assert plain.sort_values(["group", "score"]) is not None
+    sorted_plain = selection_common._sort_by_plain_keys(plain, ["group", "score"], [True, True])
+    assert sorted_plain["score"].tolist() == [1.0, 2.0, 3.0]
 
 
 def test_add_ipix_column_handles_empty_and_nonempty():

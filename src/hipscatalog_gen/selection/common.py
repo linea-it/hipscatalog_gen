@@ -20,6 +20,24 @@ def _as_plain_pandas_frame(pdf: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(pdf)
 
 
+def _sort_by_plain_keys(pdf: pd.DataFrame, sort_cols: list[str], ascending: list[bool]) -> pd.DataFrame:
+    """Sort using a plain helper frame with only key columns, then select rows by position."""
+    if pdf.empty:
+        return pdf
+
+    key_df = pd.DataFrame(index=pd.RangeIndex(len(pdf)))
+    for col in sort_cols:
+        values = pd.Series(pdf[col].to_numpy(), index=key_df.index)
+        numeric = pd.to_numeric(values, errors="coerce")
+        if numeric.notna().any() or values.isna().all():
+            key_df[col] = numeric
+        else:
+            key_df[col] = values.astype("string")
+
+    order = key_df.sort_values(sort_cols, ascending=ascending, kind="mergesort").index.to_numpy()
+    return pdf.iloc[order]
+
+
 def targets_per_tile(counts_depth: np.ndarray, depth_total: int, bias: float) -> Dict[int, int]:
     """Distribute depth_total across active tiles with optional density bias."""
     if depth_total <= 0:
@@ -95,7 +113,7 @@ def reduce_topk_by_group_dask(
         if dec_col in group.columns:
             sort_cols.append(dec_col)
             ascending.append(True)
-        group_sorted = group.sort_values(sort_cols, ascending=ascending, kind="mergesort")
+        group_sorted = _sort_by_plain_keys(group, sort_cols, ascending)
         return group_sorted.head(k)
 
     def _local_topk_partition(pdf: pd.DataFrame) -> pd.DataFrame:
@@ -120,7 +138,7 @@ def reduce_topk_by_group_dask(
             sort_cols.append(dec_col)
             ascending.append(True)
 
-        pdf_sorted = pdf.sort_values(sort_cols, ascending=ascending, kind="mergesort")
+        pdf_sorted = _sort_by_plain_keys(pdf, sort_cols, ascending)
         rank_in_group = pdf_sorted.groupby(group_col, sort=False).cumcount()
         k_by_row = pdf_sorted[group_col].map(k_map).fillna(0).astype("int64")
         keep_mask = rank_in_group.to_numpy() < k_by_row.to_numpy()
