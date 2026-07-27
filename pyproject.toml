@@ -60,11 +60,12 @@ dev = [
   "asv[virtualenv]==0.6.6",
   "jupyter",
   "nbconvert>=7.16.6,<8",
-  "mypy==2.1.0",
+  "mypy==1.19.1",
   "pre-commit",
   "pytest",
   "pytest-cov",
   "ruff",
+  "setuptools>=83.0.0",
 ]
 docs = [
   "sphinx>=7.2,<10",
@@ -74,7 +75,7 @@ docs = [
 ]
 
 [build-system]
-requires = ["setuptools>=62"]
+requires = ["setuptools>=83.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
