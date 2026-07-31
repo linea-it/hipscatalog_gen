@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2
+
+- Avoid backend `sort_values` calls in score-density top-k selection to preserve compatibility with catalogs backed by nested/categorical data.
+- Apply the same categorical-safe ordering correction to the depth 5+ streaming path.
+- Suppress noisy Dask network-interface warnings when no explicit interface is configured.
+- Merge dependency and CI updates for GitHub Actions, Codecov, Astropy, ASV, and mypy/setuptools compatibility.
+
 ## 0.3.1
 
 - Split structured pipeline console logs between stdout and stderr so regular progress messages and error records remain independent in SLURM output files.
