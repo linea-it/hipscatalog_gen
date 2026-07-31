@@ -20,7 +20,7 @@ import pandas as pd
 from ..io.output import build_header_line_from_keep, finalize_write_tiles
 from ..pipeline.common import write_tiles_with_allsky
 from ..utils import _fmt_dur, _get_meta_df, _log_depth_stats
-from .common import add_ipix_column
+from .common import _sort_by_plain_keys, add_ipix_column
 from .levels import assign_level_edges
 from .score import compute_score_histogram_ddf
 
@@ -88,10 +88,10 @@ def _merge_files_to_parquet(
     """Merge many parquet fragments into one sorted parquet file."""
     merged = pd.concat((pd.read_parquet(fp) for fp in input_files), ignore_index=True)
     if len(merged) > 0:
-        merged = merged.sort_values(
+        merged = _sort_by_plain_keys(
+            merged,
             ["__ipix__", *sort_cols],
-            ascending=[True, *ascending],
-            kind="mergesort",
+            [True, *ascending],
         )
     output_file.parent.mkdir(parents=True, exist_ok=True)
     merged.to_parquet(output_file, index=False)
@@ -471,7 +471,7 @@ def _stream_write_depth_without_allsky(
 
         local_sort_cols = ["__bucket__", "__ipix__", *sort_cols]
         local_ascending = [True, True, *ascending]
-        pdf_sorted = pdf.sort_values(local_sort_cols, ascending=local_ascending, kind="mergesort")
+        pdf_sorted = _sort_by_plain_keys(pdf, local_sort_cols, local_ascending)
 
         n_frag = 0
         for bid, grp in pdf_sorted.groupby("__bucket__", sort=True):
@@ -717,7 +717,7 @@ def select_by_value_slices(
                 if dec_col in selected_pdf.columns:
                     sort_cols.append(dec_col)
                     ascending.append(True)
-                selected_pdf = selected_pdf.sort_values(sort_cols, ascending=ascending, kind="mergesort")
+                selected_pdf = _sort_by_plain_keys(selected_pdf, sort_cols, ascending)
 
                 written_per_ipix, _ = write_tiles_with_allsky(
                     out_dir=out_dir,
