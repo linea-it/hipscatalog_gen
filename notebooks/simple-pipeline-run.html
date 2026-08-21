@@ -108,7 +108,7 @@
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
   from .autonotebook import tqdm as notebook_tqdm
 </pre></div></div>
 </div>
@@ -276,24 +276,24 @@ Minimal configuration (YAML)
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># source parquet files (wildcards allowed)</span>
-        <span class="s2">&quot;paths&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;../../../hipscatalog_gen/tests/data/des_dr2_small_sample/*.parquet&quot;</span><span class="p">],</span>
+    <span class="s2">"input"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># source parquet files (wildcards allowed)</span>
+        <span class="s2">"paths"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"../../../hipscatalog_gen/tests/data/des_dr2_small_sample/*.parquet"</span><span class="p">],</span>
     <span class="p">},</span>
-    <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># column mapping for sky coordinates</span>
-        <span class="s2">&quot;ra&quot;</span><span class="p">:</span> <span class="s2">&quot;RA&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;dec&quot;</span><span class="p">:</span> <span class="s2">&quot;DEC&quot;</span><span class="p">,</span>
+    <span class="s2">"columns"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># column mapping for sky coordinates</span>
+        <span class="s2">"ra"</span><span class="p">:</span> <span class="s2">"RA"</span><span class="p">,</span>
+        <span class="s2">"dec"</span><span class="p">:</span> <span class="s2">"DEC"</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># HEALPix and selection parameters</span>
-        <span class="s2">&quot;level_limit&quot;</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
-        <span class="s2">&quot;selection_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;mag_global&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;mag_column&quot;</span><span class="p">:</span> <span class="s2">&quot;MAG_AUTO_I_DERED&quot;</span><span class="p">,</span>
+    <span class="s2">"algorithm"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># HEALPix and selection parameters</span>
+        <span class="s2">"level_limit"</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
+        <span class="s2">"selection_mode"</span><span class="p">:</span> <span class="s2">"mag_global"</span><span class="p">,</span>
+        <span class="s2">"mag_global"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"mag_column"</span><span class="p">:</span> <span class="s2">"MAG_AUTO_I_DERED"</span><span class="p">,</span>
         <span class="p">},</span>
     <span class="p">},</span>
-    <span class="s2">&quot;cluster&quot;</span><span class="p">:</span> <span class="p">{},</span>  <span class="c1"># use defaults for clustering</span>
-    <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># where outputs and catalog names are stored</span>
-        <span class="s2">&quot;out_dir&quot;</span><span class="p">:</span> <span class="s2">&quot;../../../hipscatalog_gen/outputs/DES_DR2_small_sample&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;cat_name&quot;</span><span class="p">:</span> <span class="s2">&quot;DES_DR2_small_sample&quot;</span><span class="p">,</span>
+    <span class="s2">"cluster"</span><span class="p">:</span> <span class="p">{},</span>  <span class="c1"># use defaults for clustering</span>
+    <span class="s2">"output"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># where outputs and catalog names are stored</span>
+        <span class="s2">"out_dir"</span><span class="p">:</span> <span class="s2">"../../../hipscatalog_gen/outputs/DES_DR2_small_sample"</span><span class="p">,</span>
+        <span class="s2">"cat_name"</span><span class="p">:</span> <span class="s2">"DES_DR2_small_sample"</span><span class="p">,</span>
     <span class="p">},</span>
 <span class="p">}</span>
 

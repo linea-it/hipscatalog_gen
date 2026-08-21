@@ -75,7 +75,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.pipeline.structure</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Pipeline data structures and execution harness.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Pipeline data structures and execution harness."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -89,14 +89,14 @@
 
 <span class="n">LogFn</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
 <span class="n">DiagCtxFactory</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">ContextManager</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>
-<span class="n">StageFn</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;PipelineContext&quot;</span><span class="p">],</span> <span class="s2">&quot;PipelineContext | None&quot;</span><span class="p">]</span>
+<span class="n">StageFn</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s2">"PipelineContext"</span><span class="p">],</span> <span class="s2">"PipelineContext | None"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="PipelineStage">
 <a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineStage.html#hipscatalog_gen.pipeline.structure.PipelineStage">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PipelineStage</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a single ordered pipeline step.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Represents a single ordered pipeline step."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">fn</span><span class="p">:</span> <span class="n">StageFn</span>
@@ -108,7 +108,7 @@
 <a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PipelineContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shared state passed between pipeline stages.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Shared state passed between pipeline stages."""</span>
 
     <span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span>
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span>
@@ -135,7 +135,7 @@
 <div class="viewcode-block" id="PipelineContext.with_updates">
 <a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext.with_updates">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">with_updates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a new context with updated fields.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return a new context with updated fields."""</span>
         <span class="k">return</span> <span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 </div>
 
@@ -144,7 +144,7 @@
 <div class="viewcode-block" id="run_stages">
 <a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.structure.run_stages.html#hipscatalog_gen.pipeline.structure.run_stages">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_stages</span><span class="p">(</span><span class="n">stages</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">PipelineStage</span><span class="p">],</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute ordered pipeline stages, threading a context object.</span>
+<span class="w">    </span><span class="sd">"""Execute ordered pipeline stages, threading a context object.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        stages: Ordered sequence of ``PipelineStage`` objects.</span>
@@ -152,13 +152,13 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Final context returned after the last stage.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="n">stages</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">,</span> <span class="s2">&quot;stage&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">,</span> <span class="s2">"stage"</span><span class="p">):</span>
                 <span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="o">.</span><span class="n">stage</span> <span class="o">=</span> <span class="n">stage</span><span class="o">.</span><span class="n">name</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">[</span><span class="s2">&quot;stage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stage</span><span class="o">.</span><span class="n">name</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">[</span><span class="s2">"stage"</span><span class="p">]</span> <span class="o">=</span> <span class="n">stage</span><span class="o">.</span><span class="n">name</span>
         <span class="n">diag_label</span> <span class="o">=</span> <span class="n">stage</span><span class="o">.</span><span class="n">diag_label</span> <span class="ow">or</span> <span class="n">stage</span><span class="o">.</span><span class="n">name</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 
@@ -169,14 +169,14 @@
                 <span class="n">ctx</span> <span class="o">=</span> <span class="n">result</span>
         <span class="n">duration</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
         <span class="c1"># Telemetry is kept mutable for low overhead.</span>
-        <span class="n">stage_metrics</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">telemetry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stages&quot;</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="n">stage_metrics</span><span class="p">[</span><span class="n">stage</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;duration_s&quot;</span><span class="p">:</span> <span class="n">duration</span><span class="p">}</span>
-        <span class="n">ctx</span><span class="o">.</span><span class="n">telemetry</span><span class="p">[</span><span class="s2">&quot;stages&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stage_metrics</span>
+        <span class="n">stage_metrics</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">telemetry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"stages"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">stage_metrics</span><span class="p">[</span><span class="n">stage</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"duration_s"</span><span class="p">:</span> <span class="n">duration</span><span class="p">}</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">telemetry</span><span class="p">[</span><span class="s2">"stages"</span><span class="p">]</span> <span class="o">=</span> <span class="n">stage_metrics</span>
         <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">,</span> <span class="s2">&quot;stage&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">,</span> <span class="s2">"stage"</span><span class="p">):</span>
                 <span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="o">.</span><span class="n">stage</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">[</span><span class="s2">&quot;stage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">log_ctx</span><span class="p">[</span><span class="s2">"stage"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">ctx</span></div>
 
 </pre></div>

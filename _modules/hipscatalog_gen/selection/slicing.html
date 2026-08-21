@@ -75,7 +75,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.selection.slicing</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Slice selections by value or score with HEALPix-aware ordering.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Slice selections by value or score with HEALPix-aware ordering."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -109,12 +109,12 @@
 <span class="k">else</span><span class="p">:</span>
     <span class="n">_pq</span> <span class="o">=</span> <span class="n">_pyarrow_parquet</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;select_by_value_slices&quot;</span><span class="p">,</span> <span class="s2">&quot;select_by_score_slices&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"select_by_value_slices"</span><span class="p">,</span> <span class="s2">"select_by_score_slices"</span><span class="p">]</span>
 
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_BucketWriteStats</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregated stats for one bucket write task.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Aggregated stats for one bucket write task."""</span>
 
     <span class="n">selected_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">tiles_written</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
@@ -126,7 +126,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_env_int</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">minimum</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read integer env var with fallback and lower bound enforcement.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Read integer env var with fallback and lower bound enforcement."""</span>
     <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">minimum</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">default</span><span class="p">))</span>
@@ -137,9 +137,9 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_local_scratch_base</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Choose a local scratch base path for merge intermediates.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Choose a local scratch base path for merge intermediates."""</span>
     <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">env_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;HIPSCATALOG_STREAM_LOCAL_TMPDIR&quot;</span><span class="p">,</span> <span class="s2">&quot;SLURM_TMPDIR&quot;</span><span class="p">,</span> <span class="s2">&quot;TMPDIR&quot;</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">env_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"HIPSCATALOG_STREAM_LOCAL_TMPDIR"</span><span class="p">,</span> <span class="s2">"SLURM_TMPDIR"</span><span class="p">,</span> <span class="s2">"TMPDIR"</span><span class="p">):</span>
         <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env_name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
             <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
@@ -162,12 +162,12 @@
     <span class="n">sort_cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">ascending</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge many parquet fragments into one sorted parquet file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Merge many parquet fragments into one sorted parquet file."""</span>
     <span class="n">merged</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span> <span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="n">input_files</span><span class="p">),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">merged</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">merged</span> <span class="o">=</span> <span class="n">_sort_by_plain_keys</span><span class="p">(</span>
             <span class="n">merged</span><span class="p">,</span>
-            <span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">],</span>
             <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">ascending</span><span class="p">],</span>
         <span class="p">)</span>
     <span class="n">output_file</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -183,7 +183,7 @@
     <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">target_files</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compact bucket fragments in rounds into local scratch.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Compact bucket fragments in rounds into local scratch."""</span>
     <span class="n">current_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">frag_files</span><span class="p">)</span>
     <span class="n">rounds</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">chunk</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">))</span>
@@ -191,13 +191,13 @@
 
     <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_files</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">target</span><span class="p">:</span>
         <span class="n">rounds</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">round_dir</span> <span class="o">=</span> <span class="n">local_bucket_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;round_</span><span class="si">{</span><span class="n">rounds</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">round_dir</span> <span class="o">=</span> <span class="n">local_bucket_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"round_</span><span class="si">{</span><span class="n">rounds</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">round_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="n">next_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_files</span><span class="p">),</span> <span class="n">chunk</span><span class="p">):</span>
             <span class="n">batch</span> <span class="o">=</span> <span class="n">current_files</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">chunk</span><span class="p">]</span>
-            <span class="n">out_fp</span> <span class="o">=</span> <span class="n">round_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;compact_</span><span class="si">{</span><span class="n">start</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="n">chunk</span><span class="si">:</span><span class="s2">05d</span><span class="si">}</span><span class="s2">.parquet&quot;</span>
+            <span class="n">out_fp</span> <span class="o">=</span> <span class="n">round_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"compact_</span><span class="si">{</span><span class="n">start</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="n">chunk</span><span class="si">:</span><span class="s2">05d</span><span class="si">}</span><span class="s2">.parquet"</span>
             <span class="n">_merge_files_to_parquet</span><span class="p">(</span>
                 <span class="n">batch</span><span class="p">,</span>
                 <span class="n">out_fp</span><span class="p">,</span>
@@ -213,7 +213,7 @@
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_ReverseSortValue</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reverse-order wrapper for descending comparisons in heap keys.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Reverse-order wrapper for descending comparisons in heap keys."""</span>
 
     <span class="n">value</span><span class="p">:</span> <span class="n">Any</span>
 
@@ -222,7 +222,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_sort_component</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ascending</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a heap-sortable component matching pandas sort semantics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Build a heap-sortable component matching pandas sort semantics."""</span>
     <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
         <span class="c1"># Keep NaNs at the end regardless of ascending/descending.</span>
         <span class="k">return</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -237,14 +237,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_row_sort_key</span><span class="p">(</span>
     <span class="n">row</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">key_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">key_ascending</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute global merge key for one streamed parquet row.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Compute global merge key for one streamed parquet row."""</span>
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
         <span class="n">_sort_component</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="n">asc</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">asc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">key_indices</span><span class="p">,</span> <span class="n">key_ascending</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_iter_parquet_rows</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield row tuples from one parquet file in streaming batches.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Yield row tuples from one parquet file in streaming batches."""</span>
     <span class="k">if</span> <span class="n">_pq</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">pdf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)</span>
         <span class="k">yield from</span> <span class="n">pdf</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -259,7 +259,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_next_or_none</span><span class="p">(</span><span class="n">it</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return next item from an iterator or None when exhausted.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return next item from an iterator or None when exhausted."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
@@ -267,7 +267,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_active_dask_client</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return active distributed Client, or None when unavailable.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return active distributed Client, or None when unavailable."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">dask.distributed</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_client</span>
 
@@ -277,30 +277,30 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_detect_worker_nthreads</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Best-effort detection of per-process worker task concurrency.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Best-effort detection of per-process worker task concurrency."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">dask.distributed</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_worker</span>
 
         <span class="n">worker</span> <span class="o">=</span> <span class="n">get_worker</span><span class="p">()</span>
-        <span class="n">worker_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">worker_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="s2">"state"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">worker_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nthreads_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">worker_state</span><span class="p">,</span> <span class="s2">&quot;nthreads&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">nthreads_state</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">worker_state</span><span class="p">,</span> <span class="s2">"nthreads"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">nthreads_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">nthreads_state</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">)</span>
         <span class="c1"># Fallback for older distributed versions where Worker.state may be absent.</span>
-        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="s2">&quot;nthreads&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="s2">"nthreads"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">))</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="k">return</span> <span class="mi">1</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_merge_max_open_files</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve cap for simultaneous parquet files opened by one bucket task.</span>
+<span class="w">    </span><span class="sd">"""Resolve cap for simultaneous parquet files opened by one bucket task.</span>
 
 <span class="sd">    Auto mode adapts to worker FD limits and task concurrency (nthreads).</span>
 <span class="sd">    Manual override via HIPSCATALOG_STREAM_MERGE_MAX_OPEN_FILES is still honored</span>
 <span class="sd">    but clipped to a safe upper bound derived from RLIMIT_NOFILE.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">raw_override</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;HIPSCATALOG_STREAM_MERGE_MAX_OPEN_FILES&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">raw_override</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"HIPSCATALOG_STREAM_MERGE_MAX_OPEN_FILES"</span><span class="p">)</span>
     <span class="n">override_val</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">raw_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
@@ -314,7 +314,7 @@
         <span class="k">return</span> <span class="n">override_val</span> <span class="k">if</span> <span class="n">override_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">32</span>
 
     <span class="n">reserve_default</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">soft_limit</span> <span class="o">//</span> <span class="mi">4</span><span class="p">))</span>
-    <span class="n">reserve</span> <span class="o">=</span> <span class="n">_env_int</span><span class="p">(</span><span class="s2">&quot;HIPSCATALOG_STREAM_MERGE_FD_RESERVE&quot;</span><span class="p">,</span> <span class="n">reserve_default</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="n">reserve</span> <span class="o">=</span> <span class="n">_env_int</span><span class="p">(</span><span class="s2">"HIPSCATALOG_STREAM_MERGE_FD_RESERVE"</span><span class="p">,</span> <span class="n">reserve_default</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
     <span class="n">available</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">soft_limit</span><span class="p">)</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">reserve</span><span class="p">))</span>
 
     <span class="n">nthreads</span> <span class="o">=</span> <span class="n">_detect_worker_nthreads</span><span class="p">()</span>
@@ -339,8 +339,8 @@
     <span class="n">sort_cols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">ascending</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_BucketWriteStats</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process one bucket (bounded fan-in prep + streaming k-way merge write).&quot;&quot;&quot;</span>
-    <span class="n">frag_files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">bucket_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;part_*.parquet&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="sd">"""Process one bucket (bounded fan-in prep + streaming k-way merge write)."""</span>
+    <span class="n">frag_files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">bucket_dir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"part_*.parquet"</span><span class="p">))</span>
     <span class="n">stats</span> <span class="o">=</span> <span class="n">_BucketWriteStats</span><span class="p">(</span><span class="n">files_in</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">frag_files</span><span class="p">),</span> <span class="n">files_out</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">frag_files</span><span class="p">))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">frag_files</span><span class="p">:</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">bucket_dir</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -354,7 +354,7 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">working_files</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">merge_max_open_files</span><span class="p">:</span>
             <span class="n">local_scratch_base</span> <span class="o">=</span> <span class="n">_resolve_local_scratch_base</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">))</span>
             <span class="n">local_bucket_dir</span> <span class="o">=</span> <span class="n">local_scratch_base</span> <span class="o">/</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;hipscatalog_stream_depth_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">bucket_dir</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"hipscatalog_stream_depth_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">bucket_dir</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
             <span class="n">local_bucket_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="c1"># Keep fan-in safely bounded by worker FD budget.</span>
@@ -380,18 +380,18 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">schema_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">working_files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
 
-        <span class="n">required</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">]</span>
+        <span class="n">required</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">]</span>
         <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">required</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">schema_cols</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;missing columns in bucket fragments: </span><span class="si">{</span><span class="n">missing</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"missing columns in bucket fragments: </span><span class="si">{</span><span class="n">missing</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
-        <span class="n">header_cols</span> <span class="o">=</span> <span class="n">header_line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">internal</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">,</span> <span class="s2">&quot;__score__&quot;</span><span class="p">,</span> <span class="s2">&quot;__icov__&quot;</span><span class="p">}</span>
+        <span class="n">header_cols</span> <span class="o">=</span> <span class="n">header_line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">internal</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"__ipix__"</span><span class="p">,</span> <span class="s2">"__score__"</span><span class="p">,</span> <span class="s2">"__icov__"</span><span class="p">}</span>
         <span class="n">tile_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">header_cols</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">internal</span> <span class="ow">and</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">schema_cols</span><span class="p">]</span>
 
-        <span class="n">read_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">([</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">,</span> <span class="o">*</span><span class="n">tile_cols</span><span class="p">]))</span>
-        <span class="n">ipix_idx</span> <span class="o">=</span> <span class="n">read_cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">)</span>
-        <span class="n">key_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">]</span>
+        <span class="n">read_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">([</span><span class="s2">"__ipix__"</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">,</span> <span class="o">*</span><span class="n">tile_cols</span><span class="p">]))</span>
+        <span class="n">ipix_idx</span> <span class="o">=</span> <span class="n">read_cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"__ipix__"</span><span class="p">)</span>
+        <span class="n">key_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">]</span>
         <span class="n">key_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">read_cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">key_cols</span><span class="p">]</span>
         <span class="n">key_ascending</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">ascending</span><span class="p">]</span>
         <span class="n">tile_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">read_cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">tile_cols</span><span class="p">]</span>
@@ -425,13 +425,13 @@
                 <span class="n">current_rows</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">return</span>
             <span class="n">selected_ipix</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">current_rows</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">tile_cols</span><span class="p">)</span>
-            <span class="n">selected_ipix</span><span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
+            <span class="n">selected_ipix</span><span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
             <span class="n">written_per_ipix</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">finalize_write_tiles</span><span class="p">(</span>
                 <span class="n">out_dir</span><span class="o">=</span><span class="n">out_dir</span><span class="p">,</span>
                 <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
                 <span class="n">header_line</span><span class="o">=</span><span class="n">header_line</span><span class="p">,</span>
-                <span class="n">ra_col</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="n">dec_col</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">ra_col</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+                <span class="n">dec_col</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
                 <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span>
                 <span class="n">selected</span><span class="o">=</span><span class="n">selected_ipix</span><span class="p">,</span>
                 <span class="n">order_desc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -491,11 +491,11 @@
     <span class="n">counts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">log_fn</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write one depth without collecting all selected rows into driver memory.</span>
+<span class="w">    </span><span class="sd">"""Write one depth without collecting all selected rows into driver memory.</span>
 
 <span class="sd">    The function spills sorted partition fragments into bucketed temporary files</span>
 <span class="sd">    and then merges per bucket before delegating final tile writing.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">asc</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">order_desc</span>
     <span class="n">sort_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">value_col</span><span class="p">]</span>
     <span class="n">ascending</span> <span class="o">=</span> <span class="p">[</span><span class="n">asc</span><span class="p">]</span>
@@ -507,63 +507,63 @@
 
     <span class="n">meta_depth</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">depth_ddf</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">tie_col</span> <span class="ow">and</span> <span class="n">tie_col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">meta_depth</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;tie_column &#39;</span><span class="si">{</span><span class="n">tie_col</span><span class="si">}</span><span class="s2">&#39; not found in selected data.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"tie_column '</span><span class="si">{</span><span class="n">tie_col</span><span class="si">}</span><span class="s2">' not found in selected data."</span><span class="p">)</span>
 
     <span class="n">meta_ipix</span> <span class="o">=</span> <span class="n">meta_depth</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">meta_ipix</span><span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">meta_ipix</span><span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
     <span class="c1"># Bucket by ipix to reduce small-file fan-out on distributed filesystems.</span>
     <span class="c1"># Keep bucket count bounded to control metadata overhead.</span>
     <span class="n">n_buckets</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="nb">int</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">+</span> <span class="mi">16383</span><span class="p">)</span> <span class="o">//</span> <span class="mi">16384</span><span class="p">)))</span>
-    <span class="n">meta_ipix</span><span class="p">[</span><span class="s2">&quot;__bucket__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int16&quot;</span><span class="p">)</span>
+    <span class="n">meta_ipix</span><span class="p">[</span><span class="s2">"__bucket__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int16"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_add_ipix_and_bucket</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="n">out</span> <span class="o">=</span> <span class="n">add_ipix_column</span><span class="p">(</span><span class="n">pdf</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">ra_col</span><span class="p">,</span> <span class="n">dec_col</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">out</span><span class="p">[</span><span class="s2">&quot;__bucket__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int16&quot;</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"__bucket__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int16"</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">out</span>
-        <span class="n">out</span><span class="p">[</span><span class="s2">&quot;__bucket__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">n_buckets</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="s2">"__bucket__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">n_buckets</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>
 
     <span class="n">ddf_with_ipix</span> <span class="o">=</span> <span class="n">depth_ddf</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span><span class="n">_add_ipix_and_bucket</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta_ipix</span><span class="p">)</span>
 
-    <span class="n">tmp_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;.tmp_stream_depth_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">tmp_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">".tmp_stream_depth_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">if</span> <span class="n">tmp_root</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">tmp_root</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">tmp_root</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">stats_meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
         <span class="p">{</span>
-            <span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
-            <span class="s2">&quot;fragments&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+            <span class="s2">"rows"</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">),</span>
+            <span class="s2">"fragments"</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">),</span>
         <span class="p">}</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_spill_partition</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">partition_info</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;fragments&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">]},</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">"rows"</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">"fragments"</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">]},</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
 
         <span class="n">part_no</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">partition_info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;number&quot;</span> <span class="ow">in</span> <span class="n">partition_info</span><span class="p">:</span>
-            <span class="n">part_no</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">partition_info</span><span class="p">[</span><span class="s2">&quot;number&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">partition_info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"number"</span> <span class="ow">in</span> <span class="n">partition_info</span><span class="p">:</span>
+            <span class="n">part_no</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">partition_info</span><span class="p">[</span><span class="s2">"number"</span><span class="p">])</span>
 
-        <span class="n">local_sort_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;__bucket__&quot;</span><span class="p">,</span> <span class="s2">&quot;__ipix__&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">]</span>
+        <span class="n">local_sort_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"__bucket__"</span><span class="p">,</span> <span class="s2">"__ipix__"</span><span class="p">,</span> <span class="o">*</span><span class="n">sort_cols</span><span class="p">]</span>
         <span class="n">local_ascending</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">ascending</span><span class="p">]</span>
         <span class="n">pdf_sorted</span> <span class="o">=</span> <span class="n">_sort_by_plain_keys</span><span class="p">(</span><span class="n">pdf</span><span class="p">,</span> <span class="n">local_sort_cols</span><span class="p">,</span> <span class="n">local_ascending</span><span class="p">)</span>
 
         <span class="n">n_frag</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">bid</span><span class="p">,</span> <span class="n">grp</span> <span class="ow">in</span> <span class="n">pdf_sorted</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__bucket__&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">bid</span><span class="p">,</span> <span class="n">grp</span> <span class="ow">in</span> <span class="n">pdf_sorted</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"__bucket__"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
             <span class="n">bucket</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span>
-            <span class="n">bucket_dir</span> <span class="o">=</span> <span class="n">tmp_root</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;bucket_</span><span class="si">{</span><span class="n">bucket</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">bucket_dir</span> <span class="o">=</span> <span class="n">tmp_root</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"bucket_</span><span class="si">{</span><span class="n">bucket</span><span class="si">:</span><span class="s2">04d</span><span class="si">}</span><span class="s2">"</span>
             <span class="n">bucket_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="c1"># LSDB may not provide partition_info.number; keep filenames unique to</span>
             <span class="c1"># avoid write collisions across concurrent tasks.</span>
-            <span class="n">frag_path</span> <span class="o">=</span> <span class="n">bucket_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;part_</span><span class="si">{</span><span class="n">part_no</span><span class="si">:</span><span class="s2">08d</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">.parquet&quot;</span>
+            <span class="n">frag_path</span> <span class="o">=</span> <span class="n">bucket_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"part_</span><span class="si">{</span><span class="n">part_no</span><span class="si">:</span><span class="s2">08d</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">.parquet"</span>
             <span class="c1"># LSDB partitions may be NestedFrame; cast to plain pandas before parquet IO</span>
             <span class="c1"># to keep a consistent writer signature across backends.</span>
             <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">grp</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="n">frag_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="n">n_frag</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pdf_sorted</span><span class="p">))],</span> <span class="s2">&quot;fragments&quot;</span><span class="p">:</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n_frag</span><span class="p">)]},</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">"rows"</span><span class="p">:</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pdf_sorted</span><span class="p">))],</span> <span class="s2">"fragments"</span><span class="p">:</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n_frag</span><span class="p">)]},</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">spill_stats</span> <span class="o">=</span> <span class="n">ddf_with_ipix</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span>
@@ -572,12 +572,12 @@
             <span class="n">meta</span><span class="o">=</span><span class="n">stats_meta</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
 
-        <span class="n">selected_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">spill_stats</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">spill_stats</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">selected_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">spill_stats</span><span class="p">[</span><span class="s2">"rows"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">spill_stats</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="n">selected_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
         <span class="n">bucket_dirs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">tmp_root</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;bucket_&quot;</span><span class="p">)],</span>
-            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">tmp_root</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"bucket_"</span><span class="p">)],</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]),</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">bucket_dirs</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">selected_len</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
@@ -586,14 +586,14 @@
         <span class="n">client</span> <span class="o">=</span> <span class="n">_get_active_dask_client</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;No active dask.distributed Client found for streaming bucket merge. &quot;</span>
-                <span class="s2">&quot;Start a Client (local cluster or SLURM-backed cluster) before running &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;streamed depth writes (depth=</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">, buckets=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bucket_dirs</span><span class="p">)</span><span class="si">}</span><span class="s2">).&quot;</span>
+                <span class="s2">"No active dask.distributed Client found for streaming bucket merge. "</span>
+                <span class="s2">"Start a Client (local cluster or SLURM-backed cluster) before running "</span>
+                <span class="sa">f</span><span class="s2">"streamed depth writes (depth=</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">, buckets=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bucket_dirs</span><span class="p">)</span><span class="si">}</span><span class="s2">)."</span>
             <span class="p">)</span>
 
-        <span class="n">worker_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">scheduler_info</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;workers&quot;</span><span class="p">,</span> <span class="p">{})))</span>
+        <span class="n">worker_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">scheduler_info</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"workers"</span><span class="p">,</span> <span class="p">{})))</span>
         <span class="n">log_fn</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;[stream] depth=</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2"> dask bucket submit: workers=</span><span class="si">{</span><span class="n">worker_count</span><span class="si">}</span><span class="s2"> buckets=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bucket_dirs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"[stream] depth=</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2"> dask bucket submit: workers=</span><span class="si">{</span><span class="n">worker_count</span><span class="si">}</span><span class="s2"> buckets=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bucket_dirs</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
         <span class="p">)</span>
@@ -632,9 +632,9 @@
             <span class="k">if</span> <span class="n">files_in_total</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">reduction</span> <span class="o">=</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">files_out_total</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">files_in_total</span><span class="p">)))</span>
             <span class="n">log_fn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;[stream-fan-in] depth=</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2"> buckets=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bucket_dirs</span><span class="p">)</span><span class="si">}</span><span class="s2"> reduced=</span><span class="si">{</span><span class="n">compacted_buckets</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;files_in=</span><span class="si">{</span><span class="n">files_in_total</span><span class="si">}</span><span class="s2"> files_out=</span><span class="si">{</span><span class="n">files_out_total</span><span class="si">}</span><span class="s2"> reduction=</span><span class="si">{</span><span class="n">reduction</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;rounds_total=</span><span class="si">{</span><span class="n">rounds_total</span><span class="si">}</span><span class="s2"> max_bucket_in=</span><span class="si">{</span><span class="n">max_bucket_in</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"[stream-fan-in] depth=</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2"> buckets=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bucket_dirs</span><span class="p">)</span><span class="si">}</span><span class="s2"> reduced=</span><span class="si">{</span><span class="n">compacted_buckets</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"files_in=</span><span class="si">{</span><span class="n">files_in_total</span><span class="si">}</span><span class="s2"> files_out=</span><span class="si">{</span><span class="n">files_out_total</span><span class="si">}</span><span class="s2"> reduction=</span><span class="si">{</span><span class="n">reduction</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% "</span>
+                <span class="sa">f</span><span class="s2">"rounds_total=</span><span class="si">{</span><span class="n">rounds_total</span><span class="si">}</span><span class="s2"> max_bucket_in=</span><span class="si">{</span><span class="n">max_bucket_in</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
             <span class="p">)</span>
@@ -670,18 +670,18 @@
     <span class="n">hist_diag_ctx_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">depth_diag_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Slice by per-depth value ranges and write tiles.</span>
+<span class="w">    </span><span class="sd">"""Slice by per-depth value ranges and write tiles.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Dict with per-depth write summaries (currently depth_totals/depth_tiles).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">level_edges</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">compute_hist_fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">hist_nbins</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">value_min</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">value_max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: missing histogram parameters (compute_hist_fn, hist_nbins, value_min, value_max).&quot;</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: missing histogram parameters (compute_hist_fn, hist_nbins, value_min, value_max)."</span>
             <span class="p">)</span>
 
-        <span class="n">hist_ctx</span> <span class="o">=</span> <span class="n">hist_diag_ctx_name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;dask_</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_hist&quot;</span>
+        <span class="n">hist_ctx</span> <span class="o">=</span> <span class="n">hist_diag_ctx_name</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"dask_</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_hist"</span>
         <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="n">hist_ctx</span><span class="p">):</span>
             <span class="n">hist</span><span class="p">,</span> <span class="n">edges_hist</span><span class="p">,</span> <span class="n">n_tot</span> <span class="o">=</span> <span class="n">compute_hist_fn</span><span class="p">(</span>
                 <span class="n">remainder_ddf</span><span class="p">,</span>
@@ -693,13 +693,13 @@
 
         <span class="k">if</span> <span class="n">n_tot</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">log_fn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;[selection] </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: no objects found in the range &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">value_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">value_max</span><span class="si">}</span><span class="s2">] → nothing to select.&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"[selection] </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: no objects found in the range "</span>
+                <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">value_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">value_max</span><span class="si">}</span><span class="s2">] → nothing to select."</span><span class="p">,</span>
                 <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;depth_tiles&quot;</span><span class="p">:</span> <span class="p">{}}</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">"depth_totals"</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">"depth_tiles"</span><span class="p">:</span> <span class="p">{}}</span>
 
-        <span class="n">cdf_hist</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+        <span class="n">cdf_hist</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float64"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cdf_hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">cdf_hist</span> <span class="o">/=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cdf_hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
@@ -718,21 +718,21 @@
             <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">level_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">level_edges</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+        <span class="n">level_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">level_edges</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
 
     <span class="n">depths_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">depths_sel</span><span class="p">)</span>
     <span class="n">log_fn</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;[selection] </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> mode: per-depth slices:</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;  depth </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">: [</span><span class="si">{</span><span class="n">level_edges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">level_edges</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;)&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">depths_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;]&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">"[selection] </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> mode: per-depth slices:</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"  depth </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">: [</span><span class="si">{</span><span class="n">level_edges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">level_edges</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">')'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">depths_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">']'</span><span class="si">}</span><span class="s2">"</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">depths_list</span><span class="p">)</span>
         <span class="p">),</span>
         <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">header_line</span> <span class="o">=</span> <span class="n">build_header_line_from_keep</span><span class="p">(</span><span class="n">keep_cols</span><span class="p">)</span>
-    <span class="n">depth_ctx</span> <span class="o">=</span> <span class="n">depth_diag_prefix</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;dask_</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_depth&quot;</span>
+    <span class="n">depth_ctx</span> <span class="o">=</span> <span class="n">depth_diag_prefix</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"dask_</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_depth"</span>
     <span class="n">depth_totals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">depth_tiles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -741,7 +741,7 @@
         <span class="n">v_lo</span> <span class="o">=</span> <span class="n">level_edges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="n">v_hi</span> <span class="o">=</span> <span class="n">level_edges</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
-        <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">depth_ctx</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">depth_ctx</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">"</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">depth</span> <span class="o">!=</span> <span class="n">depths_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
                 <span class="n">val_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">remainder_ddf</span><span class="p">[</span><span class="n">value_col</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">v_lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">remainder_ddf</span><span class="p">[</span><span class="n">value_col</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">v_hi</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -753,37 +753,37 @@
             <span class="k">if</span> <span class="n">allsky_needed</span><span class="p">:</span>
                 <span class="n">selected_pdf</span> <span class="o">=</span> <span class="n">depth_ddf</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
                 <span class="k">if</span> <span class="n">tie_col</span> <span class="ow">and</span> <span class="n">tie_col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">selected_pdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: tie_column &#39;</span><span class="si">{</span><span class="n">tie_col</span><span class="si">}</span><span class="s2">&#39; not found in selected data.&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: tie_column '</span><span class="si">{</span><span class="n">tie_col</span><span class="si">}</span><span class="s2">' not found in selected data."</span><span class="p">)</span>
                 <span class="n">selected_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">))</span>
                 <span class="n">_log_depth_stats</span><span class="p">(</span>
                     <span class="n">log_fn</span><span class="p">,</span>
                     <span class="n">depth</span><span class="p">,</span>
-                    <span class="s2">&quot;selected&quot;</span><span class="p">,</span>
+                    <span class="s2">"selected"</span><span class="p">,</span>
                     <span class="n">counts</span><span class="o">=</span><span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">],</span>
                     <span class="n">selected_len</span><span class="o">=</span><span class="n">selected_len</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">selected_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">log_fn</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: no rows in slice [</span><span class="si">{</span><span class="n">v_lo</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">v_hi</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">] → skipping.&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: no rows in slice [</span><span class="si">{</span><span class="n">v_lo</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">v_hi</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">] → skipping."</span><span class="p">,</span>
                         <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                         <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="n">log_fn</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                         <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                         <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="k">continue</span>
 
-                <span class="n">ra_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">[</span><span class="n">ra_col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
-                <span class="n">dec_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">[</span><span class="n">dec_col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                <span class="n">ra_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">[</span><span class="n">ra_col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                <span class="n">dec_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">[</span><span class="n">dec_col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
 
                 <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mf">90.0</span> <span class="o">-</span> <span class="n">dec_vals</span><span class="p">)</span>
                 <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">ra_vals</span> <span class="o">%</span> <span class="mf">360.0</span><span class="p">)</span>
 
                 <span class="n">nside_l</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">depth</span>
                 <span class="n">ipix_l</span> <span class="o">=</span> <span class="n">hp</span><span class="o">.</span><span class="n">ang2pix</span><span class="p">(</span><span class="n">nside_l</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">nest</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-                <span class="n">selected_pdf</span><span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ipix_l</span>
+                <span class="n">selected_pdf</span><span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">ipix_l</span>
 
                 <span class="n">sort_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">value_col</span><span class="p">]</span>
                 <span class="n">ascending</span> <span class="o">=</span> <span class="p">[</span><span class="ow">not</span> <span class="n">order_desc</span><span class="p">]</span>
@@ -810,7 +810,7 @@
                     <span class="n">allsky_needed</span><span class="o">=</span><span class="n">allsky_needed</span><span class="p">,</span>
                     <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="n">_log_depth_stats</span><span class="p">(</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="s2">&quot;written&quot;</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">],</span> <span class="n">written</span><span class="o">=</span><span class="n">written_per_ipix</span><span class="p">)</span>
+                <span class="n">_log_depth_stats</span><span class="p">(</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="s2">"written"</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">],</span> <span class="n">written</span><span class="o">=</span><span class="n">written_per_ipix</span><span class="p">)</span>
                 <span class="n">depth_totals</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">written_per_ipix</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span> <span class="k">if</span> <span class="n">written_per_ipix</span> <span class="k">else</span> <span class="mi">0</span>
                 <span class="n">depth_tiles</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">written_per_ipix</span><span class="p">))</span> <span class="k">if</span> <span class="n">written_per_ipix</span> <span class="k">else</span> <span class="mi">0</span>
             <span class="k">else</span><span class="p">:</span>
@@ -830,18 +830,18 @@
                 <span class="n">_log_depth_stats</span><span class="p">(</span>
                     <span class="n">log_fn</span><span class="p">,</span>
                     <span class="n">depth</span><span class="p">,</span>
-                    <span class="s2">&quot;selected&quot;</span><span class="p">,</span>
+                    <span class="s2">"selected"</span><span class="p">,</span>
                     <span class="n">counts</span><span class="o">=</span><span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">],</span>
                     <span class="n">selected_len</span><span class="o">=</span><span class="n">selected_len</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">selected_len</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">log_fn</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: no rows in slice [</span><span class="si">{</span><span class="n">v_lo</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">v_hi</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">] → skipping.&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: no rows in slice [</span><span class="si">{</span><span class="n">v_lo</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">v_hi</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">] → skipping."</span><span class="p">,</span>
                         <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                         <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="n">log_fn</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                         <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                         <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
                     <span class="p">)</span>
@@ -849,7 +849,7 @@
                 <span class="n">_log_depth_stats</span><span class="p">(</span>
                     <span class="n">log_fn</span><span class="p">,</span>
                     <span class="n">depth</span><span class="p">,</span>
-                    <span class="s2">&quot;written&quot;</span><span class="p">,</span>
+                    <span class="s2">"written"</span><span class="p">,</span>
                     <span class="n">counts</span><span class="o">=</span><span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">],</span>
                     <span class="n">tiles_written</span><span class="o">=</span><span class="n">tiles_written</span><span class="p">,</span>
                     <span class="n">rows_written</span><span class="o">=</span><span class="n">rows_written</span><span class="p">,</span>
@@ -858,12 +858,12 @@
                 <span class="n">depth_tiles</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tiles_written</span><span class="p">)</span>
 
         <span class="n">log_fn</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">:</span> <span class="n">depth_totals</span><span class="p">,</span> <span class="s2">&quot;depth_tiles&quot;</span><span class="p">:</span> <span class="n">depth_tiles</span><span class="p">}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"depth_totals"</span><span class="p">:</span> <span class="n">depth_totals</span><span class="p">,</span> <span class="s2">"depth_tiles"</span><span class="p">:</span> <span class="n">depth_tiles</span><span class="p">}</span></div>
 
 
 
@@ -890,7 +890,7 @@
     <span class="n">depth_diag_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">tie_col</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Score-specialized wrapper around select_by_value_slices.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Score-specialized wrapper around select_by_value_slices."""</span>
     <span class="k">return</span> <span class="n">select_by_value_slices</span><span class="p">(</span>
         <span class="n">remainder_ddf</span><span class="o">=</span><span class="n">remainder_ddf</span><span class="p">,</span>
         <span class="n">densmaps</span><span class="o">=</span><span class="n">densmaps</span><span class="p">,</span>

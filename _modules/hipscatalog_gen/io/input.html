@@ -75,7 +75,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.io.input</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Input readers for Parquet/CSV/TSV and HATS/LSDB catalogs.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Input readers for Parquet/CSV/TSV and HATS/LSDB catalogs."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -92,9 +92,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ID_RE</span><span class="p">,</span> <span class="n">_get_dask_base</span><span class="p">,</span> <span class="n">_get_meta_df</span><span class="p">,</span> <span class="n">_resolve_col_name</span><span class="p">,</span> <span class="n">_score_deps</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;_build_input_ddf&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;compute_column_report_sample&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;compute_column_report_global&quot;</span><span class="p">,</span>
+    <span class="s2">"_build_input_ddf"</span><span class="p">,</span>
+    <span class="s2">"compute_column_report_sample"</span><span class="p">,</span>
+    <span class="s2">"compute_column_report_global"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -104,7 +104,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_unique_available</span><span class="p">(</span><span class="n">cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">available_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return unique columns in input order, filtered by availability.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return unique columns in input order, filtered by availability."""</span>
     <span class="n">avail</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">available_cols</span><span class="p">)</span>
     <span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -123,7 +123,7 @@
     <span class="n">must_keep</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
     <span class="n">requested_keep_cfg</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve final output column order based on columns.keep semantics.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resolve final output column order based on columns.keep semantics."""</span>
     <span class="n">must_keep_unique</span> <span class="o">=</span> <span class="n">_unique_available</span><span class="p">(</span><span class="n">must_keep</span><span class="p">,</span> <span class="n">available_cols</span><span class="p">)</span>
 
     <span class="c1"># keep omitted/null -&gt; preserve input catalog order.</span>
@@ -154,7 +154,7 @@
 <div class="viewcode-block" id="_build_input_ddf">
 <a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.input._build_input_ddf.html#hipscatalog_gen.io.input._build_input_ddf">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_input_ddf</span><span class="p">(</span><span class="n">paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the main input collection for the pipeline.</span>
+<span class="w">    </span><span class="sd">"""Build the main input collection for the pipeline.</span>
 
 <span class="sd">    Supports Parquet/CSV/TSV and HATS/LSDB catalogs.</span>
 
@@ -168,26 +168,26 @@
 <span class="sd">            ra_name: Resolved RA column name.</span>
 <span class="sd">            dec_name: Resolved DEC column name.</span>
 <span class="sd">            keep_cols: Final ordered list of columns to keep (tile header order).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">paths</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No input files matched.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No input files matched."</span><span class="p">)</span>
 
     <span class="n">fmt</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">format</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="c1"># Single declaration for the whole function (avoid no-redef)</span>
     <span class="n">mag_col_cfg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">flux_col_cfg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">score_global_expr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;score_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">sdh_score_expr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;sdh_score_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
-    <span class="n">selection_mode</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;selection_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">selection_mode</span> <span class="o">==</span> <span class="s2">&quot;score_global&quot;</span><span class="p">:</span>
+    <span class="n">score_global_expr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"score_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
+    <span class="n">sdh_score_expr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"sdh_score_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span>
+    <span class="n">selection_mode</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"selection_mode"</span><span class="p">,</span> <span class="s2">"mag_global"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">selection_mode</span> <span class="o">==</span> <span class="s2">"score_global"</span><span class="p">:</span>
         <span class="n">active_score_expr</span> <span class="o">=</span> <span class="n">score_global_expr</span>
-    <span class="k">elif</span> <span class="n">selection_mode</span> <span class="o">==</span> <span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">selection_mode</span> <span class="o">==</span> <span class="s2">"score_density_hybrid"</span><span class="p">:</span>
         <span class="n">active_score_expr</span> <span class="o">=</span> <span class="n">sdh_score_expr</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">active_score_expr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">selection_mode</span> <span class="o">==</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">:</span>
+        <span class="n">active_score_expr</span> <span class="o">=</span> <span class="s2">""</span>
+    <span class="k">if</span> <span class="n">selection_mode</span> <span class="o">==</span> <span class="s2">"mag_global"</span><span class="p">:</span>
         <span class="n">mag_col_cfg</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">mag_column</span>
-        <span class="n">flux_col_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;flux_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">flux_col_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"flux_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="c1"># If columns.keep is None, preserve all input columns.</span>
     <span class="n">keep_all_columns</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">keep</span> <span class="ow">is</span> <span class="kc">None</span>
@@ -195,10 +195,10 @@
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># HATS / LSDB input: keep LSDB structure</span>
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;hats&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"hats"</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;For input.format=&#39;hats&#39;, please specify exactly one HATS catalog path in input.paths.&quot;</span>
+                <span class="s2">"For input.format='hats', please specify exactly one HATS catalog path in input.paths."</span>
             <span class="p">)</span>
 
         <span class="n">hats_path</span> <span class="o">=</span> <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -275,34 +275,34 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="c1"># 1) Base read to discover columns and resolve RA/DEC.</span>
-    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;parquet&quot;</span><span class="p">:</span>
-        <span class="n">ddf0</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;pyarrow&quot;</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;csv&quot;</span><span class="p">,</span> <span class="s2">&quot;tsv&quot;</span><span class="p">):</span>
-        <span class="n">ascii_fmt</span> <span class="o">=</span> <span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">ascii_format</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">ascii_fmt</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;CSV&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
-            <span class="n">sep</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span>
-        <span class="k">elif</span> <span class="n">ascii_fmt</span> <span class="o">==</span> <span class="s2">&quot;TSV&quot;</span><span class="p">:</span>
-            <span class="n">sep</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"parquet"</span><span class="p">:</span>
+        <span class="n">ddf0</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s2">"pyarrow"</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"csv"</span><span class="p">,</span> <span class="s2">"tsv"</span><span class="p">):</span>
+        <span class="n">ascii_fmt</span> <span class="o">=</span> <span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">ascii_format</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ascii_fmt</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"CSV"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
+            <span class="n">sep</span> <span class="o">=</span> <span class="s2">","</span>
+        <span class="k">elif</span> <span class="n">ascii_fmt</span> <span class="o">==</span> <span class="s2">"TSV"</span><span class="p">:</span>
+            <span class="n">sep</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\t</span><span class="s2">"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">sep</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span> <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;csv&quot;</span> <span class="k">else</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span>
+            <span class="n">sep</span> <span class="o">=</span> <span class="s2">","</span> <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"csv"</span> <span class="k">else</span> <span class="s2">"</span><span class="se">\t</span><span class="s2">"</span>
 
         <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">header</span><span class="p">:</span>
             <span class="n">ddf0</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="n">sep</span><span class="p">,</span> <span class="n">assume_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ddf0</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="n">sep</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assume_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unsupported input.format; use &#39;parquet&#39;, &#39;csv&#39;, &#39;tsv&#39;, or &#39;hats&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Unsupported input.format; use 'parquet', 'csv', 'tsv', or 'hats'."</span><span class="p">)</span>
 
     <span class="c1"># Resolve RA/DEC.</span>
     <span class="n">ra_col</span> <span class="o">=</span> <span class="n">_resolve_col_name</span><span class="p">(</span>
         <span class="n">cfg</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">ra</span><span class="p">,</span>
         <span class="n">ddf0</span><span class="p">,</span>
-        <span class="n">header</span><span class="o">=</span><span class="p">(</span><span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;parquet&quot;</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">header</span><span class="p">),</span>
+        <span class="n">header</span><span class="o">=</span><span class="p">(</span><span class="n">fmt</span> <span class="o">==</span> <span class="s2">"parquet"</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">header</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">dec_col</span> <span class="o">=</span> <span class="n">_resolve_col_name</span><span class="p">(</span>
         <span class="n">cfg</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">dec</span><span class="p">,</span>
         <span class="n">ddf0</span><span class="p">,</span>
-        <span class="n">header</span><span class="o">=</span><span class="p">(</span><span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;parquet&quot;</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">header</span><span class="p">),</span>
+        <span class="n">header</span><span class="o">=</span><span class="p">(</span><span class="n">fmt</span> <span class="o">==</span> <span class="s2">"parquet"</span> <span class="ow">or</span> <span class="n">cfg</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">header</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">RA_NAME</span> <span class="o">=</span> <span class="n">ra_col</span>
     <span class="n">DEC_NAME</span> <span class="o">=</span> <span class="n">dec_col</span>
@@ -313,7 +313,7 @@
 
     <span class="n">requested_keep_cfg</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">keep</span>
 
-    <span class="n">flux_col_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;flux_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">flux_col_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"flux_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="n">must_keep</span> <span class="o">=</span> <span class="p">[</span><span class="n">RA_NAME</span><span class="p">,</span> <span class="n">DEC_NAME</span><span class="p">,</span> <span class="o">*</span><span class="n">score_dependencies</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">mag_col_cfg</span> <span class="ow">and</span> <span class="n">mag_col_cfg</span> <span class="ow">in</span> <span class="n">available_cols</span><span class="p">:</span>
@@ -342,7 +342,7 @@
 <div class="viewcode-block" id="compute_column_report_sample">
 <a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.input.compute_column_report_sample.html#hipscatalog_gen.io.input.compute_column_report_sample">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_column_report_sample</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">sample_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">200_000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a small column summary from a sample.</span>
+<span class="w">    </span><span class="sd">"""Build a small column summary from a sample.</span>
 
 <span class="sd">    Uses sampling to keep the computation fast and scalable. Works with</span>
 <span class="sd">    Dask DataFrames and LSDB catalogs.</span>
@@ -353,12 +353,12 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Nested dict with basic column statistics and examples.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># Try to use the native .sample(...) API whenever it exists.</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">&quot;sample&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">"sample"</span><span class="p">):</span>
         <span class="c1"># Heuristic for sampling fraction based on number of columns.</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">ncols</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">&quot;columns&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+            <span class="n">ncols</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">"columns"</span><span class="p">,</span> <span class="p">[]))</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">ncols</span> <span class="o">=</span> <span class="mi">0</span>
 
@@ -368,7 +368,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">sample</span> <span class="o">=</span> <span class="n">ddf_like</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="n">frac</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="c1"># Some implementations may support only &quot;n=&quot;.</span>
+            <span class="c1"># Some implementations may support only "n=".</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">sample</span> <span class="o">=</span> <span class="n">ddf_like</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">sample_rows</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
@@ -386,35 +386,35 @@
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">pdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">pdf</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>
         <span class="n">col_info</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
-            <span class="s2">&quot;n_null&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
+            <span class="s2">"dtype"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+            <span class="s2">"n_null"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span>
         <span class="p">}</span>
 
         <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_numeric_dtype</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
                 <span class="n">col_info</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
                     <span class="p">{</span>
-                        <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span>
-                        <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span>
-                        <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span>
+                        <span class="s2">"min"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span>
+                        <span class="s2">"max"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span>
+                        <span class="s2">"mean"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span>
                     <span class="p">}</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">col_info</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">})</span>
+                <span class="n">col_info</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">"min"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">})</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">example</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-            <span class="n">col_info</span><span class="p">[</span><span class="s2">&quot;example&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+            <span class="n">example</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="n">col_info</span><span class="p">[</span><span class="s2">"example"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
 
         <span class="n">report</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">col_info</span>
 
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="n">report</span><span class="p">}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"columns"</span><span class="p">:</span> <span class="n">report</span><span class="p">}</span></div>
 
 
 
 <div class="viewcode-block" id="compute_column_report_global">
 <a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.input.compute_column_report_global.html#hipscatalog_gen.io.input.compute_column_report_global">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compute_column_report_global</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a column summary using global Dask-based statistics.</span>
+<span class="w">    </span><span class="sd">"""Build a column summary using global Dask-based statistics.</span>
 
 <span class="sd">    Computes min, max, mean and null counts using a single Dask graph.</span>
 
@@ -423,7 +423,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Nested dict with global column statistics and examples.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">report</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="n">dtypes</span> <span class="o">=</span> <span class="n">ddf_like</span><span class="o">.</span><span class="n">dtypes</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
@@ -436,22 +436,22 @@
 
         <span class="c1"># Always compute n_null.</span>
         <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">&quot;n_null&quot;</span><span class="p">))</span>
+        <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">"n_null"</span><span class="p">))</span>
 
         <span class="c1"># Numeric → global min/max/mean.</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">number</span><span class="p">):</span>
             <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
-            <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">))</span>
+            <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">"min"</span><span class="p">))</span>
 
             <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
-            <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">))</span>
+            <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">))</span>
 
             <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
-            <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">))</span>
+            <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># For non-numeric, get one non-null example if available.</span>
             <span class="n">tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-            <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">&quot;example&quot;</span><span class="p">))</span>
+            <span class="n">task_keys</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">col</span><span class="p">,</span> <span class="s2">"example"</span><span class="p">))</span>
 
     <span class="c1"># Execute all aggregations in a single Dask compute.</span>
     <span class="n">results</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">dask_compute</span><span class="p">(</span><span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
@@ -459,22 +459,22 @@
     <span class="n">tmp</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">field</span><span class="p">),</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">task_keys</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">:</span>
-            <span class="n">tmp</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">dtypes</span><span class="p">[</span><span class="n">col</span><span class="p">])}</span>
+            <span class="n">tmp</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"dtype"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">dtypes</span><span class="p">[</span><span class="n">col</span><span class="p">])}</span>
 
-        <span class="k">if</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;example&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">"example"</span><span class="p">:</span>
             <span class="c1"># At runtime this is usually a pandas Series; keep typing lenient.</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">iloc</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;iloc&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="n">v</span> <span class="o">=</span> <span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">iloc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                <span class="n">iloc</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"iloc"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">iloc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">""</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">v</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-            <span class="n">tmp</span><span class="p">[</span><span class="n">col</span><span class="p">][</span><span class="s2">&quot;example&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;min&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">):</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="s2">""</span>
+            <span class="n">tmp</span><span class="p">[</span><span class="n">col</span><span class="p">][</span><span class="s2">"example"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"min"</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">):</span>
             <span class="n">tmp</span><span class="p">[</span><span class="n">col</span><span class="p">][</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-        <span class="k">elif</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">&quot;n_null&quot;</span><span class="p">:</span>
-            <span class="n">tmp</span><span class="p">[</span><span class="n">col</span><span class="p">][</span><span class="s2">&quot;n_null&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">field</span> <span class="o">==</span> <span class="s2">"n_null"</span><span class="p">:</span>
+            <span class="n">tmp</span><span class="p">[</span><span class="n">col</span><span class="p">][</span><span class="s2">"n_null"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
-    <span class="n">report</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span>
+    <span class="n">report</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span>
     <span class="k">return</span> <span class="n">report</span></div>
 
 </pre></div>

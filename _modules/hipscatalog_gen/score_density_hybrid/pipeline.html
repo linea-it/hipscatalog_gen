@@ -75,7 +75,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.score_density_hybrid.pipeline</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Hybrid density-first then score-based selection pipeline.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Hybrid density-first then score-based selection pipeline."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -111,9 +111,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_fmt_dur</span><span class="p">,</span> <span class="n">_get_meta_df</span><span class="p">,</span> <span class="n">_log_depth_stats</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;normalize_score_density_hybrid&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;prepare_score_density_hybrid&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;run_score_density_hybrid_selection&quot;</span><span class="p">,</span>
+    <span class="s2">"normalize_score_density_hybrid"</span><span class="p">,</span>
+    <span class="s2">"prepare_score_density_hybrid"</span><span class="p">,</span>
+    <span class="s2">"run_score_density_hybrid_selection"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -132,7 +132,7 @@
     <span class="n">persist_ddfs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">avoid_computes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">ScoreDensityHybridParams</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add ``__score__`` column and compute window without mutating cfg.</span>
+<span class="w">    </span><span class="sd">"""Add ``__score__`` column and compute window without mutating cfg.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        ddf: Dask-like collection with score columns or expressions.</span>
@@ -147,64 +147,64 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If the score expression/configuration is invalid.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">algo</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span>
-    <span class="n">score_expr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_score_column&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;score_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">score_expr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_column"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"score_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">score_expr</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;score_density_hybrid selection requires algorithm.sdh_score_column/score_column.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"score_density_hybrid selection requires algorithm.sdh_score_column/score_column."</span><span class="p">)</span>
 
     <span class="n">score_source</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;score_density_hybrid.score_column&quot;</span>
-        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_score_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">else</span> <span class="s2">&quot;score_global.score_column&quot;</span>
+        <span class="s2">"score_density_hybrid.score_column"</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">else</span> <span class="s2">"score_global.score_column"</span>
     <span class="p">)</span>
     <span class="n">score_expr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">score_expr</span><span class="p">)</span>
     <span class="n">log_fn</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;[selection] score_density_hybrid using </span><span class="si">{</span><span class="n">score_source</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">score_expr</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"[selection] score_density_hybrid using </span><span class="si">{</span><span class="n">score_source</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">score_expr</span><span class="si">!r}</span><span class="s2">."</span><span class="p">,</span>
         <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">score_range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_score_adaptive_range&quot;</span><span class="p">,</span> <span class="s2">&quot;complete&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;complete&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">score_range_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;complete&quot;</span><span class="p">,</span> <span class="s2">&quot;hist_peak&quot;</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;algorithm.sdh_score_adaptive_range must be &#39;complete&#39; or &#39;hist_peak&#39;.&quot;</span><span class="p">)</span>
+    <span class="n">score_range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_adaptive_range"</span><span class="p">,</span> <span class="s2">"complete"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"complete"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">score_range_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"complete"</span><span class="p">,</span> <span class="s2">"hist_peak"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"algorithm.sdh_score_adaptive_range must be 'complete' or 'hist_peak'."</span><span class="p">)</span>
 
-    <span class="n">score_hist_nbins</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_score_hist_nbins&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;score_hist_nbins&quot;</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)))</span>
+    <span class="n">score_hist_nbins</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_hist_nbins"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"score_hist_nbins"</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)))</span>
     <span class="k">if</span> <span class="n">score_hist_nbins</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;algorithm.sdh_score_hist_nbins must be a positive integer.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"algorithm.sdh_score_hist_nbins must be a positive integer."</span><span class="p">)</span>
 
-    <span class="n">ddf</span> <span class="o">=</span> <span class="n">add_score_column</span><span class="p">(</span><span class="n">ddf</span><span class="p">,</span> <span class="n">score_expr</span><span class="p">,</span> <span class="n">output_col</span><span class="o">=</span><span class="s2">&quot;__score__&quot;</span><span class="p">)</span>
+    <span class="n">ddf</span> <span class="o">=</span> <span class="n">add_score_column</span><span class="p">(</span><span class="n">ddf</span><span class="p">,</span> <span class="n">score_expr</span><span class="p">,</span> <span class="n">output_col</span><span class="o">=</span><span class="s2">"__score__"</span><span class="p">)</span>
 
-    <span class="n">score_col_internal</span> <span class="o">=</span> <span class="s2">&quot;__score__&quot;</span>
-    <span class="n">score_min_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_score_min&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;score_min&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
-    <span class="n">score_max_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_score_max&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;score_max&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
-    <span class="n">keep_invalid</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_keep_invalid_values&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">keep_invalid</span> <span class="ow">and</span> <span class="n">score_range_mode</span> <span class="o">!=</span> <span class="s2">&quot;complete&quot;</span><span class="p">:</span>
+    <span class="n">score_col_internal</span> <span class="o">=</span> <span class="s2">"__score__"</span>
+    <span class="n">score_min_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_min"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"score_min"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">score_max_cfg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_max"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"score_max"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+    <span class="n">keep_invalid</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_keep_invalid_values"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">keep_invalid</span> <span class="ow">and</span> <span class="n">score_range_mode</span> <span class="o">!=</span> <span class="s2">"complete"</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;score_density_hybrid: keep_invalid_values=True is only supported with &quot;</span>
-            <span class="s2">&quot;score_adaptive_range=complete.&quot;</span>
+            <span class="s2">"score_density_hybrid: keep_invalid_values=True is only supported with "</span>
+            <span class="s2">"score_adaptive_range=complete."</span>
         <span class="p">)</span>
-    <span class="n">order_desc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;sdh_order_desc&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;order_desc&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+    <span class="n">order_desc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"sdh_order_desc"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"order_desc"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
 
-    <span class="n">sentinel</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="nb">sentinel</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">keep_invalid</span><span class="p">:</span>
         <span class="n">fin_min</span><span class="p">,</span> <span class="n">fin_max</span> <span class="o">=</span> <span class="n">_finite_min_max</span><span class="p">(</span><span class="n">ddf</span><span class="p">,</span> <span class="n">score_col_internal</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">fin_min</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">fin_max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;score_density_hybrid: all score values are NaN/Inf; nothing to select.&quot;</span><span class="p">)</span>
-        <span class="n">sentinel</span> <span class="o">=</span> <span class="n">_sentinel_for_order</span><span class="p">(</span><span class="n">fin_min</span><span class="p">,</span> <span class="n">fin_max</span><span class="p">,</span> <span class="n">order_desc</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"score_density_hybrid: all score values are NaN/Inf; nothing to select."</span><span class="p">)</span>
+        <span class="nb">sentinel</span> <span class="o">=</span> <span class="n">_sentinel_for_order</span><span class="p">(</span><span class="n">fin_min</span><span class="p">,</span> <span class="n">fin_max</span><span class="p">,</span> <span class="n">order_desc</span><span class="p">)</span>
         <span class="n">ddf</span> <span class="o">=</span> <span class="n">_map_invalid_to_sentinel</span><span class="p">(</span>
             <span class="n">ddf</span><span class="p">,</span>
             <span class="n">score_col_internal</span><span class="p">,</span>
-            <span class="n">sentinel</span><span class="o">=</span><span class="n">sentinel</span><span class="p">,</span>
+            <span class="nb">sentinel</span><span class="o">=</span><span class="nb">sentinel</span><span class="p">,</span>
             <span class="n">meta</span><span class="o">=</span><span class="n">_get_meta_df</span><span class="p">(</span><span class="n">ddf</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">score_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">score_min_cfg</span><span class="p">)</span> <span class="k">if</span> <span class="n">score_min_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">fin_min</span><span class="p">)</span>
         <span class="n">score_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">score_max_cfg</span><span class="p">)</span> <span class="k">if</span> <span class="n">score_max_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">fin_max</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">order_desc</span><span class="p">:</span>
-            <span class="n">score_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">score_max</span><span class="p">,</span> <span class="n">sentinel</span><span class="p">)</span>
+            <span class="n">score_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">score_max</span><span class="p">,</span> <span class="nb">sentinel</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">score_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">score_min</span><span class="p">,</span> <span class="n">sentinel</span><span class="p">)</span>
+            <span class="n">score_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">score_min</span><span class="p">,</span> <span class="nb">sentinel</span><span class="p">)</span>
         <span class="n">log_fn</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;[score_density_hybrid] keep_invalid_values=True → mapping NaN/Inf to sentinel </span><span class="si">{</span><span class="n">sentinel</span><span class="si">}</span><span class="s2"> &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;and using range [</span><span class="si">{</span><span class="n">score_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">score_max</span><span class="si">}</span><span class="s2">] (order_desc=</span><span class="si">{</span><span class="n">order_desc</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"[score_density_hybrid] keep_invalid_values=True → mapping NaN/Inf to sentinel </span><span class="si">{</span><span class="nb">sentinel</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"and using range [</span><span class="si">{</span><span class="n">score_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">score_max</span><span class="si">}</span><span class="s2">] (order_desc=</span><span class="si">{</span><span class="n">order_desc</span><span class="si">}</span><span class="s2">)."</span><span class="p">,</span>
             <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -218,43 +218,43 @@
             <span class="n">compute_hist_fn</span><span class="o">=</span><span class="n">compute_score_histogram_ddf</span><span class="p">,</span>
             <span class="n">diag_ctx</span><span class="o">=</span><span class="n">diag_ctx</span><span class="p">,</span>
             <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
-            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">"score_density_hybrid"</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="n">params</span> <span class="o">=</span> <span class="n">ScoreDensityHybridParams</span><span class="p">(</span><span class="n">score_min</span><span class="o">=</span><span class="n">score_min</span><span class="p">,</span> <span class="n">score_max</span><span class="o">=</span><span class="n">score_max</span><span class="p">,</span> <span class="n">sentinel</span><span class="o">=</span><span class="n">sentinel</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">ScoreDensityHybridParams</span><span class="p">(</span><span class="n">score_min</span><span class="o">=</span><span class="n">score_min</span><span class="p">,</span> <span class="n">score_max</span><span class="o">=</span><span class="n">score_max</span><span class="p">,</span> <span class="nb">sentinel</span><span class="o">=</span><span class="nb">sentinel</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ddf</span><span class="p">,</span> <span class="n">params</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_filter_score_window</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">score_min_val</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">score_max_val</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep rows within the resolved score window for one partition.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Keep rows within the resolved score window for one partition."""</span>
     <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pdf</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__score__&quot;</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">pdf</span><span class="p">[</span><span class="s2">"__score__"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">s</span> <span class="o">&gt;=</span> <span class="n">score_min_val</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">s</span> <span class="o">&lt;=</span> <span class="n">score_max_val</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">pdf</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_attach_unique_id</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">partition_info</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Attach a unique integer id per row (partition-aware).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Attach a unique integer id per row (partition-aware)."""</span>
     <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-        <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+        <span class="n">pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">pdf</span>
 
-    <span class="n">part_no</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">partition_info</span><span class="p">[</span><span class="s2">&quot;number&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">partition_info</span> <span class="ow">and</span> <span class="s2">&quot;number&quot;</span> <span class="ow">in</span> <span class="n">partition_info</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">part_no</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">partition_info</span><span class="p">[</span><span class="s2">"number"</span><span class="p">])</span> <span class="k">if</span> <span class="n">partition_info</span> <span class="ow">and</span> <span class="s2">"number"</span> <span class="ow">in</span> <span class="n">partition_info</span> <span class="k">else</span> <span class="mi">0</span>
     <span class="n">pdf</span> <span class="o">=</span> <span class="n">pdf</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
-    <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">local</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">part_no</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">32</span><span class="p">)</span>
+    <span class="n">local</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
+    <span class="n">pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">local</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">part_no</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">32</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">pdf</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_distribute_by_weights</span><span class="p">(</span><span class="n">total</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Distribute an integer total following relative weights with rounding.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Distribute an integer total following relative weights with rounding."""</span>
     <span class="k">if</span> <span class="n">total</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">weights</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">weights</span><span class="p">}</span>
 
     <span class="n">idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-    <span class="n">w_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">w_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
     <span class="n">w_sum</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">w_vec</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">w_sum</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
         <span class="n">base</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">w_vec</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
@@ -264,7 +264,7 @@
         <span class="n">remainder</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total</span> <span class="o">-</span> <span class="n">base</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">remainder</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">frac</span> <span class="o">=</span> <span class="n">raw</span> <span class="o">-</span> <span class="n">base</span>
-            <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">frac</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;mergesort&quot;</span><span class="p">)</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">frac</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"mergesort"</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">order</span><span class="p">[:</span><span class="n">remainder</span><span class="p">]:</span>
                 <span class="n">base</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)}</span>
@@ -278,7 +278,7 @@
     <span class="n">log_fn</span><span class="p">,</span>
     <span class="n">stage1_depth_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Redistribute stage-1 totals across configured density depths.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Redistribute stage-1 totals across configured density depths."""</span>
     <span class="n">depths_stage1</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">base_targets</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;=</span> <span class="n">stage1_depth_max</span><span class="p">])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">depths_stage1</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{}</span>
@@ -304,8 +304,8 @@
         <span class="n">avail</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">densmaps</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">totals</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">avail</span><span class="p">:</span>
             <span class="n">log_fn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;[score_density_hybrid] Requested </span><span class="si">{</span><span class="n">totals</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="si">}</span><span class="s2"> objects for depth </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;but only </span><span class="si">{</span><span class="n">avail</span><span class="si">}</span><span class="s2"> available → clamping.&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"[score_density_hybrid] Requested </span><span class="si">{</span><span class="n">totals</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="si">}</span><span class="s2"> objects for depth </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"but only </span><span class="si">{</span><span class="n">avail</span><span class="si">}</span><span class="s2"> available → clamping."</span><span class="p">,</span>
                 <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">totals</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">avail</span>
@@ -326,13 +326,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_drop_selected_ids</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove already-selected IDs from a partition.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Remove already-selected IDs from a partition."""</span>
     <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pdf</span>
     <span class="n">ids_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">ids_set</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pdf</span>
-    <span class="k">return</span> <span class="n">pdf</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">ids_set</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">pdf</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">ids_set</span><span class="p">)]</span>
 
 
 <span class="c1"># =============================================================================</span>
@@ -351,7 +351,7 @@
     <span class="n">persist_ddfs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">avoid_computes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Restrict to a score window using pre-computed params.</span>
+<span class="w">    </span><span class="sd">"""Restrict to a score window using pre-computed params.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        ddf: Dask-like collection with ``__score__`` already attached.</span>
@@ -364,10 +364,10 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Dask-like collection filtered to the score window with unique IDs attached.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">meta_sel</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">ddf</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">meta_sel</span><span class="p">[</span><span class="s2">&quot;__score__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">meta_sel</span><span class="p">[</span><span class="s2">"__score__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
     <span class="n">ddf_sel</span> <span class="o">=</span> <span class="n">ddf</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span>
         <span class="n">_filter_score_window</span><span class="p">,</span>
         <span class="n">params</span><span class="o">.</span><span class="n">score_min</span><span class="p">,</span>
@@ -376,60 +376,60 @@
     <span class="p">)</span>
 
     <span class="n">meta_with_id</span> <span class="o">=</span> <span class="n">meta_sel</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">meta_with_id</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">meta_with_id</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_attach_id_partition</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">partition_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach __sdh_id__ deterministically using partition number.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">partition_info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;number&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">partition_info</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Attach __sdh_id__ deterministically using partition number."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">partition_info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"number"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">partition_info</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+                <span class="n">pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">pdf</span><span class="p">[</span><span class="n">meta_with_id</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;score_density_hybrid: missing partition_info; cannot build unique IDs.&quot;</span><span class="p">)</span>
-        <span class="n">part_no</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">partition_info</span><span class="p">[</span><span class="s2">&quot;number&quot;</span><span class="p">])</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"score_density_hybrid: missing partition_info; cannot build unique IDs."</span><span class="p">)</span>
+        <span class="n">part_no</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">partition_info</span><span class="p">[</span><span class="s2">"number"</span><span class="p">])</span>
         <span class="n">base</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">part_no</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">32</span>
-        <span class="n">seq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
         <span class="n">pdf</span> <span class="o">=</span> <span class="n">pdf</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="n">seq</span>
+        <span class="n">pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="n">seq</span>
         <span class="k">return</span> <span class="n">pdf</span><span class="p">[</span><span class="n">meta_with_id</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_parse_pixel_order_pixel</span><span class="p">(</span><span class="n">pixel_obj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract (order, pixel) from an LSDB pixel object or its string form.&quot;&quot;&quot;</span>
-        <span class="n">order</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pixel_obj</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">pix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pixel_obj</span><span class="p">,</span> <span class="s2">&quot;pixel&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""Extract (order, pixel) from an LSDB pixel object or its string form."""</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pixel_obj</span><span class="p">,</span> <span class="s2">"order"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">pix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pixel_obj</span><span class="p">,</span> <span class="s2">"pixel"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">order</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">pix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">order</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">pix</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pixel_obj</span><span class="p">)</span>
-            <span class="n">parts</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-            <span class="k">if</span> <span class="s2">&quot;Order:&quot;</span> <span class="ow">in</span> <span class="n">parts</span> <span class="ow">and</span> <span class="s2">&quot;Pixel:&quot;</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
-                <span class="n">order</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="n">parts</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;Order:&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
-                <span class="n">pix</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="n">parts</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;Pixel:&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">if</span> <span class="s2">"Order:"</span> <span class="ow">in</span> <span class="n">parts</span> <span class="ow">and</span> <span class="s2">"Pixel:"</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+                <span class="n">order</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="n">parts</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"Order:"</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">pix</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="n">parts</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"Pixel:"</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
                 <span class="k">return</span> <span class="n">order</span><span class="p">,</span> <span class="n">pix</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_attach_id_pixel</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pixel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach __sdh_id__ using (order, pixel, row_index).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Attach __sdh_id__ using (order, pixel, row_index)."""</span>
         <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+            <span class="n">pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">pdf</span><span class="p">[</span><span class="n">meta_with_id</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
         <span class="n">order</span><span class="p">,</span> <span class="n">pix</span> <span class="o">=</span> <span class="n">_parse_pixel_order_pixel</span><span class="p">(</span><span class="n">pixel</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">order</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">pix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+                <span class="n">pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">pdf</span><span class="p">[</span><span class="n">meta_with_id</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;score_density_hybrid: missing LSDB pixel metadata; cannot build unique IDs.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"score_density_hybrid: missing LSDB pixel metadata; cannot build unique IDs."</span><span class="p">)</span>
         <span class="n">base</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="mi">58</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="n">pix</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
-        <span class="n">seq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pdf</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
         <span class="n">pdf</span> <span class="o">=</span> <span class="n">pdf</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">pdf</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="n">seq</span>
+        <span class="n">pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">base</span> <span class="o">+</span> <span class="n">seq</span>
         <span class="k">return</span> <span class="n">pdf</span><span class="p">[</span><span class="n">meta_with_id</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
 
     <span class="n">is_lsdb</span> <span class="o">=</span> <span class="n">LsdbCatalog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ddf</span><span class="p">,</span> <span class="n">LsdbCatalog</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">is_lsdb</span><span class="p">:</span>
         <span class="n">log_fn</span><span class="p">(</span>
-            <span class="s2">&quot;[score_density_hybrid] Using LSDB pixel-based IDs for stage-1 de-duplication.&quot;</span><span class="p">,</span>
+            <span class="s2">"[score_density_hybrid] Using LSDB pixel-based IDs for stage-1 de-duplication."</span><span class="p">,</span>
             <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">ddf_sel</span> <span class="o">=</span> <span class="n">ddf_sel</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span>
@@ -437,7 +437,7 @@
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">log_fn</span><span class="p">(</span>
-            <span class="s2">&quot;[score_density_hybrid] Using partition_info-based IDs for stage-1 de-duplication.&quot;</span><span class="p">,</span>
+            <span class="s2">"[score_density_hybrid] Using partition_info-based IDs for stage-1 de-duplication."</span><span class="p">,</span>
             <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">ddf_sel</span> <span class="o">=</span> <span class="n">ddf_sel</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span>
@@ -445,14 +445,14 @@
         <span class="p">)</span>
 
     <span class="n">should_persist</span> <span class="o">=</span> <span class="n">persist_ddfs</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">avoid_computes</span><span class="p">)</span>
-    <span class="n">reason</span> <span class="o">=</span> <span class="s2">&quot;cluster.persist_ddfs=True&quot;</span> <span class="k">if</span> <span class="n">persist_ddfs</span> <span class="k">else</span> <span class="s2">&quot;avoid_computes_wherever_possible=False&quot;</span>
+    <span class="n">reason</span> <span class="o">=</span> <span class="s2">"cluster.persist_ddfs=True"</span> <span class="k">if</span> <span class="n">persist_ddfs</span> <span class="k">else</span> <span class="s2">"avoid_computes_wherever_possible=False"</span>
     <span class="n">ddf_sel</span> <span class="o">=</span> <span class="n">maybe_persist_ddf</span><span class="p">(</span>
         <span class="n">ddf_sel</span><span class="p">,</span>
         <span class="n">should_persist</span><span class="o">=</span><span class="n">should_persist</span><span class="p">,</span>
         <span class="n">diag_ctx</span><span class="o">=</span><span class="n">diag_ctx</span><span class="p">,</span>
         <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
-        <span class="n">log_prefix</span><span class="o">=</span><span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">,</span>
-        <span class="n">diag_label</span><span class="o">=</span><span class="s2">&quot;dask_sdh_persist_filtered&quot;</span><span class="p">,</span>
+        <span class="n">log_prefix</span><span class="o">=</span><span class="s2">"score_density_hybrid"</span><span class="p">,</span>
+        <span class="n">diag_label</span><span class="o">=</span><span class="s2">"dask_sdh_persist_filtered"</span><span class="p">,</span>
         <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -475,7 +475,7 @@
     <span class="n">avoid_computes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">params</span><span class="p">:</span> <span class="n">ScoreDensityHybridParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute the score_density_hybrid selection.</span>
+<span class="w">    </span><span class="sd">"""Execute the score_density_hybrid selection.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        remainder_ddf: Dask-like collection after pre-filtering.</span>
@@ -489,28 +489,28 @@
 <span class="sd">        log_fn: Logging callback.</span>
 <span class="sd">        avoid_computes: Whether to avoid explicit ``compute()`` calls when possible.</span>
 <span class="sd">        params: Resolved score parameters (required).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">algo</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span>
-    <span class="n">score_col_internal</span> <span class="o">=</span> <span class="s2">&quot;__score__&quot;</span>
+    <span class="n">score_col_internal</span> <span class="o">=</span> <span class="s2">"__score__"</span>
     <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;score_density_hybrid: selection parameters were not provided.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"score_density_hybrid: selection parameters were not provided."</span><span class="p">)</span>
 
     <span class="n">score_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">score_min</span><span class="p">)</span>
     <span class="n">score_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">score_max</span><span class="p">)</span>
     <span class="n">depths_sel</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">stage1_depth_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
-        <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_density_up_to_depth&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+        <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_density_up_to_depth"</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
         <span class="nb">int</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="n">stage1_depth_max</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;score_density_hybrid: density_up_to_depth must be &gt;= 1.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"score_density_hybrid: density_up_to_depth must be &gt;= 1."</span><span class="p">)</span>
 
     <span class="n">header_line</span> <span class="o">=</span> <span class="n">build_header_line_from_keep</span><span class="p">(</span><span class="n">keep_cols</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Stage 1: density-driven up to configured depth</span>
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="s2">&quot;dask_sdh_score_hist_initial&quot;</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="s2">"dask_sdh_score_hist_initial"</span><span class="p">):</span>
         <span class="n">hist</span><span class="p">,</span> <span class="n">score_edges_hist</span><span class="p">,</span> <span class="n">n_tot_score</span> <span class="o">=</span> <span class="n">compute_score_histogram_ddf</span><span class="p">(</span>
             <span class="n">remainder_ddf</span><span class="p">,</span>
             <span class="n">score_col</span><span class="o">=</span><span class="n">score_col_internal</span><span class="p">,</span>
@@ -521,13 +521,13 @@
 
     <span class="k">if</span> <span class="n">n_tot_score</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">log_fn</span><span class="p">(</span>
-            <span class="s2">&quot;[selection] score_density_hybrid: no objects found in the score range &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">score_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">score_max</span><span class="si">}</span><span class="s2">] → nothing to select.&quot;</span><span class="p">,</span>
+            <span class="s2">"[selection] score_density_hybrid: no objects found in the score range "</span>
+            <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">score_min</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">score_max</span><span class="si">}</span><span class="s2">] → nothing to select."</span><span class="p">,</span>
             <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;depth_tiles&quot;</span><span class="p">:</span> <span class="p">{}}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"depth_totals"</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">"depth_tiles"</span><span class="p">:</span> <span class="p">{}}</span>
 
-    <span class="n">cdf_hist</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">cdf_hist</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"float64"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">cdf_hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">cdf_hist</span> <span class="o">/=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cdf_hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
@@ -537,10 +537,10 @@
     <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">stage1_depth_max</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">n_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sdh_n_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">k_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sdh_k_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">n_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sdh_n_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">k_val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sdh_k_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">n_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">k_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;score_density_hybrid: both n_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> and k_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> are set; choose one.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"score_density_hybrid: both n_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> and k_</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> are set; choose one."</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">k_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">active_tiles</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">densmaps</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">[])))</span>
             <span class="n">n_val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">k_val</span><span class="p">)</span> <span class="o">*</span> <span class="n">active_tiles</span><span class="p">))</span>
@@ -562,7 +562,7 @@
         <span class="n">score_max</span><span class="o">=</span><span class="n">score_max</span><span class="p">,</span>
         <span class="n">n_tot_score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">n_tot_score</span><span class="p">),</span>
         <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
-        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">"score_density_hybrid"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">base_targets</span> <span class="o">=</span> <span class="p">{</span><span class="n">depths_sel</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="nb">float</span><span class="p">(</span><span class="n">targets_per_depth_raw</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">depths_sel</span><span class="p">))}</span>
@@ -575,14 +575,14 @@
         <span class="n">stage1_depth_max</span><span class="o">=</span><span class="n">stage1_depth_max</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">log_fn</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;[selection] score_density_hybrid stage 1 targets (depth 1–</span><span class="si">{</span><span class="n">stage1_depth_max</span><span class="si">}</span><span class="s2">): &quot;</span>
-        <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">stage1_totals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">stage1_totals</span><span class="p">)),</span>
+        <span class="sa">f</span><span class="s2">"[selection] score_density_hybrid stage 1 targets (depth 1–</span><span class="si">{</span><span class="n">stage1_depth_max</span><span class="si">}</span><span class="s2">): "</span>
+        <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">stage1_totals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">stage1_totals</span><span class="p">)),</span>
         <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">available_ddf</span> <span class="o">=</span> <span class="n">remainder_ddf</span>
-    <span class="n">order_desc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_order_desc&quot;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;order_desc&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
-    <span class="n">tie_col</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_tie_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;tie_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">order_desc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_order_desc"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"order_desc"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+    <span class="n">tie_col</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_tie_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"tie_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">stage1_depth_totals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">stage1_depth_tiles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -590,22 +590,22 @@
         <span class="n">depth_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">depth_total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">stage1_totals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">depth_total</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">log_fn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: target is 0 → skipping.&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">log_fn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: target is 0 → skipping."</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="n">counts</span> <span class="o">=</span> <span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">]</span>
-        <span class="n">bias</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;sdh_density_bias_n</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sdh_density_bias_n</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
         <span class="n">targets_per_tile_map</span> <span class="o">=</span> <span class="n">targets_per_tile</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">depth_total</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">targets_per_tile_map</span><span class="p">:</span>
             <span class="n">log_fn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: no active tiles or zero targets → skipping.&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: no active tiles or zero targets → skipping."</span><span class="p">,</span>
                 <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">continue</span>
 
-        <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dask_sdh_depth_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">_candidates&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dask_sdh_depth_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">_candidates"</span><span class="p">):</span>
             <span class="n">meta_ipix</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">available_ddf</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">meta_ipix</span><span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+            <span class="n">meta_ipix</span><span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"int64"</span><span class="p">)</span>
             <span class="n">ddf_with_ipix</span> <span class="o">=</span> <span class="n">available_ddf</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span>
                 <span class="n">add_ipix_column</span><span class="p">,</span>
                 <span class="n">depth</span><span class="p">,</span>
@@ -615,10 +615,10 @@
             <span class="p">)</span>
 
             <span class="n">target_tiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">targets_per_tile_map</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-            <span class="n">cand_ddf</span> <span class="o">=</span> <span class="n">ddf_with_ipix</span><span class="p">[</span><span class="n">ddf_with_ipix</span><span class="p">[</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">target_tiles</span><span class="p">)]</span>
+            <span class="n">cand_ddf</span> <span class="o">=</span> <span class="n">ddf_with_ipix</span><span class="p">[</span><span class="n">ddf_with_ipix</span><span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">target_tiles</span><span class="p">)]</span>
             <span class="n">selected_ddf</span> <span class="o">=</span> <span class="n">reduce_topk_by_group_dask</span><span class="p">(</span>
                 <span class="n">cand_ddf</span><span class="p">,</span>
-                <span class="n">group_col</span><span class="o">=</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">,</span>
+                <span class="n">group_col</span><span class="o">=</span><span class="s2">"__ipix__"</span><span class="p">,</span>
                 <span class="n">score_col</span><span class="o">=</span><span class="n">score_col_internal</span><span class="p">,</span>
                 <span class="n">order_desc</span><span class="o">=</span><span class="n">order_desc</span><span class="p">,</span>
                 <span class="n">k_per_group</span><span class="o">=</span><span class="n">targets_per_tile_map</span><span class="p">,</span>
@@ -628,11 +628,11 @@
             <span class="p">)</span>
             <span class="n">selected_pdf</span> <span class="o">=</span> <span class="n">selected_ddf</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
 
-        <span class="n">_log_depth_stats</span><span class="p">(</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="s2">&quot;selected&quot;</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span> <span class="n">selected_len</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">))</span>
+        <span class="n">_log_depth_stats</span><span class="p">(</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="s2">"selected"</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span> <span class="n">selected_len</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">log_fn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: no rows selected for this depth.&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: no rows selected for this depth."</span><span class="p">,</span>
                 <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">continue</span>
@@ -650,23 +650,23 @@
             <span class="n">allsky_needed</span><span class="o">=</span><span class="n">allsky_needed</span><span class="p">,</span>
             <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">_log_depth_stats</span><span class="p">(</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="s2">&quot;written&quot;</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span> <span class="n">written</span><span class="o">=</span><span class="n">written_per_ipix</span><span class="p">)</span>
+        <span class="n">_log_depth_stats</span><span class="p">(</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="s2">"written"</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span> <span class="n">written</span><span class="o">=</span><span class="n">written_per_ipix</span><span class="p">)</span>
         <span class="n">stage1_depth_totals</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">written_per_ipix</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span> <span class="k">if</span> <span class="n">written_per_ipix</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="n">stage1_depth_tiles</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">written_per_ipix</span><span class="p">))</span> <span class="k">if</span> <span class="n">written_per_ipix</span> <span class="k">else</span> <span class="mi">0</span>
 
-        <span class="n">ids_used</span> <span class="o">=</span> <span class="n">selected_pdf</span><span class="p">[</span><span class="s2">&quot;__sdh_id__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">ids_used</span> <span class="o">=</span> <span class="n">selected_pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"int64"</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">ids_used</span><span class="p">:</span>
             <span class="n">meta_avail</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">available_ddf</span><span class="p">)</span>
             <span class="n">available_ddf</span> <span class="o">=</span> <span class="n">available_ddf</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span><span class="n">_drop_selected_ids</span><span class="p">,</span> <span class="n">ids_used</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta_avail</span><span class="p">)</span>
 
-        <span class="n">log_fn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">log_fn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Stage 2: remaining depths via score_global logic on the remainder</span>
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="n">remaining_depths</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">depths_sel</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">stage1_depth_max</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">remaining_depths</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">:</span> <span class="n">stage1_depth_totals</span><span class="p">,</span> <span class="s2">&quot;depth_tiles&quot;</span><span class="p">:</span> <span class="n">stage1_depth_tiles</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"depth_totals"</span><span class="p">:</span> <span class="n">stage1_depth_totals</span><span class="p">,</span> <span class="s2">"depth_tiles"</span><span class="p">:</span> <span class="n">stage1_depth_tiles</span><span class="p">}</span>
 
     <span class="n">stage2_stats</span> <span class="o">=</span> <span class="n">select_by_score_slices</span><span class="p">(</span>
         <span class="n">remainder_ddf</span><span class="o">=</span><span class="n">available_ddf</span><span class="p">,</span>
@@ -682,21 +682,21 @@
         <span class="n">out_dir</span><span class="o">=</span><span class="n">out_dir</span><span class="p">,</span>
         <span class="n">diag_ctx</span><span class="o">=</span><span class="n">diag_ctx</span><span class="p">,</span>
         <span class="n">log_fn</span><span class="o">=</span><span class="n">log_fn</span><span class="p">,</span>
-        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s2">"score_density_hybrid"</span><span class="p">,</span>
         <span class="n">order_desc</span><span class="o">=</span><span class="n">order_desc</span><span class="p">,</span>
         <span class="n">fixed_targets</span><span class="o">=</span><span class="p">{},</span>
-        <span class="n">hist_diag_ctx_name</span><span class="o">=</span><span class="s2">&quot;dask_sdh_score_hist_remaining&quot;</span><span class="p">,</span>
-        <span class="n">depth_diag_prefix</span><span class="o">=</span><span class="s2">&quot;dask_sdh_depth_score&quot;</span><span class="p">,</span>
+        <span class="n">hist_diag_ctx_name</span><span class="o">=</span><span class="s2">"dask_sdh_score_hist_remaining"</span><span class="p">,</span>
+        <span class="n">depth_diag_prefix</span><span class="o">=</span><span class="s2">"dask_sdh_depth_score"</span><span class="p">,</span>
         <span class="n">tie_col</span><span class="o">=</span><span class="n">tie_col</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">depth_totals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">stage1_depth_totals</span><span class="p">)</span>
     <span class="n">depth_tiles</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">stage1_depth_tiles</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stage2_stats</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">depth_key</span><span class="p">,</span> <span class="n">depth_total</span> <span class="ow">in</span> <span class="p">(</span><span class="n">stage2_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">depth_key</span><span class="p">,</span> <span class="n">depth_total</span> <span class="ow">in</span> <span class="p">(</span><span class="n">stage2_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"depth_totals"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">depth_totals</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth_key</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">depth_total</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">depth_key</span><span class="p">,</span> <span class="n">depth_tile_count</span> <span class="ow">in</span> <span class="p">(</span><span class="n">stage2_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;depth_tiles&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">depth_key</span><span class="p">,</span> <span class="n">depth_tile_count</span> <span class="ow">in</span> <span class="p">(</span><span class="n">stage2_stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"depth_tiles"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">depth_tiles</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth_key</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">depth_tile_count</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">:</span> <span class="n">depth_totals</span><span class="p">,</span> <span class="s2">&quot;depth_tiles&quot;</span><span class="p">:</span> <span class="n">depth_tiles</span><span class="p">}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"depth_totals"</span><span class="p">:</span> <span class="n">depth_totals</span><span class="p">,</span> <span class="s2">"depth_tiles"</span><span class="p">:</span> <span class="n">depth_tiles</span><span class="p">}</span></div>
 
 </pre></div>
 

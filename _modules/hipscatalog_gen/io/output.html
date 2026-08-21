@@ -75,7 +75,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.io.output</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Writers for HiPS tiles, metadata, MOC, and density map products.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Writers for HiPS tiles, metadata, MOC, and density map products."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -98,15 +98,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_mkdirs</span><span class="p">,</span> <span class="n">_now_str</span><span class="p">,</span> <span class="n">_write_text</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;TSVTileWriter&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_properties&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_arguments&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_metadata_xml&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_moc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_densmap_fits&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;write_index_html&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;finalize_write_tiles&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build_header_line_from_keep&quot;</span><span class="p">,</span>
+    <span class="s2">"TSVTileWriter"</span><span class="p">,</span>
+    <span class="s2">"write_properties"</span><span class="p">,</span>
+    <span class="s2">"write_arguments"</span><span class="p">,</span>
+    <span class="s2">"write_metadata_xml"</span><span class="p">,</span>
+    <span class="s2">"write_moc"</span><span class="p">,</span>
+    <span class="s2">"write_densmap_fits"</span><span class="p">,</span>
+    <span class="s2">"write_index_html"</span><span class="p">,</span>
+    <span class="s2">"finalize_write_tiles"</span><span class="p">,</span>
+    <span class="s2">"build_header_line_from_keep"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -118,61 +118,61 @@
 <div class="viewcode-block" id="TSVTileWriter">
 <a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TSVTileWriter</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper for writing HiPS catalogue tiles in TSV format.</span>
+<span class="w">    </span><span class="sd">"""Helper for writing HiPS catalogue tiles in TSV format.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        out_dir: HiPS root output directory.</span>
 <span class="sd">        depth: HiPS order (NorderX).</span>
 <span class="sd">        header_line: Header line for TSV tiles (without completeness line).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">header_line</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize tile writer for a given depth.</span>
+<span class="w">        </span><span class="sd">"""Initialize tile writer for a given depth.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            out_dir: HiPS root output directory.</span>
 <span class="sd">            depth: HiPS order (NorderX).</span>
 <span class="sd">            header_line: Header line for TSV tiles (without completeness line).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="n">depth</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span> <span class="o">=</span> <span class="n">out_dir</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">norder_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;Norder</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">norder_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"Norder</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">_mkdirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norder_dir</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">header_line</span> <span class="o">=</span> <span class="n">header_line</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_dir_for_ipix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ipix</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return directory path for a given HEALPix pixel.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Return directory path for a given HEALPix pixel."""</span>
         <span class="n">base</span> <span class="o">=</span> <span class="p">(</span><span class="n">ipix</span> <span class="o">//</span> <span class="mi">10_000</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10_000</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norder_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;Dir</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norder_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"Dir</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">_mkdirs</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">p</span>
 
 <div class="viewcode-block" id="TSVTileWriter.allsky_tmp">
 <a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter.allsky_tmp">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">allsky_tmp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return temporary path for Allsky.tsv.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">norder_dir</span> <span class="o">/</span> <span class="s2">&quot;.Allsky.tsv&quot;</span></div>
+<span class="w">        </span><span class="sd">"""Return temporary path for Allsky.tsv."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">norder_dir</span> <span class="o">/</span> <span class="s2">".Allsky.tsv"</span></div>
 
 
 <div class="viewcode-block" id="TSVTileWriter.allsky_path">
 <a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter.allsky_path">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">allsky_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return final path for Allsky.tsv.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">norder_dir</span> <span class="o">/</span> <span class="s2">&quot;Allsky.tsv&quot;</span></div>
+<span class="w">        </span><span class="sd">"""Return final path for Allsky.tsv."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">norder_dir</span> <span class="o">/</span> <span class="s2">"Allsky.tsv"</span></div>
 
 
 <div class="viewcode-block" id="TSVTileWriter.cell_tmp">
 <a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter.cell_tmp">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cell_tmp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ipix</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return temporary path for a given Npix tile.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dir_for_ipix</span><span class="p">(</span><span class="n">ipix</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;.Npix</span><span class="si">{</span><span class="n">ipix</span><span class="si">}</span><span class="s2">.tsv&quot;</span></div>
+<span class="w">        </span><span class="sd">"""Return temporary path for a given Npix tile."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dir_for_ipix</span><span class="p">(</span><span class="n">ipix</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">".Npix</span><span class="si">{</span><span class="n">ipix</span><span class="si">}</span><span class="s2">.tsv"</span></div>
 
 
 <div class="viewcode-block" id="TSVTileWriter.cell_path">
 <a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter.cell_path">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">cell_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ipix</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return final path for a given Npix tile.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dir_for_ipix</span><span class="p">(</span><span class="n">ipix</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;Npix</span><span class="si">{</span><span class="n">ipix</span><span class="si">}</span><span class="s2">.tsv&quot;</span></div>
+<span class="w">        </span><span class="sd">"""Return final path for a given Npix tile."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dir_for_ipix</span><span class="p">(</span><span class="n">ipix</span><span class="p">)</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"Npix</span><span class="si">{</span><span class="n">ipix</span><span class="si">}</span><span class="s2">.tsv"</span></div>
 </div>
 
 
@@ -190,7 +190,7 @@
     <span class="n">order_desc</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">allsky_collect</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write one TSV per HEALPix cell and build optional Allsky dataframe.</span>
+<span class="w">    </span><span class="sd">"""Write one TSV per HEALPix cell and build optional Allsky dataframe.</span>
 
 <span class="sd">    The function:</span>
 <span class="sd">        * Writes a completeness header line.</span>
@@ -216,20 +216,20 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        OSError: If tile files cannot be written or renamed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">writer</span> <span class="o">=</span> <span class="n">TSVTileWriter</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">header_line</span><span class="p">)</span>
     <span class="n">npix</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
     <span class="n">written</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">allsky_rows</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="n">header_cols</span> <span class="o">=</span> <span class="n">header_line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">internal</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">,</span> <span class="s2">&quot;__score__&quot;</span><span class="p">,</span> <span class="s2">&quot;__icov__&quot;</span><span class="p">}</span>
+    <span class="n">header_cols</span> <span class="o">=</span> <span class="n">header_line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">internal</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"__ipix__"</span><span class="p">,</span> <span class="s2">"__score__"</span><span class="p">,</span> <span class="s2">"__icov__"</span><span class="p">}</span>
     <span class="n">tile_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">header_cols</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">internal</span> <span class="ow">and</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">selected</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">selected</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">tile_cols</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{},</span> <span class="kc">None</span>
 
-    <span class="k">for</span> <span class="n">pid</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">selected</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;__ipix__&quot;</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">pid</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">selected</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"__ipix__"</span><span class="p">):</span>
         <span class="n">ip</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">pid</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">ip</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">ip</span> <span class="o">&gt;=</span> <span class="n">npix</span><span class="p">:</span>
             <span class="k">continue</span>
@@ -241,39 +241,39 @@
         <span class="n">written</span><span class="p">[</span><span class="n">ip</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_written</span>
         <span class="n">n_remaining</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_src_cell</span> <span class="o">-</span> <span class="n">n_written</span><span class="p">)</span>
 
-        <span class="n">completeness_header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;# Completeness = </span><span class="si">{</span><span class="n">n_remaining</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">n_src_cell</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">completeness_header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"# Completeness = </span><span class="si">{</span><span class="n">n_remaining</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">n_src_cell</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
 
         <span class="n">final_path</span> <span class="o">=</span> <span class="n">writer</span><span class="o">.</span><span class="n">cell_path</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
         <span class="n">final_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">final_path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;.Npix</span><span class="si">{</span><span class="n">ip</span><span class="si">}</span><span class="s2">.tsv.tmp&quot;</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">final_path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="sa">f</span><span class="s2">".Npix</span><span class="si">{</span><span class="n">ip</span><span class="si">}</span><span class="s2">.tsv.tmp"</span><span class="p">)</span>
 
         <span class="c1"># 1) Write completeness + header.</span>
-        <span class="k">with</span> <span class="n">tmp</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">tmp</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">completeness_header</span><span class="p">)</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">header_line</span><span class="p">)</span>
 
         <span class="c1"># Sanitize string columns (NestedFrame-safe: operate column by column).</span>
         <span class="c1"># On object columns containing only nulls, pandas replace(regex=True)</span>
         <span class="c1"># may hit a NumPy vectorize(empty) path and raise ValueError.</span>
-        <span class="n">obj_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">g_tile</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;object&quot;</span><span class="p">,</span> <span class="s2">&quot;string&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">obj_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">g_tile</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="p">[</span><span class="s2">"object"</span><span class="p">,</span> <span class="s2">"string"</span><span class="p">])</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">obj_cols</span><span class="p">:</span>
             <span class="n">col_values</span> <span class="o">=</span> <span class="n">g_tile</span><span class="p">[</span><span class="n">col</span><span class="p">]</span>
             <span class="n">non_null_mask</span> <span class="o">=</span> <span class="n">col_values</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">non_null_mask</span><span class="o">.</span><span class="n">any</span><span class="p">()):</span>
                 <span class="k">continue</span>
             <span class="n">g_tile</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">non_null_mask</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">col_values</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">non_null_mask</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;string&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[\t\r\n]&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">col_values</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">non_null_mask</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"string"</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[\t\r\n]"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="p">)</span>
 
         <span class="c1"># 2) Append rows.</span>
         <span class="n">g_tile</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
             <span class="n">tmp</span><span class="p">,</span>
-            <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">sep</span><span class="o">=</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">,</span>
-            <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
-            <span class="n">lineterminator</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">"a"</span><span class="p">,</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span>
+            <span class="n">lineterminator</span><span class="o">=</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">final_path</span><span class="p">)</span>
@@ -292,8 +292,8 @@
 <div class="viewcode-block" id="build_header_line_from_keep">
 <a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.build_header_line_from_keep.html#hipscatalog_gen.io.output.build_header_line_from_keep">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_header_line_from_keep</span><span class="p">(</span><span class="n">keep_cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build header line from a list of column names.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">keep_cols</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span></div>
+<span class="w">    </span><span class="sd">"""Build header line from a list of column names."""</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">keep_cols</span><span class="p">])</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span></div>
 
 
 
@@ -309,85 +309,85 @@
     <span class="n">output_cfg</span><span class="p">:</span> <span class="n">OutputCfg</span><span class="p">,</span>
     <span class="n">level_limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">n_src</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">tile_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;tsv&quot;</span><span class="p">,</span>
+    <span class="n">tile_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"tsv"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write HiPS &#39;properties&#39; file for a catalogue HiPS.</span>
+<span class="w">    </span><span class="sd">"""Write HiPS 'properties' file for a catalogue HiPS.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        out_dir: HiPS root output directory.</span>
 <span class="sd">        output_cfg: Output configuration object.</span>
 <span class="sd">        level_limit: Deepest HiPS order.</span>
 <span class="sd">        n_src: Total number of catalogue sources.</span>
-<span class="sd">        tile_format: Tile format string (usually &quot;tsv&quot;).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        tile_format: Tile format string (usually "tsv").</span>
+<span class="sd">    """</span>
     <span class="n">now_iso</span> <span class="o">=</span> <span class="n">_now_str</span><span class="p">()</span>
     <span class="n">label</span> <span class="o">=</span> <span class="n">output_cfg</span><span class="o">.</span><span class="n">cat_name</span>
 
-    <span class="n">publisher_did</span> <span class="o">=</span> <span class="n">output_cfg</span><span class="o">.</span><span class="n">creator_did</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;ivo://PRIVATE_USER/</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">publisher_did</span> <span class="o">=</span> <span class="n">output_cfg</span><span class="o">.</span><span class="n">creator_did</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">"ivo://PRIVATE_USER/</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">"</span>
     <span class="n">obs_title</span> <span class="o">=</span> <span class="n">output_cfg</span><span class="o">.</span><span class="n">obs_title</span> <span class="ow">or</span> <span class="n">label</span>
-    <span class="n">publisher_id</span> <span class="o">=</span> <span class="s2">&quot;ivo://PRIVATE_USER&quot;</span>
+    <span class="n">publisher_id</span> <span class="o">=</span> <span class="s2">"ivo://PRIVATE_USER"</span>
 
     <span class="n">buf</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;# Generated by the hipscatalog_gen tool (inspired by the CDS HiPS catalog tools).</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;# hips_release_date generated at </span><span class="si">{</span><span class="n">now_iso</span><span class="si">}</span><span class="s2"> (UTC)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"# Generated by the hipscatalog_gen tool (inspired by the CDS HiPS catalog tools).</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"# hips_release_date generated at </span><span class="si">{</span><span class="n">now_iso</span><span class="si">}</span><span class="s2"> (UTC)</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># Mandatory HiPS 1.4 keywords.</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;publisher_did   = </span><span class="si">{</span><span class="n">publisher_did</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;obs_title       = </span><span class="si">{</span><span class="n">obs_title</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;dataproduct_type  = catalog</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;hips_version    = 1.4</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_release_date = </span><span class="si">{</span><span class="n">now_iso</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;hips_status     = public master unclonable</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;hips_frame      = equatorial</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_order      = </span><span class="si">{</span><span class="n">level_limit</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_tile_format  = </span><span class="si">{</span><span class="n">tile_format</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"publisher_did   = </span><span class="si">{</span><span class="n">publisher_did</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"obs_title       = </span><span class="si">{</span><span class="n">obs_title</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"dataproduct_type  = catalog</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"hips_version    = 1.4</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hips_release_date = </span><span class="si">{</span><span class="n">now_iso</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"hips_status     = public master unclonable</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"hips_frame      = equatorial</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hips_order      = </span><span class="si">{</span><span class="n">level_limit</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hips_tile_format  = </span><span class="si">{</span><span class="n">tile_format</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># Recommended/extra keywords.</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;publisher_id    = </span><span class="si">{</span><span class="n">publisher_id</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_service_url  = </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_builder    = linea-it/hipscatalog_gen v</span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_cat_nrows  = </span><span class="si">{</span><span class="n">n_src</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"publisher_id    = </span><span class="si">{</span><span class="n">publisher_id</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hips_service_url  = </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hips_builder    = linea-it/hipscatalog_gen v</span><span class="si">{</span><span class="n">__version__</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hips_cat_nrows  = </span><span class="si">{</span><span class="n">n_src</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># Optional initial view center.</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">ra0</span><span class="p">,</span> <span class="n">dec0</span> <span class="o">=</span> <span class="n">output_cfg</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="n">ra0</span><span class="p">,</span> <span class="n">dec0</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_initial_ra = </span><span class="si">{</span><span class="n">ra0</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hips_initial_dec = </span><span class="si">{</span><span class="n">dec0</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">ra0</span><span class="p">,</span> <span class="n">dec0</span> <span class="o">=</span> <span class="s2">"0"</span><span class="p">,</span> <span class="s2">"0"</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hips_initial_ra = </span><span class="si">{</span><span class="n">ra0</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"hips_initial_dec = </span><span class="si">{</span><span class="n">dec0</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># Legacy fields kept for compatibility.</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;# Deprecated but still kept for compatibility with some clients</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;label=</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;coordsys=C</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"# Deprecated but still kept for compatibility with some clients</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"label=</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"coordsys=C</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
-    <span class="n">_write_text</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;properties&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span></div>
+    <span class="n">_write_text</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"properties"</span><span class="p">,</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">))</span></div>
 
 
 
 <div class="viewcode-block" id="write_arguments">
 <a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.write_arguments.html#hipscatalog_gen.io.output.write_arguments">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_arguments</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">args_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write command-line arguments used to run the pipeline.</span>
+<span class="w">    </span><span class="sd">"""Write command-line arguments used to run the pipeline.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        out_dir: HiPS root output directory.</span>
 <span class="sd">        args_text: Text blob to persist under ``arguments``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_write_text</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;arguments&quot;</span><span class="p">,</span> <span class="n">args_text</span><span class="p">)</span></div>
+<span class="sd">    """</span>
+    <span class="n">_write_text</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"arguments"</span><span class="p">,</span> <span class="n">args_text</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="write_index_html">
 <a class="viewcode-back" href="../../../api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_index_html">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_index_html</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">output_cfg</span><span class="p">:</span> <span class="n">OutputCfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a simple index.html page for quick local catalog inspection.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Write a simple index.html page for quick local catalog inspection."""</span>
     <span class="n">cat_name</span> <span class="o">=</span> <span class="n">escape</span><span class="p">(</span><span class="n">output_cfg</span><span class="o">.</span><span class="n">cat_name</span><span class="p">)</span>
-    <span class="n">html_doc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;&lt;!doctype html&gt;</span>
-<span class="s2">&lt;html lang=&quot;en&quot;&gt;</span>
+    <span class="n">html_doc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""&lt;!doctype html&gt;</span>
+<span class="s2">&lt;html lang="en"&gt;</span>
 <span class="s2">  &lt;head&gt;</span>
-<span class="s2">    &lt;meta charset=&quot;UTF-8&quot;&gt;</span>
-<span class="s2">    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;</span>
+<span class="s2">    &lt;meta charset="UTF-8"&gt;</span>
+<span class="s2">    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</span>
 <span class="s2">    &lt;title&gt;</span><span class="si">{</span><span class="n">cat_name</span><span class="si">}</span><span class="s2"> HiPS catalogue&lt;/title&gt;</span>
 <span class="s2">    &lt;style&gt;</span>
 <span class="s2">      body </span><span class="se">{{</span><span class="s2"> font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; </span><span class="se">}}</span>
@@ -406,12 +406,12 @@
 <span class="s2">      li </span><span class="se">{{</span><span class="s2"> margin-bottom: 6px; </span><span class="se">}}</span>
 <span class="s2">      code </span><span class="se">{{</span><span class="s2"> background: #f5f5f5; padding: 2px 4px; border-radius: 4px; </span><span class="se">}}</span>
 <span class="s2">    &lt;/style&gt;</span>
-<span class="s2">    &lt;link rel=&quot;stylesheet&quot; href=&quot;https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css&quot;&gt;</span>
-<span class="s2">    &lt;script src=&quot;https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js&quot;&gt;&lt;/script&gt;</span>
+<span class="s2">    &lt;link rel="stylesheet" href="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.css"&gt;</span>
+<span class="s2">    &lt;script src="https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js"&gt;&lt;/script&gt;</span>
 <span class="s2">    &lt;script&gt;</span>
 <span class="s2">      function baseUrl() </span><span class="se">{{</span>
 <span class="s2">        const href = window.location.href;</span>
-<span class="s2">        return href.substring(0, href.lastIndexOf(&quot;/&quot;) + 1);</span>
+<span class="s2">        return href.substring(0, href.lastIndexOf("/") + 1);</span>
 <span class="s2">      </span><span class="se">}}</span>
 
 <span class="s2">      function setLink(id, url, text) </span><span class="se">{{</span>
@@ -420,76 +420,76 @@
 <span class="s2">        if (text) a.textContent = text;</span>
 <span class="s2">      </span><span class="se">}}</span>
 
-<span class="s2">      window.addEventListener(&quot;load&quot;, function() </span><span class="se">{{</span>
-<span class="s2">        const tabName = &quot;</span><span class="si">{</span><span class="n">cat_name</span><span class="si">}</span><span class="s2">&quot;;</span>
-<span class="s2">        const isFile = window.location.protocol === &quot;file:&quot;;</span>
-<span class="s2">        const url = isFile ? &quot;./&quot; : baseUrl();</span>
-<span class="s2">        document.querySelectorAll(&quot;.hipsNameSpan&quot;).forEach(el =&gt; el.textContent = tabName);</span>
+<span class="s2">      window.addEventListener("load", function() </span><span class="se">{{</span>
+<span class="s2">        const tabName = "</span><span class="si">{</span><span class="n">cat_name</span><span class="si">}</span><span class="s2">";</span>
+<span class="s2">        const isFile = window.location.protocol === "file:";</span>
+<span class="s2">        const url = isFile ? "./" : baseUrl();</span>
+<span class="s2">        document.querySelectorAll(".hipsNameSpan").forEach(el =&gt; el.textContent = tabName);</span>
 
-<span class="s2">        setLink(&quot;hrefMetadata&quot;, url + &quot;metadata.xml&quot;);</span>
-<span class="s2">        setLink(&quot;hrefProperties&quot;, url + &quot;properties&quot;);</span>
-<span class="s2">        setLink(&quot;hrefMOC&quot;, url + &quot;Moc.fits&quot;);</span>
-<span class="s2">        setLink(&quot;hrefAll1&quot;, url + &quot;Norder1/Allsky.tsv&quot;);</span>
-<span class="s2">        setLink(&quot;hrefAll2&quot;, url + &quot;Norder2/Allsky.tsv&quot;);</span>
-<span class="s2">        setLink(&quot;hipsBase&quot;, url, url);</span>
-<span class="s2">        document.getElementById(&quot;tilesUrl&quot;).innerHTML =</span>
-<span class="s2">          url + &quot;Norder&lt;i&gt;[0-orderMax]&lt;/i&gt;/Dir&lt;i&gt;[0-9]*&lt;/i&gt;/Npix&lt;i&gt;[0-ipixMax]&lt;/i&gt;.tsv&quot;;</span>
+<span class="s2">        setLink("hrefMetadata", url + "metadata.xml");</span>
+<span class="s2">        setLink("hrefProperties", url + "properties");</span>
+<span class="s2">        setLink("hrefMOC", url + "Moc.fits");</span>
+<span class="s2">        setLink("hrefAll1", url + "Norder1/Allsky.tsv");</span>
+<span class="s2">        setLink("hrefAll2", url + "Norder2/Allsky.tsv");</span>
+<span class="s2">        setLink("hipsBase", url, url);</span>
+<span class="s2">        document.getElementById("tilesUrl").innerHTML =</span>
+<span class="s2">          url + "Norder&lt;i&gt;[0-orderMax]&lt;/i&gt;/Dir&lt;i&gt;[0-9]*&lt;/i&gt;/Npix&lt;i&gt;[0-ipixMax]&lt;/i&gt;.tsv";</span>
 
-<span class="s2">        const status = document.getElementById(&quot;viewerStatus&quot;);</span>
+<span class="s2">        const status = document.getElementById("viewerStatus");</span>
 <span class="s2">        if (isFile) </span><span class="se">{{</span>
 <span class="s2">          status.textContent =</span>
-<span class="s2">            &quot;Aladin preview is disabled in file:// mode (browser CORS). &quot; +</span>
-<span class="s2">            &quot;Option 1: open a terminal in this same output directory (the one containing index.html), &quot; +</span>
-<span class="s2">            &quot;run: python -m http.server 8000, then open http://localhost:8000/index.html. &quot; +</span>
-<span class="s2">            &quot;Option 2: run: hipscatalog-gen serve --out &lt;dir&gt;&quot;;</span>
+<span class="s2">            "Aladin preview is disabled in file:// mode (browser CORS). " +</span>
+<span class="s2">            "Option 1: open a terminal in this same output directory (the one containing index.html), " +</span>
+<span class="s2">            "run: python -m http.server 8000, then open http://localhost:8000/index.html. " +</span>
+<span class="s2">            "Option 2: run: hipscatalog-gen serve --out &lt;dir&gt;";</span>
 <span class="s2">          return;</span>
 <span class="s2">        </span><span class="se">}}</span>
 
 <span class="s2">        if (window.A &amp;&amp; A.aladin &amp;&amp; A.catalogHiPS) </span><span class="se">{{</span>
 <span class="s2">          try </span><span class="se">{{</span>
-<span class="s2">            const aladin = A.aladin(&quot;#aladin-lite-div&quot;, </span><span class="se">{{</span>
-<span class="s2">              target: &quot;0 +0&quot;,</span>
+<span class="s2">            const aladin = A.aladin("#aladin-lite-div", </span><span class="se">{{</span>
+<span class="s2">              target: "0 +0",</span>
 <span class="s2">              fov: 55,</span>
-<span class="s2">              survey: &quot;P/2MASS/color&quot;</span>
+<span class="s2">              survey: "P/2MASS/color"</span>
 <span class="s2">            </span><span class="se">}}</span><span class="s2">);</span>
-<span class="s2">            const hips = A.catalogHiPS(url, </span><span class="se">{{</span><span class="s2"> onClick: &quot;showTable&quot;, name: tabName </span><span class="se">}}</span><span class="s2">);</span>
+<span class="s2">            const hips = A.catalogHiPS(url, </span><span class="se">{{</span><span class="s2"> onClick: "showTable", name: tabName </span><span class="se">}}</span><span class="s2">);</span>
 <span class="s2">            aladin.addCatalog(hips);</span>
-<span class="s2">            status.textContent = &quot;Aladin preview loaded.&quot;;</span>
+<span class="s2">            status.textContent = "Aladin preview loaded.";</span>
 <span class="s2">          </span><span class="se">}}</span><span class="s2"> catch (err) </span><span class="se">{{</span>
-<span class="s2">            status.textContent = &quot;Failed to initialize Aladin preview: &quot; + String(err);</span>
+<span class="s2">            status.textContent = "Failed to initialize Aladin preview: " + String(err);</span>
 <span class="s2">          </span><span class="se">}}</span>
 <span class="s2">        </span><span class="se">}}</span><span class="s2"> else </span><span class="se">{{</span>
-<span class="s2">          status.textContent = &quot;Aladin script was not loaded. Check your network connection.&quot;;</span>
+<span class="s2">          status.textContent = "Aladin script was not loaded. Check your network connection.";</span>
 <span class="s2">        </span><span class="se">}}</span>
 <span class="s2">      </span><span class="se">}}</span><span class="s2">);</span>
 <span class="s2">    &lt;/script&gt;</span>
 <span class="s2">  &lt;/head&gt;</span>
 <span class="s2">  &lt;body&gt;</span>
-<span class="s2">    &lt;h1&gt;&lt;span class=&quot;hipsNameSpan&quot;&gt;&lt;/span&gt; progressive catalogue&lt;/h1&gt;</span>
-<span class="s2">    &lt;p class=&quot;sub&quot;&gt;Quick local inspection page for a generated HiPS catalogue.&lt;/p&gt;</span>
-<span class="s2">    &lt;div class=&quot;layout&quot;&gt;</span>
+<span class="s2">    &lt;h1&gt;&lt;span class="hipsNameSpan"&gt;&lt;/span&gt; progressive catalogue&lt;/h1&gt;</span>
+<span class="s2">    &lt;p class="sub"&gt;Quick local inspection page for a generated HiPS catalogue.&lt;/p&gt;</span>
+<span class="s2">    &lt;div class="layout"&gt;</span>
 <span class="s2">      &lt;div&gt;</span>
-<span class="s2">        &lt;div id=&quot;aladin-lite-div&quot;&gt;&lt;/div&gt;</span>
-<span class="s2">        &lt;p id=&quot;viewerStatus&quot;&gt;&lt;/p&gt;</span>
+<span class="s2">        &lt;div id="aladin-lite-div"&gt;&lt;/div&gt;</span>
+<span class="s2">        &lt;p id="viewerStatus"&gt;&lt;/p&gt;</span>
 <span class="s2">      &lt;/div&gt;</span>
 <span class="s2">      &lt;div&gt;</span>
 <span class="s2">        &lt;ul&gt;</span>
-<span class="s2">          &lt;li&gt;&lt;b&gt;Label:&lt;/b&gt; &lt;span class=&quot;hipsNameSpan&quot;&gt;&lt;/span&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Label:&lt;/b&gt; &lt;span class="hipsNameSpan"&gt;&lt;/span&gt;&lt;/li&gt;</span>
 <span class="s2">          &lt;li&gt;&lt;b&gt;Type:&lt;/b&gt; HiPS table&lt;/li&gt;</span>
-<span class="s2">          &lt;li&gt;&lt;b&gt;Raw property file:&lt;/b&gt; &lt;a id=&quot;hrefProperties&quot; href=&quot;&quot;&gt;properties&lt;/a&gt;&lt;/li&gt;</span>
-<span class="s2">          &lt;li&gt;&lt;b&gt;Metadata:&lt;/b&gt; &lt;a id=&quot;hrefMetadata&quot; href=&quot;&quot;&gt;metadata.xml&lt;/a&gt;&lt;/li&gt;</span>
-<span class="s2">          &lt;li&gt;&lt;b&gt;Associated coverage map:&lt;/b&gt; &lt;a id=&quot;hrefMOC&quot; href=&quot;&quot;&gt;Moc.fits&lt;/a&gt;&lt;/li&gt;</span>
-<span class="s2">          &lt;li&gt;&lt;b&gt;Base URL:&lt;/b&gt; &lt;a id=&quot;hipsBase&quot; href=&quot;&quot;&gt;&lt;/a&gt;&lt;/li&gt;</span>
-<span class="s2">          &lt;li&gt;&lt;b&gt;Allsky level 1:&lt;/b&gt; &lt;a id=&quot;hrefAll1&quot; href=&quot;&quot;&gt;Allsky.tsv&lt;/a&gt;&lt;/li&gt;</span>
-<span class="s2">          &lt;li&gt;&lt;b&gt;Allsky level 2:&lt;/b&gt; &lt;a id=&quot;hrefAll2&quot; href=&quot;&quot;&gt;Allsky.tsv&lt;/a&gt;&lt;/li&gt;</span>
-<span class="s2">          &lt;li&gt;&lt;b&gt;Tiles URL format:&lt;/b&gt; &lt;span id=&quot;tilesUrl&quot;&gt;&lt;/span&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Raw property file:&lt;/b&gt; &lt;a id="hrefProperties" href=""&gt;properties&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Metadata:&lt;/b&gt; &lt;a id="hrefMetadata" href=""&gt;metadata.xml&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Associated coverage map:&lt;/b&gt; &lt;a id="hrefMOC" href=""&gt;Moc.fits&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Base URL:&lt;/b&gt; &lt;a id="hipsBase" href=""&gt;&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Allsky level 1:&lt;/b&gt; &lt;a id="hrefAll1" href=""&gt;Allsky.tsv&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Allsky level 2:&lt;/b&gt; &lt;a id="hrefAll2" href=""&gt;Allsky.tsv&lt;/a&gt;&lt;/li&gt;</span>
+<span class="s2">          &lt;li&gt;&lt;b&gt;Tiles URL format:&lt;/b&gt; &lt;span id="tilesUrl"&gt;&lt;/span&gt;&lt;/li&gt;</span>
 <span class="s2">        &lt;/ul&gt;</span>
 <span class="s2">      &lt;/div&gt;</span>
 <span class="s2">    &lt;/div&gt;</span>
 <span class="s2">  &lt;/body&gt;</span>
 <span class="s2">&lt;/html&gt;</span>
-<span class="s2">&quot;&quot;&quot;</span>
-    <span class="n">_write_text</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span><span class="p">,</span> <span class="n">html_doc</span><span class="p">)</span></div>
+<span class="s2">"""</span>
+    <span class="n">_write_text</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"index.html"</span><span class="p">,</span> <span class="n">html_doc</span><span class="p">)</span></div>
 
 
 
@@ -501,7 +501,7 @@
     <span class="n">ra_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">dec_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write VOTable metadata (metadata.xml and Metadata.xml).</span>
+<span class="w">    </span><span class="sd">"""Write VOTable metadata (metadata.xml and Metadata.xml).</span>
 
 <span class="sd">    Marks RA/DEC columns with appropriate UCDs.</span>
 
@@ -510,18 +510,18 @@
 <span class="sd">        columns: List of ``(name, dtype, ucd)`` tuples.</span>
 <span class="sd">        ra_idx: Index of RA column in ``columns``.</span>
 <span class="sd">        dec_idx: Index of DEC column in ``columns``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">table</span> <span class="o">=</span> <span class="n">Table</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">_ucd</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>  <span class="c1"># _ucd intentionally unused here</span>
         <span class="c1"># Ensure consistent typing for mypy by declaring a neutral dtype</span>
         <span class="n">np_dt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
         <span class="n">dts</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">dts</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">):</span>
-            <span class="n">np_dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">dts</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;int&quot;</span><span class="p">):</span>
-            <span class="n">np_dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dts</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"float"</span><span class="p">):</span>
+            <span class="n">np_dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">"float64"</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">dts</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"int"</span><span class="p">):</span>
+            <span class="n">np_dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">"int64"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">np_dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;U1&quot;</span><span class="p">)</span>
+            <span class="n">np_dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">"U1"</span><span class="p">)</span>
         <span class="n">table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np_dt</span><span class="p">)</span>
 
     <span class="n">vot</span> <span class="o">=</span> <span class="n">from_table</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
@@ -531,23 +531,23 @@
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vtab</span><span class="o">.</span><span class="n">fields</span><span class="p">):</span>
         <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">columns</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">ra_idx</span><span class="p">:</span>
-            <span class="n">field</span><span class="o">.</span><span class="n">ucd</span> <span class="o">=</span> <span class="s2">&quot;pos.eq.ra;meta.main&quot;</span>
+            <span class="n">field</span><span class="o">.</span><span class="n">ucd</span> <span class="o">=</span> <span class="s2">"pos.eq.ra;meta.main"</span>
         <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="n">dec_idx</span><span class="p">:</span>
-            <span class="n">field</span><span class="o">.</span><span class="n">ucd</span> <span class="o">=</span> <span class="s2">&quot;pos.eq.dec;meta.main&quot;</span>
+            <span class="n">field</span><span class="o">.</span><span class="n">ucd</span> <span class="o">=</span> <span class="s2">"pos.eq.dec;meta.main"</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">field</span><span class="o">.</span><span class="n">ucd</span> <span class="o">=</span> <span class="n">columns</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="ow">or</span> <span class="n">field</span><span class="o">.</span><span class="n">ucd</span>
 
-    <span class="n">path_lower</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;metadata.xml&quot;</span><span class="p">)</span>
-    <span class="n">path_upper</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;Metadata.xml&quot;</span><span class="p">)</span>
+    <span class="n">path_lower</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"metadata.xml"</span><span class="p">)</span>
+    <span class="n">path_upper</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"Metadata.xml"</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">vot_writeto</span><span class="p">(</span><span class="n">vot</span><span class="p">,</span> <span class="n">path_lower</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_lower</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_lower</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
             <span class="n">vot</span><span class="o">.</span><span class="n">to_xml</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">vot_writeto</span><span class="p">(</span><span class="n">vot</span><span class="p">,</span> <span class="n">path_upper</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_upper</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_upper</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
             <span class="n">vot</span><span class="o">.</span><span class="n">to_xml</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span></div>
 
 
@@ -555,7 +555,7 @@
 <div class="viewcode-block" id="write_moc">
 <a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.write_moc.html#hipscatalog_gen.io.output.write_moc">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_moc</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">moc_order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dens_counts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build and write MOC from densmap counts.</span>
+<span class="w">    </span><span class="sd">"""Build and write MOC from densmap counts.</span>
 
 <span class="sd">    Outputs both FITS (Moc.fits) and JSON (Moc.json) representations.</span>
 
@@ -566,7 +566,7 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        RuntimeError: If MOC construction fails for all attempted mocpy builders.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">order</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">moc_order</span><span class="p">)</span>
     <span class="n">ipix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">dens_counts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
 
@@ -610,26 +610,26 @@
                 <span class="k">continue</span>
         <span class="k">if</span> <span class="n">moc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Failed to build MOC with your mocpy version. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Last error: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">last_err</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">last_err</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="s2">"Failed to build MOC with your mocpy version. "</span>
+                <span class="sa">f</span><span class="s2">"Last error: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">last_err</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">last_err</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
-    <span class="n">fits_path</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;Moc.fits&quot;</span>
+    <span class="n">fits_path</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"Moc.fits"</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">moc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fits_path</span><span class="p">),</span> <span class="s2">&quot;fits&quot;</span><span class="p">)</span>
+            <span class="n">moc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fits_path</span><span class="p">),</span> <span class="s2">"fits"</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="n">moc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fits_path</span><span class="p">),</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;fits&quot;</span><span class="p">)</span>
+            <span class="n">moc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">fits_path</span><span class="p">),</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"fits"</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">moc</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fits_path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="n">json_path</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;Moc.json&quot;</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">moc</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">json_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">json_path</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"Moc.json"</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">moc</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">json_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
 
@@ -638,19 +638,19 @@
 <div class="viewcode-block" id="write_densmap_fits">
 <a class="viewcode-back" href="../../../reference/generated/io/hipscatalog_gen.io.output.write_densmap_fits.html#hipscatalog_gen.io.output.write_densmap_fits">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_densmap_fits</span><span class="p">(</span><span class="n">out_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">depth</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">counts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write densmap_o&lt;depth&gt;.fits for depths &lt; 13.</span>
+<span class="w">    </span><span class="sd">"""Write densmap_o&lt;depth&gt;.fits for depths &lt; 13.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        out_dir: HiPS root output directory.</span>
 <span class="sd">        depth: HEALPix order (depth).</span>
 <span class="sd">        counts: Counts per pixel at this depth.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">depth</span> <span class="o">&gt;=</span> <span class="mi">13</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="n">hdu0</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">PrimaryHDU</span><span class="p">()</span>
-    <span class="n">col</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;VALUE&quot;</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;K&quot;</span><span class="p">)</span>
+    <span class="n">col</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"VALUE"</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">counts</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="nb">format</span><span class="o">=</span><span class="s2">"K"</span><span class="p">)</span>
     <span class="n">hdu1</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">BinTableHDU</span><span class="o">.</span><span class="n">from_columns</span><span class="p">([</span><span class="n">col</span><span class="p">])</span>
-    <span class="n">fits</span><span class="o">.</span><span class="n">HDUList</span><span class="p">([</span><span class="n">hdu0</span><span class="p">,</span> <span class="n">hdu1</span><span class="p">])</span><span class="o">.</span><span class="n">writeto</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;densmap_o</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">.fits&quot;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+    <span class="n">fits</span><span class="o">.</span><span class="n">HDUList</span><span class="p">([</span><span class="n">hdu0</span><span class="p">,</span> <span class="n">hdu1</span><span class="p">])</span><span class="o">.</span><span class="n">writeto</span><span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"densmap_o</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">.fits"</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 </pre></div>
 

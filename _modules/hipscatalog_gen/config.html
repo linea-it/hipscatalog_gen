@@ -75,7 +75,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.config</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Configuration parsing and validation for hipscatalog-gen.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Configuration parsing and validation for hipscatalog-gen."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -86,15 +86,15 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>  <span class="c1"># type: ignore[import-untyped, unused-ignore]</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;AlgoOpts&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ColumnsCfg&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;InputCfg&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ClusterCfg&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;OutputCfg&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Config&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;load_config&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;load_config_from_dict&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;display_available_configs&quot;</span><span class="p">,</span>
+    <span class="s2">"AlgoOpts"</span><span class="p">,</span>
+    <span class="s2">"ColumnsCfg"</span><span class="p">,</span>
+    <span class="s2">"InputCfg"</span><span class="p">,</span>
+    <span class="s2">"ClusterCfg"</span><span class="p">,</span>
+    <span class="s2">"OutputCfg"</span><span class="p">,</span>
+    <span class="s2">"Config"</span><span class="p">,</span>
+    <span class="s2">"load_config"</span><span class="p">,</span>
+    <span class="s2">"load_config_from_dict"</span><span class="p">,</span>
+    <span class="s2">"display_available_configs"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -102,11 +102,11 @@
 <a class="viewcode-back" href="../../api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AlgoOpts</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Algorithm options for HiPS selection and density profiles.</span>
+<span class="w">    </span><span class="sd">"""Algorithm options for HiPS selection and density profiles.</span>
 
 <span class="sd">    Common settings (all modes):</span>
-<span class="sd">        selection_mode: High-level strategy (&quot;mag_global&quot;, &quot;score_global&quot;, or</span>
-<span class="sd">        &quot;score_density_hybrid&quot;).</span>
+<span class="sd">        selection_mode: High-level strategy ("mag_global", "score_global", or</span>
+<span class="sd">        "score_density_hybrid").</span>
 <span class="sd">        level_limit: Maximum HiPS order (NorderL).</span>
 <span class="sd">        moc_order: HiPS order used for the MOC (defaults to level_limit).</span>
 <span class="sd">        order_desc/tie_column/keep_invalid_values: global defaults for ordering, tie-breakers,</span>
@@ -127,7 +127,7 @@
 <span class="sd">        density_up_to_depth;</span>
 <span class="sd">        optional n_1/n_2/n_3 (or k_1/k_2/k_3) targets; density_bias_n1/n2/n3;</span>
 <span class="sd">        order_desc/tie_column/keep_invalid_values (fall back to selection_defaults).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># Common settings</span>
     <span class="n">selection_mode</span><span class="p">:</span> <span class="nb">str</span>
@@ -143,7 +143,7 @@
     <span class="n">mag_offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">mag_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">mag_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">mag_adaptive_range</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;complete&quot;</span>
+    <span class="n">mag_adaptive_range</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"complete"</span>
     <span class="n">mag_hist_nbins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
     <span class="n">mag_keep_invalid_values</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># map NaN/Inf to sentinel when True (complete mode only)</span>
     <span class="n">mag_tie_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># optional tie-breaker for mag_global</span>
@@ -158,7 +158,7 @@
     <span class="n">score_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">score_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">score_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">score_adaptive_range</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;complete&quot;</span>
+    <span class="n">score_adaptive_range</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"complete"</span>
     <span class="n">score_hist_nbins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
     <span class="n">score_keep_invalid_values</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># keep NaN/Inf with sentinel (complete mode only)</span>
     <span class="n">score_tie_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># optional tie-breaker for score_global</span>
@@ -174,7 +174,7 @@
     <span class="n">sdh_score_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">sdh_score_min</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">sdh_score_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">sdh_score_adaptive_range</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;complete&quot;</span>
+    <span class="n">sdh_score_adaptive_range</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"complete"</span>
     <span class="n">sdh_score_hist_nbins</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
     <span class="n">sdh_keep_invalid_values</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># keep NaN/Inf with sentinel (complete mode only)</span>
     <span class="n">sdh_tie_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># optional tie-breaker for score_density_hybrid</span>
@@ -196,7 +196,7 @@
 <a class="viewcode-back" href="../../api/hipscatalog_gen.html#hipscatalog_gen.config.ColumnsCfg">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ColumnsCfg</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Column mapping for RA/DEC and extra fields.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Column mapping for RA/DEC and extra fields."""</span>
 
     <span class="n">ra</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># RA column name (or index for ASCII without header)</span>
     <span class="n">dec</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># DEC column name</span>
@@ -208,12 +208,12 @@
 <a class="viewcode-back" href="../../api/hipscatalog_gen.html#hipscatalog_gen.config.InputCfg">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">InputCfg</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Input catalog configuration.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Input catalog configuration."""</span>
 
     <span class="n">paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># list of glob patterns for files</span>
-    <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;parquet&quot; | &quot;csv&quot; | &quot;tsv&quot;</span>
+    <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "parquet" | "csv" | "tsv"</span>
     <span class="n">header</span><span class="p">:</span> <span class="nb">bool</span>  <span class="c1"># header row present for CSV/TSV</span>
-    <span class="n">ascii_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># optional hint (&quot;CSV&quot; or &quot;TSV&quot;)</span></div>
+    <span class="n">ascii_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># optional hint ("CSV" or "TSV")</span></div>
 
 
 
@@ -221,15 +221,15 @@
 <a class="viewcode-back" href="../../api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClusterCfg</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dask cluster configuration.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Dask cluster configuration."""</span>
 
-    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;local&quot; | &quot;slurm&quot;</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># "local" | "slurm"</span>
     <span class="n">n_workers</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">threads_per_worker</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">memory_per_worker</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># e.g. &quot;8GB&quot;</span>
+    <span class="n">memory_per_worker</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># e.g. "8GB"</span>
     <span class="n">slurm</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">low_memory_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># deprecated (kept only to emit user-facing warning)</span>
-    <span class="n">diagnostics_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;global&quot;</span>  <span class="c1"># &quot;per_step&quot; | &quot;global&quot; | &quot;off&quot;</span></div>
+    <span class="n">diagnostics_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"global"</span>  <span class="c1"># "per_step" | "global" | "off"</span></div>
 
 
 
@@ -237,7 +237,7 @@
 <a class="viewcode-back" href="../../api/hipscatalog_gen.html#hipscatalog_gen.config.OutputCfg">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">OutputCfg</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Output HiPS catalog configuration.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Output HiPS catalog configuration."""</span>
 
     <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">cat_name</span><span class="p">:</span> <span class="nb">str</span>
@@ -252,7 +252,7 @@
 <a class="viewcode-back" href="../../reference/generated/core/hipscatalog_gen.Config.html#hipscatalog_gen.config.Config">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Top-level configuration container for the HiPS pipeline.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Top-level configuration container for the HiPS pipeline."""</span>
 
     <span class="nb">input</span><span class="p">:</span> <span class="n">InputCfg</span>
     <span class="n">columns</span><span class="p">:</span> <span class="n">ColumnsCfg</span>
@@ -262,7 +262,7 @@
 
 
 
-<span class="n">_CONFIG_HELP_TEXT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="n">_CONFIG_HELP_TEXT</span> <span class="o">=</span> <span class="s2">"""</span>
 <span class="s2">HiPS catalog pipeline configuration reference</span>
 <span class="s2">=============================================</span>
 
@@ -278,12 +278,12 @@
 <span class="s2">-----</span>
 <span class="s2">paths         [required] list[str]</span>
 <span class="s2">    Glob patterns for input files (Parquet/CSV/TSV/HATS).</span>
-<span class="s2">format        [optional, default=&quot;parquet&quot;]</span>
-<span class="s2">    One of: &quot;parquet&quot;, &quot;csv&quot;, &quot;tsv&quot;, &quot;hats&quot;.</span>
+<span class="s2">format        [optional, default="parquet"]</span>
+<span class="s2">    One of: "parquet", "csv", "tsv", "hats".</span>
 <span class="s2">header        [optional, default=True]</span>
 <span class="s2">    Whether CSV/TSV files include a header row.</span>
 <span class="s2">ascii_format  [optional, default=None]</span>
-<span class="s2">    Optional hint for ASCII input (&quot;CSV&quot; or &quot;TSV&quot;).</span>
+<span class="s2">    Optional hint for ASCII input ("CSV" or "TSV").</span>
 
 <span class="s2">columns</span>
 <span class="s2">-------</span>
@@ -306,7 +306,7 @@
 <span class="s2">algorithm (block-based)</span>
 <span class="s2">-----------------------</span>
 <span class="s2">selection_mode         [required]</span>
-<span class="s2">    &quot;mag_global&quot; | &quot;score_global&quot; | &quot;score_density_hybrid&quot;.</span>
+<span class="s2">    "mag_global" | "score_global" | "score_density_hybrid".</span>
 <span class="s2">level_limit            [required] int</span>
 <span class="s2">    Maximum HiPS order (NorderL). Must be in [4, 11].</span>
 <span class="s2">moc_order              [optional, default=level_limit] int</span>
@@ -314,7 +314,7 @@
 <span class="s2">selection_defaults     [optional] dict</span>
 <span class="s2">    Shared defaults for all modes. Recognized keys:</span>
 <span class="s2">      - hist_nbins        (int, default 2048)</span>
-<span class="s2">      - adaptive_range    (</span><span class="se">\&quot;</span><span class="s2">complete</span><span class="se">\&quot;</span><span class="s2"> | </span><span class="se">\&quot;</span><span class="s2">hist_peak</span><span class="se">\&quot;</span><span class="s2">, default </span><span class="se">\&quot;</span><span class="s2">complete</span><span class="se">\&quot;</span><span class="s2">)</span>
+<span class="s2">      - adaptive_range    (</span><span class="se">\"</span><span class="s2">complete</span><span class="se">\"</span><span class="s2"> | </span><span class="se">\"</span><span class="s2">hist_peak</span><span class="se">\"</span><span class="s2">, default </span><span class="se">\"</span><span class="s2">complete</span><span class="se">\"</span><span class="s2">)</span>
 <span class="s2">      - order_desc        (bool, default False)</span>
 <span class="s2">      - density_bias_n1/n2/n3 (float, default 1.0 for SDH)</span>
 
@@ -324,9 +324,9 @@
 <span class="s2">mag_global.flux_column       [required if mag_column absent] str</span>
 <span class="s2">mag_global.mag_offset        [required when flux_column is set] float</span>
 <span class="s2">mag_global.mag_min/max       [optional] float</span>
-<span class="s2">mag_global.adaptive_range    [optional, default=selection_defaults.adaptive_range or </span><span class="se">\&quot;</span><span class="s2">complete</span><span class="se">\&quot;</span><span class="s2">]</span>
+<span class="s2">mag_global.adaptive_range    [optional, default=selection_defaults.adaptive_range or </span><span class="se">\"</span><span class="s2">complete</span><span class="se">\"</span><span class="s2">]</span>
 <span class="s2">mag_global.hist_nbins        [optional, default=selection_defaults.hist_nbins or 2048]</span>
-<span class="s2">mag_global.k_1/k_2/k_3       [optional] int, </span><span class="se">\&quot;</span><span class="s2">per active tile</span><span class="se">\&quot;</span><span class="s2"> aliases for n_*</span>
+<span class="s2">mag_global.k_1/k_2/k_3       [optional] int, </span><span class="se">\"</span><span class="s2">per active tile</span><span class="se">\"</span><span class="s2"> aliases for n_*</span>
 <span class="s2">mag_global.n_1/n_2/n_3       [optional] int (must be provided in order)</span>
 <span class="s2">mag_global.order_desc        [optional, default=selection_defaults.order_desc or False]</span>
 
@@ -334,9 +334,9 @@
 <span class="s2">^^^^^^^^^^^^^^^^^^</span>
 <span class="s2">score_global.score_column    [required] str (column or expression)</span>
 <span class="s2">score_global.score_min/max   [optional] float</span>
-<span class="s2">score_global.adaptive_range  [optional, default=selection_defaults.adaptive_range or </span><span class="se">\&quot;</span><span class="s2">complete</span><span class="se">\&quot;</span><span class="s2">]</span>
+<span class="s2">score_global.adaptive_range  [optional, default=selection_defaults.adaptive_range or </span><span class="se">\"</span><span class="s2">complete</span><span class="se">\"</span><span class="s2">]</span>
 <span class="s2">score_global.hist_nbins      [optional, default=selection_defaults.hist_nbins or 2048]</span>
-<span class="s2">score_global.k_1/k_2/k_3     [optional] int, </span><span class="se">\&quot;</span><span class="s2">per active tile</span><span class="se">\&quot;</span><span class="s2"> aliases for n_*</span>
+<span class="s2">score_global.k_1/k_2/k_3     [optional] int, </span><span class="se">\"</span><span class="s2">per active tile</span><span class="se">\"</span><span class="s2"> aliases for n_*</span>
 <span class="s2">score_global.n_1/n_2/n_3     [optional] int (must be provided in order)</span>
 <span class="s2">score_global.order_desc      [optional, default=selection_defaults.order_desc or False]</span>
 
@@ -344,11 +344,11 @@
 <span class="s2">^^^^^^^^^^^^^^^^^^^^^^^^^^</span>
 <span class="s2">score_density_hybrid.score_column   [required] str (column or expression)</span>
 <span class="s2">score_density_hybrid.score_min/max  [optional] float</span>
-<span class="s2">score_density_hybrid.adaptive_range [optional, default=selection_defaults.adaptive_range or </span><span class="se">\&quot;</span><span class="s2">complete</span><span class="se">\&quot;</span><span class="s2">]</span>
+<span class="s2">score_density_hybrid.adaptive_range [optional, default=selection_defaults.adaptive_range or </span><span class="se">\"</span><span class="s2">complete</span><span class="se">\"</span><span class="s2">]</span>
 <span class="s2">score_density_hybrid.hist_nbins     [optional, default=selection_defaults.hist_nbins or 2048]</span>
 <span class="s2">score_density_hybrid.density_up_to_depth [optional, default=4]</span>
 <span class="s2">    Max depth handled by stage-1 density pass (clamped to level_limit).</span>
-<span class="s2">score_density_hybrid.k_1/k_2/k_3    [optional] int, </span><span class="se">\&quot;</span><span class="s2">per active tile</span><span class="se">\&quot;</span><span class="s2"> aliases for n_*</span>
+<span class="s2">score_density_hybrid.k_1/k_2/k_3    [optional] int, </span><span class="se">\"</span><span class="s2">per active tile</span><span class="se">\"</span><span class="s2"> aliases for n_*</span>
 <span class="s2">score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)</span>
 <span class="s2">score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]</span>
 <span class="s2">    float in [0,1]</span>
@@ -356,25 +356,25 @@
 
 <span class="s2">cluster</span>
 <span class="s2">-------</span>
-<span class="s2">mode                     [optional, default=&quot;local&quot;]</span>
-<span class="s2">    Cluster mode: &quot;local&quot; or &quot;slurm&quot;.</span>
+<span class="s2">mode                     [optional, default="local"]</span>
+<span class="s2">    Cluster mode: "local" or "slurm".</span>
 <span class="s2">n_workers                [optional, default=3] int</span>
 <span class="s2">threads_per_worker       [optional, default=1] int</span>
-<span class="s2">memory_per_worker        [optional, default=&quot;2GB&quot;] str</span>
+<span class="s2">memory_per_worker        [optional, default="2GB"] str</span>
 <span class="s2">slurm                    [optional, default=None] dict</span>
 <span class="s2">low_memory_mode          [optional, default=True] bool</span>
 <span class="s2">    DEPRECATED: kept only for backward compatibility and has no effect.</span>
 <span class="s2">    The pipeline now always uses:</span>
 <span class="s2">      - no DataFrame persistence of large intermediates</span>
 <span class="s2">      - avoiding early large computes whenever possible</span>
-<span class="s2">diagnostics_mode         [optional, default=&quot;global&quot;]</span>
-<span class="s2">    &quot;per_step&quot; | &quot;global&quot; | &quot;off&quot;.</span>
+<span class="s2">diagnostics_mode         [optional, default="global"]</span>
+<span class="s2">    "per_step" | "global" | "off".</span>
 
 <span class="s2">output</span>
 <span class="s2">------</span>
 <span class="s2">out_dir      [required] str</span>
 <span class="s2">cat_name     [required] str</span>
-<span class="s2">target       [optional, default=&quot;0 0&quot;] str</span>
+<span class="s2">target       [optional, default="0 0"] str</span>
 <span class="s2">creator_did  [optional, default=None] str</span>
 <span class="s2">obs_title    [optional, default=None] str</span>
 <span class="s2">overwrite    [optional, default=False] bool</span>
@@ -386,26 +386,26 @@
 <span class="s2">----------------------------</span>
 
 <span class="s2">    input:</span>
-<span class="s2">      paths: [&quot;/path/to/catalog/*.parquet&quot;]</span>
+<span class="s2">      paths: ["/path/to/catalog/*.parquet"]</span>
 <span class="s2">    columns:</span>
-<span class="s2">      ra: &quot;ra&quot;</span>
-<span class="s2">      dec: &quot;dec&quot;</span>
+<span class="s2">      ra: "ra"</span>
+<span class="s2">      dec: "dec"</span>
 <span class="s2">    algorithm:</span>
-<span class="s2">      selection_mode: &quot;mag_global&quot;</span>
+<span class="s2">      selection_mode: "mag_global"</span>
 <span class="s2">      level_limit: 10</span>
 <span class="s2">      mag_global:</span>
-<span class="s2">        mag_column: &quot;mag_r&quot;</span>
+<span class="s2">        mag_column: "mag_r"</span>
 <span class="s2">    cluster: </span><span class="si">{}</span>
 <span class="s2">    output:</span>
-<span class="s2">      out_dir: &quot;/path/to/output&quot;</span>
-<span class="s2">      cat_name: &quot;MyCatalog&quot;</span>
-<span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<span class="s2">      out_dir: "/path/to/output"</span>
+<span class="s2">      cat_name: "MyCatalog"</span>
+<span class="s2">"""</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="display_available_configs">
 <a class="viewcode-back" href="../../reference/generated/core/hipscatalog_gen.config.display_available_configs.html#hipscatalog_gen.config.display_available_configs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">display_available_configs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Display a concise reference of all configuration options.</span>
+<span class="w">    </span><span class="sd">"""Display a concise reference of all configuration options.</span>
 
 <span class="sd">    This prints a structured summary of all available configuration keys,</span>
 <span class="sd">    grouped by top-level section (input, columns, algorithm, cluster, output),</span>
@@ -416,164 +416,164 @@
 
 <span class="sd">        from hipscatalog_gen.config import display_available_configs</span>
 <span class="sd">        display_available_configs()</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">_CONFIG_HELP_TEXT</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_config_from_mapping</span><span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Config</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Internal helper to build a Config from a raw mapping.&quot;&quot;&quot;</span>
-    <span class="n">algo</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="s2">&quot;algorithm&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""Internal helper to build a Config from a raw mapping."""</span>
+    <span class="n">algo</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="s2">"algorithm"</span><span class="p">]</span>
 
-    <span class="n">raw_selection_mode</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;selection_mode&quot;</span><span class="p">)</span>
+    <span class="n">raw_selection_mode</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"selection_mode"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">raw_selection_mode</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Missing required parameter: algorithm.selection_mode. &quot;</span>
-            <span class="s2">&quot;Set it to &#39;mag_global&#39;, &#39;score_global&#39; or &#39;score_density_hybrid&#39; &quot;</span>
-            <span class="s2">&quot;in the configuration.&quot;</span>
+            <span class="s2">"Missing required parameter: algorithm.selection_mode. "</span>
+            <span class="s2">"Set it to 'mag_global', 'score_global' or 'score_density_hybrid' "</span>
+            <span class="s2">"in the configuration."</span>
         <span class="p">)</span>
     <span class="n">selection_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw_selection_mode</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="n">allowed_modes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mag_global&quot;</span><span class="p">,</span> <span class="s2">&quot;score_global&quot;</span><span class="p">,</span> <span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">}</span>
+    <span class="n">allowed_modes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"mag_global"</span><span class="p">,</span> <span class="s2">"score_global"</span><span class="p">,</span> <span class="s2">"score_density_hybrid"</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">selection_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_modes</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;algorithm.selection_mode must be one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">allowed_modes</span><span class="p">)</span><span class="si">}</span><span class="s2"> (got </span><span class="si">{</span><span class="n">selection_mode</span><span class="si">!r}</span><span class="s2">).&quot;</span>
+            <span class="sa">f</span><span class="s2">"algorithm.selection_mode must be one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">allowed_modes</span><span class="p">)</span><span class="si">}</span><span class="s2"> (got </span><span class="si">{</span><span class="n">selection_mode</span><span class="si">!r}</span><span class="s2">)."</span>
         <span class="p">)</span>
 
-    <span class="n">level_limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">algo</span><span class="p">[</span><span class="s2">&quot;level_limit&quot;</span><span class="p">])</span>
-    <span class="n">raw_moc_order</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;moc_order&quot;</span><span class="p">)</span>
+    <span class="n">level_limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">algo</span><span class="p">[</span><span class="s2">"level_limit"</span><span class="p">])</span>
+    <span class="n">raw_moc_order</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"moc_order"</span><span class="p">)</span>
     <span class="n">moc_order</span> <span class="o">=</span> <span class="n">level_limit</span> <span class="k">if</span> <span class="n">raw_moc_order</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_moc_order</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">moc_order</span> <span class="o">&gt;</span> <span class="n">level_limit</span><span class="p">:</span>
         <span class="n">moc_order</span> <span class="o">=</span> <span class="n">level_limit</span>
 
-    <span class="n">defaults</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;selection_defaults&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">mag_cfg</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mag_global&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">score_cfg</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score_global&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
-    <span class="n">sdh_cfg</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"selection_defaults"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">mag_cfg</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mag_global"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">score_cfg</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"score_global"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">sdh_cfg</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"score_density_hybrid"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_to_int_or_none</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert to int when set, enforcing non-negative inputs.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Convert to int when set, enforcing non-negative inputs."""</span>
         <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">v</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;algorithm.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be an integer, got </span><span class="si">{</span><span class="n">x</span><span class="si">!r}</span><span class="s2">.&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"algorithm.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be an integer, got </span><span class="si">{</span><span class="n">x</span><span class="si">!r}</span><span class="s2">."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
         <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;algorithm.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be non-negative, got </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"algorithm.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be non-negative, got </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_require_order</span><span class="p">(</span><span class="n">vals</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure values are provided in order without gaps.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Ensure values are provided in order without gaps."""</span>
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">[:</span><span class="n">idx</span><span class="p">]):</span>
                 <span class="n">prev</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;algorithm.</span><span class="si">{</span><span class="n">names</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2"> is set but algorithm.</span><span class="si">{</span><span class="n">prev</span><span class="si">}</span><span class="s2"> is missing.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"algorithm.</span><span class="si">{</span><span class="n">names</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="si">}</span><span class="s2"> is set but algorithm.</span><span class="si">{</span><span class="n">prev</span><span class="si">}</span><span class="s2"> is missing."</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">vals</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_hist_nbins</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve histogram bin count with per-mode override.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hist_nbins&quot;</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hist_nbins&quot;</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)))</span>
+<span class="w">        </span><span class="sd">"""Resolve histogram bin count with per-mode override."""</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"hist_nbins"</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"hist_nbins"</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_keep_invalid</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve keep_invalid_values flag with per-mode override.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;keep_invalid_values&quot;</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;keep_invalid_values&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+<span class="w">        </span><span class="sd">"""Resolve keep_invalid_values flag with per-mode override."""</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"keep_invalid_values"</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"keep_invalid_values"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_tie_col</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve tie-breaker column with per-mode override.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tie_column&quot;</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tie_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+<span class="w">        </span><span class="sd">"""Resolve tie-breaker column with per-mode override."""</span>
+        <span class="k">return</span> <span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tie_column"</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tie_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_adaptive</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve adaptive_range mode with per-mode override.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;adaptive_range&quot;</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;adaptive_range&quot;</span><span class="p">,</span> <span class="s2">&quot;complete&quot;</span><span class="p">)))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<span class="w">        </span><span class="sd">"""Resolve adaptive_range mode with per-mode override."""</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"adaptive_range"</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"adaptive_range"</span><span class="p">,</span> <span class="s2">"complete"</span><span class="p">)))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_order_desc</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve ordering direction with per-mode override.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;order_desc&quot;</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;order_desc&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
+<span class="w">        </span><span class="sd">"""Resolve ordering direction with per-mode override."""</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"order_desc"</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"order_desc"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)))</span>
 
     <span class="n">order_desc_global</span> <span class="o">=</span> <span class="n">_order_desc</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_order_desc_mode</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve per-mode order_desc with fallback to global default.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;order_desc&quot;</span><span class="p">,</span> <span class="n">order_desc_global</span><span class="p">))</span>
+<span class="w">        </span><span class="sd">"""Resolve per-mode order_desc with fallback to global default."""</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"order_desc"</span><span class="p">,</span> <span class="n">order_desc_global</span><span class="p">))</span>
 
     <span class="c1"># Target validation</span>
     <span class="n">n_vals</span> <span class="o">=</span> <span class="n">_require_order</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_1&quot;</span><span class="p">),</span> <span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_2&quot;</span><span class="p">),</span> <span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_3&quot;</span><span class="p">)],</span>
-        <span class="p">[</span><span class="s2">&quot;mag_global.n_1&quot;</span><span class="p">,</span> <span class="s2">&quot;mag_global.n_2&quot;</span><span class="p">,</span> <span class="s2">&quot;mag_global.n_3&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_1"</span><span class="p">),</span> <span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_2"</span><span class="p">),</span> <span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_3"</span><span class="p">)],</span>
+        <span class="p">[</span><span class="s2">"mag_global.n_1"</span><span class="p">,</span> <span class="s2">"mag_global.n_2"</span><span class="p">,</span> <span class="s2">"mag_global.n_3"</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">k_vals</span> <span class="o">=</span> <span class="n">_require_order</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;k_1&quot;</span><span class="p">),</span> <span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;k_2&quot;</span><span class="p">),</span> <span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;k_3&quot;</span><span class="p">)],</span>
-        <span class="p">[</span><span class="s2">&quot;mag_global.k_1&quot;</span><span class="p">,</span> <span class="s2">&quot;mag_global.k_2&quot;</span><span class="p">,</span> <span class="s2">&quot;mag_global.k_3&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"k_1"</span><span class="p">),</span> <span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"k_2"</span><span class="p">),</span> <span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"k_3"</span><span class="p">)],</span>
+        <span class="p">[</span><span class="s2">"mag_global.k_1"</span><span class="p">,</span> <span class="s2">"mag_global.k_2"</span><span class="p">,</span> <span class="s2">"mag_global.k_3"</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">sg_vals</span> <span class="o">=</span> <span class="n">_require_order</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_1&quot;</span><span class="p">),</span> <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_2&quot;</span><span class="p">),</span> <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_3&quot;</span><span class="p">)],</span>
-        <span class="p">[</span><span class="s2">&quot;score_global.n_1&quot;</span><span class="p">,</span> <span class="s2">&quot;score_global.n_2&quot;</span><span class="p">,</span> <span class="s2">&quot;score_global.n_3&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_1"</span><span class="p">),</span> <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_2"</span><span class="p">),</span> <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_3"</span><span class="p">)],</span>
+        <span class="p">[</span><span class="s2">"score_global.n_1"</span><span class="p">,</span> <span class="s2">"score_global.n_2"</span><span class="p">,</span> <span class="s2">"score_global.n_3"</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">sg_k_vals</span> <span class="o">=</span> <span class="n">_require_order</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;k_1&quot;</span><span class="p">),</span> <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;k_2&quot;</span><span class="p">),</span> <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;k_3&quot;</span><span class="p">)],</span>
-        <span class="p">[</span><span class="s2">&quot;score_global.k_1&quot;</span><span class="p">,</span> <span class="s2">&quot;score_global.k_2&quot;</span><span class="p">,</span> <span class="s2">&quot;score_global.k_3&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"k_1"</span><span class="p">),</span> <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"k_2"</span><span class="p">),</span> <span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"k_3"</span><span class="p">)],</span>
+        <span class="p">[</span><span class="s2">"score_global.k_1"</span><span class="p">,</span> <span class="s2">"score_global.k_2"</span><span class="p">,</span> <span class="s2">"score_global.k_3"</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">sdh_vals</span> <span class="o">=</span> <span class="n">_require_order</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_1&quot;</span><span class="p">),</span> <span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_2&quot;</span><span class="p">),</span> <span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_3&quot;</span><span class="p">)],</span>
-        <span class="p">[</span><span class="s2">&quot;score_density_hybrid.n_1&quot;</span><span class="p">,</span> <span class="s2">&quot;score_density_hybrid.n_2&quot;</span><span class="p">,</span> <span class="s2">&quot;score_density_hybrid.n_3&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_1"</span><span class="p">),</span> <span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_2"</span><span class="p">),</span> <span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_3"</span><span class="p">)],</span>
+        <span class="p">[</span><span class="s2">"score_density_hybrid.n_1"</span><span class="p">,</span> <span class="s2">"score_density_hybrid.n_2"</span><span class="p">,</span> <span class="s2">"score_density_hybrid.n_3"</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">sdh_k_vals</span> <span class="o">=</span> <span class="n">_require_order</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;k_1&quot;</span><span class="p">),</span> <span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;k_2&quot;</span><span class="p">),</span> <span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;k_3&quot;</span><span class="p">)],</span>
-        <span class="p">[</span><span class="s2">&quot;score_density_hybrid.k_1&quot;</span><span class="p">,</span> <span class="s2">&quot;score_density_hybrid.k_2&quot;</span><span class="p">,</span> <span class="s2">&quot;score_density_hybrid.k_3&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"k_1"</span><span class="p">),</span> <span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"k_2"</span><span class="p">),</span> <span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"k_3"</span><span class="p">)],</span>
+        <span class="p">[</span><span class="s2">"score_density_hybrid.k_1"</span><span class="p">,</span> <span class="s2">"score_density_hybrid.k_2"</span><span class="p">,</span> <span class="s2">"score_density_hybrid.k_3"</span><span class="p">],</span>
     <span class="p">)</span>
 
-    <span class="n">n_1</span><span class="p">,</span> <span class="n">n_2</span><span class="p">,</span> <span class="n">n_3</span> <span class="o">=</span> <span class="p">(</span><span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;mag_global.n_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">n_vals</span><span class="p">))</span>
-    <span class="n">k_1</span><span class="p">,</span> <span class="n">k_2</span><span class="p">,</span> <span class="n">k_3</span> <span class="o">=</span> <span class="p">(</span><span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;mag_global.k_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">k_vals</span><span class="p">))</span>
+    <span class="n">n_1</span><span class="p">,</span> <span class="n">n_2</span><span class="p">,</span> <span class="n">n_3</span> <span class="o">=</span> <span class="p">(</span><span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"mag_global.n_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">n_vals</span><span class="p">))</span>
+    <span class="n">k_1</span><span class="p">,</span> <span class="n">k_2</span><span class="p">,</span> <span class="n">k_3</span> <span class="o">=</span> <span class="p">(</span><span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"mag_global.k_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">k_vals</span><span class="p">))</span>
     <span class="n">score_n_1</span><span class="p">,</span> <span class="n">score_n_2</span><span class="p">,</span> <span class="n">score_n_3</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;score_global.n_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sg_vals</span><span class="p">)</span>
+        <span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"score_global.n_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sg_vals</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">score_k_1</span><span class="p">,</span> <span class="n">score_k_2</span><span class="p">,</span> <span class="n">score_k_3</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;score_global.k_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sg_k_vals</span><span class="p">)</span>
+        <span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"score_global.k_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sg_k_vals</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">sdh_n_1</span><span class="p">,</span> <span class="n">sdh_n_2</span><span class="p">,</span> <span class="n">sdh_n_3</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;score_density_hybrid.n_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sdh_vals</span><span class="p">)</span>
+        <span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"score_density_hybrid.n_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sdh_vals</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">sdh_k_1</span><span class="p">,</span> <span class="n">sdh_k_2</span><span class="p">,</span> <span class="n">sdh_k_3</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;score_density_hybrid.k_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sdh_k_vals</span><span class="p">)</span>
+        <span class="n">_to_int_or_none</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"score_density_hybrid.k_</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sdh_k_vals</span><span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">cluster_map</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="s2">&quot;cluster&quot;</span><span class="p">]</span>
-    <span class="n">low_memory_mode_raw</span> <span class="o">=</span> <span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;low_memory_mode&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">cluster_map</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="s2">"cluster"</span><span class="p">]</span>
+    <span class="n">low_memory_mode_raw</span> <span class="o">=</span> <span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"low_memory_mode"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="n">low_memory_mode_value</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">low_memory_mode_raw</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">low_memory_mode_value</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">low_memory_mode_raw</span><span class="p">)</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s2">&quot;cluster.low_memory_mode is deprecated and has no effect. &quot;</span>
-            <span class="s2">&quot;The pipeline now always defaults to non-persistent intermediates and &quot;</span>
-            <span class="s2">&quot;avoiding early large computes.&quot;</span><span class="p">,</span>
+            <span class="s2">"cluster.low_memory_mode is deprecated and has no effect. "</span>
+            <span class="s2">"The pipeline now always defaults to non-persistent intermediates and "</span>
+            <span class="s2">"avoiding early large computes."</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span>
             <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">if</span> <span class="s2">&quot;persist_ddfs&quot;</span> <span class="ow">in</span> <span class="n">cluster_map</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">"persist_ddfs"</span> <span class="ow">in</span> <span class="n">cluster_map</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s2">&quot;cluster.persist_ddfs is deprecated and ignored.&quot;</span><span class="p">,</span>
+            <span class="s2">"cluster.persist_ddfs is deprecated and ignored."</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span>
             <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="s2">&quot;avoid_computes_wherever_possible&quot;</span> <span class="ow">in</span> <span class="n">cluster_map</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s2">"avoid_computes_wherever_possible"</span> <span class="ow">in</span> <span class="n">cluster_map</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s2">&quot;cluster.avoid_computes_wherever_possible is deprecated and ignored.&quot;</span><span class="p">,</span>
+            <span class="s2">"cluster.avoid_computes_wherever_possible is deprecated and ignored."</span><span class="p">,</span>
             <span class="ne">DeprecationWarning</span><span class="p">,</span>
             <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span>
         <span class="nb">input</span><span class="o">=</span><span class="n">InputCfg</span><span class="p">(</span>
-            <span class="n">paths</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">][</span><span class="s2">&quot;paths&quot;</span><span class="p">],</span>
-            <span class="nb">format</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;format&quot;</span><span class="p">,</span> <span class="s2">&quot;parquet&quot;</span><span class="p">),</span>
-            <span class="n">header</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;header&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
-            <span class="n">ascii_format</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ascii_format&quot;</span><span class="p">),</span>
+            <span class="n">paths</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"input"</span><span class="p">][</span><span class="s2">"paths"</span><span class="p">],</span>
+            <span class="nb">format</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"format"</span><span class="p">,</span> <span class="s2">"parquet"</span><span class="p">),</span>
+            <span class="n">header</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"header"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="n">ascii_format</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"input"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ascii_format"</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">columns</span><span class="o">=</span><span class="n">ColumnsCfg</span><span class="p">(</span>
-            <span class="n">ra</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">][</span><span class="s2">&quot;ra&quot;</span><span class="p">],</span>
-            <span class="n">dec</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">][</span><span class="s2">&quot;dec&quot;</span><span class="p">],</span>
-            <span class="n">keep</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;keep&quot;</span><span class="p">),</span>
+            <span class="n">ra</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">][</span><span class="s2">"ra"</span><span class="p">],</span>
+            <span class="n">dec</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">][</span><span class="s2">"dec"</span><span class="p">],</span>
+            <span class="n">keep</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"columns"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"keep"</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">algorithm</span><span class="o">=</span><span class="n">AlgoOpts</span><span class="p">(</span>
             <span class="c1"># Common settings</span>
@@ -585,11 +585,11 @@
             <span class="n">mg_order_desc</span><span class="o">=</span><span class="n">_order_desc_mode</span><span class="p">(</span><span class="n">mag_cfg</span><span class="p">),</span>
             <span class="n">mag_tie_column</span><span class="o">=</span><span class="n">_tie_col</span><span class="p">(</span><span class="n">mag_cfg</span><span class="p">),</span>
             <span class="c1"># mag_global mode</span>
-            <span class="n">mag_column</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mag_column&quot;</span><span class="p">),</span>
-            <span class="n">flux_column</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;flux_column&quot;</span><span class="p">),</span>
-            <span class="n">mag_offset</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mag_offset&quot;</span><span class="p">),</span>
-            <span class="n">mag_min</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mag_min&quot;</span><span class="p">),</span>
-            <span class="n">mag_max</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mag_max&quot;</span><span class="p">),</span>
+            <span class="n">mag_column</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mag_column"</span><span class="p">),</span>
+            <span class="n">flux_column</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"flux_column"</span><span class="p">),</span>
+            <span class="n">mag_offset</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mag_offset"</span><span class="p">),</span>
+            <span class="n">mag_min</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mag_min"</span><span class="p">),</span>
+            <span class="n">mag_max</span><span class="o">=</span><span class="n">mag_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mag_max"</span><span class="p">),</span>
             <span class="n">mag_adaptive_range</span><span class="o">=</span><span class="n">_adaptive</span><span class="p">(</span><span class="n">mag_cfg</span><span class="p">),</span>
             <span class="n">mag_hist_nbins</span><span class="o">=</span><span class="n">_hist_nbins</span><span class="p">(</span><span class="n">mag_cfg</span><span class="p">),</span>
             <span class="n">mag_keep_invalid_values</span><span class="o">=</span><span class="n">_keep_invalid</span><span class="p">(</span><span class="n">mag_cfg</span><span class="p">),</span>
@@ -600,9 +600,9 @@
             <span class="n">n_2</span><span class="o">=</span><span class="n">n_2</span><span class="p">,</span>
             <span class="n">n_3</span><span class="o">=</span><span class="n">n_3</span><span class="p">,</span>
             <span class="c1"># score_global mode</span>
-            <span class="n">score_column</span><span class="o">=</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score_column&quot;</span><span class="p">),</span>
-            <span class="n">score_min</span><span class="o">=</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score_min&quot;</span><span class="p">),</span>
-            <span class="n">score_max</span><span class="o">=</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score_max&quot;</span><span class="p">),</span>
+            <span class="n">score_column</span><span class="o">=</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"score_column"</span><span class="p">),</span>
+            <span class="n">score_min</span><span class="o">=</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"score_min"</span><span class="p">),</span>
+            <span class="n">score_max</span><span class="o">=</span><span class="n">score_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"score_max"</span><span class="p">),</span>
             <span class="n">score_adaptive_range</span><span class="o">=</span><span class="n">_adaptive</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">),</span>
             <span class="n">score_hist_nbins</span><span class="o">=</span><span class="n">_hist_nbins</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">),</span>
             <span class="n">score_keep_invalid_values</span><span class="o">=</span><span class="n">_keep_invalid</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">),</span>
@@ -615,9 +615,9 @@
             <span class="n">score_n_3</span><span class="o">=</span><span class="n">score_n_3</span><span class="p">,</span>
             <span class="n">sg_order_desc</span><span class="o">=</span><span class="n">_order_desc_mode</span><span class="p">(</span><span class="n">score_cfg</span><span class="p">),</span>
             <span class="c1"># score_density_hybrid mode</span>
-            <span class="n">sdh_score_column</span><span class="o">=</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score_column&quot;</span><span class="p">),</span>
-            <span class="n">sdh_score_min</span><span class="o">=</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score_min&quot;</span><span class="p">),</span>
-            <span class="n">sdh_score_max</span><span class="o">=</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score_max&quot;</span><span class="p">),</span>
+            <span class="n">sdh_score_column</span><span class="o">=</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"score_column"</span><span class="p">),</span>
+            <span class="n">sdh_score_min</span><span class="o">=</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"score_min"</span><span class="p">),</span>
+            <span class="n">sdh_score_max</span><span class="o">=</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"score_max"</span><span class="p">),</span>
             <span class="n">sdh_score_adaptive_range</span><span class="o">=</span><span class="n">_adaptive</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="p">),</span>
             <span class="n">sdh_score_hist_nbins</span><span class="o">=</span><span class="n">_hist_nbins</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="p">),</span>
             <span class="n">sdh_keep_invalid_values</span><span class="o">=</span><span class="n">_keep_invalid</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="p">),</span>
@@ -628,28 +628,28 @@
             <span class="n">sdh_n_1</span><span class="o">=</span><span class="n">sdh_n_1</span><span class="p">,</span>
             <span class="n">sdh_n_2</span><span class="o">=</span><span class="n">sdh_n_2</span><span class="p">,</span>
             <span class="n">sdh_n_3</span><span class="o">=</span><span class="n">sdh_n_3</span><span class="p">,</span>
-            <span class="n">sdh_density_up_to_depth</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;density_up_to_depth&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
-            <span class="n">sdh_density_bias_n1</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;density_bias_n1&quot;</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;density_bias_n1&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))),</span>
-            <span class="n">sdh_density_bias_n2</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;density_bias_n2&quot;</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;density_bias_n2&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))),</span>
-            <span class="n">sdh_density_bias_n3</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;density_bias_n3&quot;</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;density_bias_n3&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))),</span>
+            <span class="n">sdh_density_up_to_depth</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"density_up_to_depth"</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+            <span class="n">sdh_density_bias_n1</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"density_bias_n1"</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"density_bias_n1"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))),</span>
+            <span class="n">sdh_density_bias_n2</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"density_bias_n2"</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"density_bias_n2"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))),</span>
+            <span class="n">sdh_density_bias_n3</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"density_bias_n3"</span><span class="p">,</span> <span class="n">defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"density_bias_n3"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))),</span>
             <span class="n">sdh_order_desc</span><span class="o">=</span><span class="n">_order_desc_mode</span><span class="p">(</span><span class="n">sdh_cfg</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">cluster</span><span class="o">=</span><span class="n">ClusterCfg</span><span class="p">(</span>
-            <span class="n">mode</span><span class="o">=</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mode&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">),</span>
-            <span class="n">n_workers</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n_workers&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span>
-            <span class="n">threads_per_worker</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;threads_per_worker&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
-            <span class="n">memory_per_worker</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;memory_per_worker&quot;</span><span class="p">,</span> <span class="s2">&quot;2GB&quot;</span><span class="p">)),</span>
-            <span class="n">slurm</span><span class="o">=</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slurm&quot;</span><span class="p">),</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mode"</span><span class="p">,</span> <span class="s2">"local"</span><span class="p">),</span>
+            <span class="n">n_workers</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_workers"</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span>
+            <span class="n">threads_per_worker</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"threads_per_worker"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+            <span class="n">memory_per_worker</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"memory_per_worker"</span><span class="p">,</span> <span class="s2">"2GB"</span><span class="p">)),</span>
+            <span class="n">slurm</span><span class="o">=</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"slurm"</span><span class="p">),</span>
             <span class="n">low_memory_mode</span><span class="o">=</span><span class="n">low_memory_mode_value</span><span class="p">,</span>
-            <span class="n">diagnostics_mode</span><span class="o">=</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;diagnostics_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;global&quot;</span><span class="p">),</span>
+            <span class="n">diagnostics_mode</span><span class="o">=</span><span class="n">cluster_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"diagnostics_mode"</span><span class="p">,</span> <span class="s2">"global"</span><span class="p">),</span>
         <span class="p">),</span>
         <span class="n">output</span><span class="o">=</span><span class="n">OutputCfg</span><span class="p">(</span>
-            <span class="n">out_dir</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">][</span><span class="s2">&quot;out_dir&quot;</span><span class="p">],</span>
-            <span class="n">cat_name</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">][</span><span class="s2">&quot;cat_name&quot;</span><span class="p">],</span>
-            <span class="n">target</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,</span> <span class="s2">&quot;0 0&quot;</span><span class="p">),</span>
-            <span class="n">creator_did</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;creator_did&quot;</span><span class="p">),</span>
-            <span class="n">obs_title</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;obs_title&quot;</span><span class="p">),</span>
-            <span class="n">overwrite</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;overwrite&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+            <span class="n">out_dir</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"output"</span><span class="p">][</span><span class="s2">"out_dir"</span><span class="p">],</span>
+            <span class="n">cat_name</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"output"</span><span class="p">][</span><span class="s2">"cat_name"</span><span class="p">],</span>
+            <span class="n">target</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"output"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"target"</span><span class="p">,</span> <span class="s2">"0 0"</span><span class="p">),</span>
+            <span class="n">creator_did</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"output"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"creator_did"</span><span class="p">),</span>
+            <span class="n">obs_title</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"output"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"obs_title"</span><span class="p">),</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="s2">"output"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"overwrite"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
         <span class="p">),</span>
     <span class="p">)</span>
 
@@ -657,60 +657,60 @@
     <span class="c1"># mag_global-specific validation (mag_column vs flux_column)</span>
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="n">algo</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span>
-    <span class="n">mag_col</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;mag_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="n">flux_col</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;flux_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">mag_col</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"mag_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">flux_col</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"flux_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">mag_col</span> <span class="ow">and</span> <span class="n">flux_col</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;mag_global configuration: mag_global.mag_column and mag_global.flux_column are mutually &quot;</span>
-            <span class="s2">&quot;exclusive. Please set only one of them.&quot;</span>
+            <span class="s2">"mag_global configuration: mag_global.mag_column and mag_global.flux_column are mutually "</span>
+            <span class="s2">"exclusive. Please set only one of them."</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">selection_mode</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">selection_mode</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"mag_global"</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">mag_col</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">flux_col</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;selection_mode=&#39;mag_global&#39; requires either mag_global.mag_column &quot;</span>
-                <span class="s2">&quot;or mag_global.flux_column to be set.&quot;</span>
+                <span class="s2">"selection_mode='mag_global' requires either mag_global.mag_column "</span>
+                <span class="s2">"or mag_global.flux_column to be set."</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">flux_col</span> <span class="ow">and</span> <span class="n">algo</span><span class="o">.</span><span class="n">mag_offset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;selection_mode=&#39;mag_global&#39; with mag_global.flux_column requires &quot;</span>
-                <span class="s2">&quot;mag_global.mag_offset to be defined for the flux→magnitude conversion.&quot;</span>
+                <span class="s2">"selection_mode='mag_global' with mag_global.flux_column requires "</span>
+                <span class="s2">"mag_global.mag_offset to be defined for the flux→magnitude conversion."</span>
             <span class="p">)</span>
 
-        <span class="n">mag_range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;mag_adaptive_range&quot;</span><span class="p">,</span> <span class="s2">&quot;complete&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">mag_range_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;complete&quot;</span><span class="p">,</span> <span class="s2">&quot;hist_peak&quot;</span><span class="p">}:</span>
+        <span class="n">mag_range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"mag_adaptive_range"</span><span class="p">,</span> <span class="s2">"complete"</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">mag_range_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"complete"</span><span class="p">,</span> <span class="s2">"hist_peak"</span><span class="p">}:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;selection_mode=&#39;mag_global&#39; requires mag_global.adaptive_range to be &quot;</span>
-                <span class="s2">&quot;either &#39;complete&#39; or &#39;hist_peak&#39;.&quot;</span>
+                <span class="s2">"selection_mode='mag_global' requires mag_global.adaptive_range to be "</span>
+                <span class="s2">"either 'complete' or 'hist_peak'."</span>
             <span class="p">)</span>
         <span class="c1"># Normalize to lowercase for downstream consumers.</span>
         <span class="n">algo</span><span class="o">.</span><span class="n">mag_adaptive_range</span> <span class="o">=</span> <span class="n">mag_range_mode</span>
-    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">selection_mode</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;score_global&quot;</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;score_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;selection_mode=&#39;score_global&#39; requires algorithm.score_column to be set.&quot;</span><span class="p">)</span>
-        <span class="n">score_range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;score_adaptive_range&quot;</span><span class="p">,</span> <span class="s2">&quot;complete&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;complete&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">score_range_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;complete&quot;</span><span class="p">,</span> <span class="s2">&quot;hist_peak&quot;</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;algorithm.score_adaptive_range must be either &#39;complete&#39; or &#39;hist_peak&#39;.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;score_hist_nbins&quot;</span><span class="p">,</span> <span class="mi">2048</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;algorithm.score_hist_nbins must be a positive integer.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">selection_mode</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_score_column&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">selection_mode</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"score_global"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"score_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"selection_mode='score_global' requires algorithm.score_column to be set."</span><span class="p">)</span>
+        <span class="n">score_range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"score_adaptive_range"</span><span class="p">,</span> <span class="s2">"complete"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"complete"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">score_range_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"complete"</span><span class="p">,</span> <span class="s2">"hist_peak"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"algorithm.score_adaptive_range must be either 'complete' or 'hist_peak'."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"score_hist_nbins"</span><span class="p">,</span> <span class="mi">2048</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"algorithm.score_hist_nbins must be a positive integer."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">selection_mode</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"score_density_hybrid"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_column"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;selection_mode=&#39;score_density_hybrid&#39; requires algorithm.sdh_score_column to be set.&quot;</span>
+                <span class="s2">"selection_mode='score_density_hybrid' requires algorithm.sdh_score_column to be set."</span>
             <span class="p">)</span>
-        <span class="n">score_range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_score_adaptive_range&quot;</span><span class="p">,</span> <span class="s2">&quot;complete&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;complete&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">score_range_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;complete&quot;</span><span class="p">,</span> <span class="s2">&quot;hist_peak&quot;</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;algorithm.sdh_score_adaptive_range must be either &#39;complete&#39; or &#39;hist_peak&#39;.&quot;</span><span class="p">)</span>
+        <span class="n">score_range_mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_adaptive_range"</span><span class="p">,</span> <span class="s2">"complete"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"complete"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">score_range_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"complete"</span><span class="p">,</span> <span class="s2">"hist_peak"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"algorithm.sdh_score_adaptive_range must be either 'complete' or 'hist_peak'."</span><span class="p">)</span>
         <span class="n">algo</span><span class="o">.</span><span class="n">sdh_score_adaptive_range</span> <span class="o">=</span> <span class="n">score_range_mode</span>
-        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_score_hist_nbins&quot;</span><span class="p">,</span> <span class="mi">2048</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;algorithm.sdh_score_hist_nbins must be a positive integer.&quot;</span><span class="p">)</span>
-        <span class="n">density_up_to_depth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">&quot;sdh_density_up_to_depth&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_hist_nbins"</span><span class="p">,</span> <span class="mi">2048</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"algorithm.sdh_score_hist_nbins must be a positive integer."</span><span class="p">)</span>
+        <span class="n">density_up_to_depth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_density_up_to_depth"</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">density_up_to_depth</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;algorithm.sdh_density_up_to_depth must be &gt;= 1.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"algorithm.sdh_density_up_to_depth must be &gt;= 1."</span><span class="p">)</span>
         <span class="n">algo</span><span class="o">.</span><span class="n">sdh_density_up_to_depth</span> <span class="o">=</span> <span class="n">density_up_to_depth</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;sdh_density_bias_n1&quot;</span><span class="p">,</span> <span class="s2">&quot;sdh_density_bias_n2&quot;</span><span class="p">,</span> <span class="s2">&quot;sdh_density_bias_n3&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"sdh_density_bias_n1"</span><span class="p">,</span> <span class="s2">"sdh_density_bias_n2"</span><span class="p">,</span> <span class="s2">"sdh_density_bias_n3"</span><span class="p">):</span>
             <span class="n">val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;algorithm.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be in [0, 1]. Got </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"algorithm.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be in [0, 1]. Got </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">cfg</span>
@@ -719,7 +719,7 @@
 <div class="viewcode-block" id="load_config">
 <a class="viewcode-back" href="../../reference/generated/core/hipscatalog_gen.load_config.html#hipscatalog_gen.config.load_config">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Config</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load configuration from a YAML file.</span>
+<span class="w">    </span><span class="sd">"""Load configuration from a YAML file.</span>
 
 <span class="sd">    The YAML structure must follow the sections described in</span>
 <span class="sd">    ``display_available_configs()``. For an overview of all available</span>
@@ -736,8 +736,8 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If algorithm options are inconsistent.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">_build_config_from_mapping</span><span class="p">(</span><span class="n">y</span><span class="p">)</span></div>
@@ -747,7 +747,7 @@
 <div class="viewcode-block" id="load_config_from_dict">
 <a class="viewcode-back" href="../../reference/generated/core/hipscatalog_gen.config.load_config_from_dict.html#hipscatalog_gen.config.load_config_from_dict">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_config_from_dict</span><span class="p">(</span><span class="n">cfg_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Config</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build configuration from an in-memory mapping.</span>
+<span class="w">    </span><span class="sd">"""Build configuration from an in-memory mapping.</span>
 
 <span class="sd">    This is useful in interactive environments (e.g., notebooks) where the</span>
 <span class="sd">    configuration is defined directly as a Python dict instead of a YAML</span>
@@ -766,7 +766,7 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If algorithm options are inconsistent.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="n">_build_config_from_mapping</span><span class="p">(</span><span class="n">cfg_dict</span><span class="p">)</span></div>
 
 </pre></div>

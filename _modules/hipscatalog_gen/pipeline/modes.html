@@ -75,7 +75,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hipscatalog_gen.pipeline.modes</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Registry of selection modes and helpers to resolve them by name.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Registry of selection modes and helpers to resolve them by name."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -109,7 +109,7 @@
 <a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.modes.SelectionMode.html#hipscatalog_gen.pipeline.modes.SelectionMode">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SelectionMode</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Registry entry for a selection mode.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Registry entry for a selection mode."""</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">validate_fn</span><span class="p">:</span> <span class="n">ValidateFn</span>
@@ -121,29 +121,29 @@
 
 
 <span class="n">MODE_REGISTRY</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SelectionMode</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;mag_global&quot;</span><span class="p">:</span> <span class="n">SelectionMode</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;mag_global&quot;</span><span class="p">,</span>
+    <span class="s2">"mag_global"</span><span class="p">:</span> <span class="n">SelectionMode</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"mag_global"</span><span class="p">,</span>
         <span class="n">validate_fn</span><span class="o">=</span><span class="n">validate_mag_global_cfg</span><span class="p">,</span>
         <span class="n">normalize_fn</span><span class="o">=</span><span class="n">normalize_mag_global</span><span class="p">,</span>
         <span class="n">prepare_fn</span><span class="o">=</span><span class="n">prepare_mag_global</span><span class="p">,</span>
         <span class="n">run_fn</span><span class="o">=</span><span class="n">run_mag_global_selection</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Magnitude-complete slices across all depths.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Magnitude-complete slices across all depths."</span><span class="p">,</span>
     <span class="p">),</span>
-    <span class="s2">&quot;score_global&quot;</span><span class="p">:</span> <span class="n">SelectionMode</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;score_global&quot;</span><span class="p">,</span>
+    <span class="s2">"score_global"</span><span class="p">:</span> <span class="n">SelectionMode</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"score_global"</span><span class="p">,</span>
         <span class="n">validate_fn</span><span class="o">=</span><span class="n">validate_score_global_cfg</span><span class="p">,</span>
         <span class="n">normalize_fn</span><span class="o">=</span><span class="n">normalize_score_global</span><span class="p">,</span>
         <span class="n">prepare_fn</span><span class="o">=</span><span class="n">prepare_score_global</span><span class="p">,</span>
         <span class="n">run_fn</span><span class="o">=</span><span class="n">run_score_global_selection</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Score-based slices across all depths.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Score-based slices across all depths."</span><span class="p">,</span>
     <span class="p">),</span>
-    <span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">:</span> <span class="n">SelectionMode</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;score_density_hybrid&quot;</span><span class="p">,</span>
+    <span class="s2">"score_density_hybrid"</span><span class="p">:</span> <span class="n">SelectionMode</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"score_density_hybrid"</span><span class="p">,</span>
         <span class="n">validate_fn</span><span class="o">=</span><span class="n">validate_score_density_hybrid_cfg</span><span class="p">,</span>
         <span class="n">normalize_fn</span><span class="o">=</span><span class="n">normalize_score_density_hybrid</span><span class="p">,</span>
         <span class="n">prepare_fn</span><span class="o">=</span><span class="n">prepare_score_density_hybrid</span><span class="p">,</span>
         <span class="n">run_fn</span><span class="o">=</span><span class="n">run_score_density_hybrid_selection</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Density-driven depths 1..density_up_to_depth (default 4), score-based afterwards.&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Density-driven depths 1..density_up_to_depth (default 4), score-based afterwards."</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">}</span>
 
@@ -151,7 +151,7 @@
 <div class="viewcode-block" id="get_selection_mode">
 <a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.modes.get_selection_mode.html#hipscatalog_gen.pipeline.modes.get_selection_mode">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_selection_mode</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SelectionMode</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a selection mode entry, raising on unsupported names.</span>
+<span class="w">    </span><span class="sd">"""Return a selection mode entry, raising on unsupported names.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        name: Selection mode identifier (e.g., ``mag_global``).</span>
@@ -161,11 +161,11 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If the name is not registered.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<span class="sd">    """</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">MODE_REGISTRY</span><span class="p">:</span>
-        <span class="n">opts</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">MODE_REGISTRY</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported selection_mode &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;. Available modes: </span><span class="si">{</span><span class="n">opts</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">)"</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">MODE_REGISTRY</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported selection_mode '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">'. Available modes: </span><span class="si">{</span><span class="n">opts</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">MODE_REGISTRY</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
 
 </pre></div>

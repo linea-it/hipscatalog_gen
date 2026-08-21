@@ -76,19 +76,19 @@
              
   <h1>Source code for hipscatalog_gen.pipeline.main</h1><div class="highlight"><pre>
 <span></span><span class="ch">#!/usr/bin/env python3</span>
-<span class="sd">&quot;&quot;&quot;Central orchestration for the HiPS catalog pipeline.</span>
+<span class="sd">"""Central orchestration for the HiPS catalog pipeline.</span>
 
 <span class="sd">This module wires configuration, cluster setup, input reading, densmap</span>
 <span class="sd">computation, and selection logic implemented in the submodules.</span>
 
 <span class="sd">Typical usage (library):</span>
 <span class="sd">    from hipscatalog_gen import load_config, run_pipeline</span>
-<span class="sd">    cfg = load_config(&quot;config.yaml&quot;)</span>
+<span class="sd">    cfg = load_config("config.yaml")</span>
 <span class="sd">    run_pipeline(cfg)</span>
 
 <span class="sd">Command-line interface:</span>
 <span class="sd">    python -m hipscatalog_gen.cli --config config.yaml</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -120,7 +120,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineContext</span><span class="p">,</span> <span class="n">PipelineStage</span><span class="p">,</span> <span class="n">run_stages</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_common_cfg</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;run_pipeline&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"run_pipeline"</span><span class="p">]</span>
 
 
 <span class="c1"># =============================================================================</span>
@@ -131,7 +131,7 @@
 <div class="viewcode-block" id="run_pipeline">
 <a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.main.run_pipeline.html#hipscatalog_gen.pipeline.main.run_pipeline">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">run_pipeline</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">json_logs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the full HiPS catalog generation pipeline.</span>
+<span class="w">    </span><span class="sd">"""Run the full HiPS catalog generation pipeline.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        cfg: Parsed configuration object with input, algorithm, cluster, and output options.</span>
@@ -141,43 +141,43 @@
 <span class="sd">        ValueError: If ``output.out_dir`` already exists without ``output.overwrite`` set.</span>
 <span class="sd">        ValueError: If ``level_limit`` is outside the supported range [4, 11].</span>
 <span class="sd">        ValueError: If the configured ``selection_mode`` is unsupported.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
-    <span class="n">overwrite</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">overwrite</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="s2">"overwrite"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_ts</span><span class="p">()</span><span class="si">}</span><span class="s2"> | [output] overwrite=True -&gt; deleting existing contents under </span><span class="si">{</span><span class="n">out_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_ts</span><span class="p">()</span><span class="si">}</span><span class="s2"> | [output] overwrite=True -&gt; deleting existing contents under </span><span class="si">{</span><span class="n">out_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
                 <span class="n">out_dir</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;output.out_dir already exists at </span><span class="si">{</span><span class="n">out_dir</span><span class="si">}</span><span class="s2">. &quot;</span>
-                <span class="s2">&quot;Set output.overwrite=true to delete it before writing a new catalog.&quot;</span>
+                <span class="sa">f</span><span class="s2">"output.out_dir already exists at </span><span class="si">{</span><span class="n">out_dir</span><span class="si">}</span><span class="s2">. "</span>
+                <span class="s2">"Set output.overwrite=true to delete it before writing a new catalog."</span>
             <span class="p">)</span>
 
     <span class="n">_mkdirs</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
 
-    <span class="n">report_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;dask_reports&quot;</span>
+    <span class="n">report_dir</span> <span class="o">=</span> <span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"dask_reports"</span>
     <span class="n">_mkdirs</span><span class="p">(</span><span class="n">report_dir</span><span class="p">)</span>
 
     <span class="n">log_ctx</span><span class="p">,</span> <span class="n">_log</span> <span class="o">=</span> <span class="n">setup_structured_logger</span><span class="p">(</span>
         <span class="n">out_dir</span><span class="p">,</span>
-        <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;selection_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">),</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"selection_mode"</span><span class="p">,</span> <span class="s2">"mag_global"</span><span class="p">),</span>
         <span class="n">json_logs</span><span class="o">=</span><span class="n">json_logs</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">log_prologue</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">_log</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">4</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">11</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;level_limit (lM) must be within [4, 11] to mirror the CDS tool.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"level_limit (lM) must be within [4, 11] to mirror the CDS tool."</span><span class="p">)</span>
 
     <span class="n">validate_common_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
 
-    <span class="n">selection_mode</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;selection_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;mag_global&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">selection_mode</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"selection_mode"</span><span class="p">,</span> <span class="s2">"mag_global"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"mag_global"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">mode_entry</span> <span class="o">=</span> <span class="n">get_selection_mode</span><span class="p">(</span><span class="n">selection_mode</span><span class="p">)</span>
 
     <span class="n">runtime</span><span class="p">,</span> <span class="n">diag_ctx</span> <span class="o">=</span> <span class="n">setup_cluster</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="n">report_dir</span><span class="p">,</span> <span class="n">_log</span><span class="p">)</span>
@@ -198,7 +198,7 @@
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_prepare_input</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load inputs, validate RA/DEC, and set partitioning flags.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Load inputs, validate RA/DEC, and set partitioning flags."""</span>
         <span class="n">ddf</span><span class="p">,</span> <span class="n">RA_NAME</span><span class="p">,</span> <span class="n">DEC_NAME</span><span class="p">,</span> <span class="n">keep_cols</span><span class="p">,</span> <span class="n">is_hats</span><span class="p">,</span> <span class="n">paths</span> <span class="o">=</span> <span class="n">build_and_prepare_input</span><span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">diag_ctx</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">persist_ddfs</span>
         <span class="p">)</span>
@@ -212,20 +212,20 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_count_input</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute total rows after RA/DEC validation.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Compute total rows after RA/DEC validation."""</span>
         <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">ddf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Pipeline context missing input DDF.&quot;</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Pipeline context missing input DDF."</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
         <span class="n">input_total</span> <span class="o">=</span> <span class="n">compute_input_total</span><span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">ddf</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">diag_ctx</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">avoid_computes</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">with_updates</span><span class="p">(</span><span class="n">input_total</span><span class="o">=</span><span class="n">input_total</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_prepare_selection</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare remainder DDF for tile writing after selection normalization.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Prepare remainder DDF for tile writing after selection normalization."""</span>
         <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">ddf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Pipeline context missing input DDF.&quot;</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Pipeline context missing input DDF."</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
         <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">selection_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Pipeline context missing selection parameters.&quot;</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Pipeline context missing selection parameters."</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
         <span class="n">remainder_ddf</span> <span class="o">=</span> <span class="n">mode_entry</span><span class="o">.</span><span class="n">prepare_fn</span><span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">ddf</span><span class="p">,</span>
             <span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span>
@@ -238,10 +238,10 @@
         <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">with_updates</span><span class="p">(</span><span class="n">remainder_ddf</span><span class="o">=</span><span class="n">remainder_ddf</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_densmaps</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute density maps and write FITS outputs.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Compute density maps and write FITS outputs."""</span>
         <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">remainder_ddf</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">RA_NAME</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">DEC_NAME</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Pipeline context missing selection inputs for densmap computation.&quot;</span>
+                <span class="s2">"Pipeline context missing selection inputs for densmap computation."</span>
             <span class="p">)</span>  <span class="c1"># pragma: no cover</span>
         <span class="n">densmaps</span> <span class="o">=</span> <span class="n">compute_and_write_densmaps</span><span class="p">(</span>
             <span class="n">ddf_sel</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">remainder_ddf</span><span class="p">,</span>
@@ -255,7 +255,7 @@
         <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">with_updates</span><span class="p">(</span><span class="n">densmaps</span><span class="o">=</span><span class="n">densmaps</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_static_products</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write static artifacts (arguments, metadata, densmap files).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write static artifacts (arguments, metadata, densmap files)."""</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">keep_cols</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">RA_NAME</span> <span class="ow">is</span> <span class="kc">None</span>
@@ -264,7 +264,7 @@
             <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">ddf</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Pipeline context missing data for static product writing.&quot;</span>
+                <span class="s2">"Pipeline context missing data for static product writing."</span>
             <span class="p">)</span>  <span class="c1"># pragma: no cover</span>
         <span class="n">write_common_static_products</span><span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">out_dir</span><span class="p">,</span>
@@ -279,14 +279,14 @@
         <span class="k">return</span> <span class="n">context</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_run_selection</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the configured selection mode and write tiles.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Run the configured selection mode and write tiles."""</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">remainder_ddf</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">keep_cols</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">RA_NAME</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">DEC_NAME</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Pipeline context missing selection inputs.&quot;</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Pipeline context missing selection inputs."</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
         <span class="n">run_result</span> <span class="o">=</span> <span class="n">mode_entry</span><span class="o">.</span><span class="n">run_fn</span><span class="p">(</span>
             <span class="n">remainder_ddf</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">remainder_ddf</span><span class="p">,</span>
             <span class="n">densmaps</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">densmaps</span><span class="p">,</span>
@@ -302,13 +302,13 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Selection stage did not return write stats; final TSV recount fallback is disabled.&quot;</span>
+                <span class="s2">"Selection stage did not return write stats; final TSV recount fallback is disabled."</span>
             <span class="p">)</span>
 
-        <span class="n">depth_totals_raw</span> <span class="o">=</span> <span class="n">run_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">)</span>
+        <span class="n">depth_totals_raw</span> <span class="o">=</span> <span class="n">run_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"depth_totals"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">depth_totals_raw</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Selection stage did not provide &#39;depth_totals&#39;; final TSV recount fallback is disabled.&quot;</span>
+                <span class="s2">"Selection stage did not provide 'depth_totals'; final TSV recount fallback is disabled."</span>
             <span class="p">)</span>
 
         <span class="n">depth_totals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -317,32 +317,32 @@
             <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
                 <span class="n">value_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value_int</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid depth total emitted by selection stage: key=</span><span class="si">{</span><span class="n">k</span><span class="si">!r}</span><span class="s2">, value=</span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid depth total emitted by selection stage: key=</span><span class="si">{</span><span class="n">k</span><span class="si">!r}</span><span class="s2">, value=</span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value_int</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Negative depth total emitted by selection stage: key=</span><span class="si">{</span><span class="n">k</span><span class="si">!r}</span><span class="s2">, value=</span><span class="si">{</span><span class="n">value_int</span><span class="si">!r}</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Negative depth total emitted by selection stage: key=</span><span class="si">{</span><span class="n">k</span><span class="si">!r}</span><span class="s2">, value=</span><span class="si">{</span><span class="n">value_int</span><span class="si">!r}</span><span class="s2">"</span>
                 <span class="p">)</span>
             <span class="n">depth_totals</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value_int</span>
 
         <span class="n">telemetry</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">telemetry</span><span class="p">)</span>
-        <span class="n">telemetry</span><span class="p">[</span><span class="s2">&quot;selection_write_stats&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">:</span> <span class="n">depth_totals</span><span class="p">}</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"selection_write_stats"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"depth_totals"</span><span class="p">:</span> <span class="n">depth_totals</span><span class="p">}</span>
         <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">with_updates</span><span class="p">(</span><span class="n">telemetry</span><span class="o">=</span><span class="n">telemetry</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_counts</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write per-depth count summaries and store telemetry.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write per-depth count summaries and store telemetry."""</span>
         <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">input_total</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Pipeline context missing input totals.&quot;</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Pipeline context missing input totals."</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
         <span class="n">precomputed_depth_totals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">telemetry</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">sws</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">telemetry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;selection_write_stats&quot;</span><span class="p">)</span>
+            <span class="n">sws</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">telemetry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"selection_write_stats"</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sws</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="n">cand</span> <span class="o">=</span> <span class="n">sws</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;depth_totals&quot;</span><span class="p">)</span>
+                <span class="n">cand</span> <span class="o">=</span> <span class="n">sws</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"depth_totals"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cand</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
                     <span class="n">precomputed_depth_totals</span> <span class="o">=</span> <span class="n">cand</span>
         <span class="k">if</span> <span class="n">precomputed_depth_totals</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Missing selection_write_stats.depth_totals in telemetry; &quot;</span>
-                <span class="s2">&quot;final TSV recount fallback is disabled.&quot;</span>
+                <span class="s2">"Missing selection_write_stats.depth_totals in telemetry; "</span>
+                <span class="s2">"final TSV recount fallback is disabled."</span>
             <span class="p">)</span>
         <span class="n">total_written</span><span class="p">,</span> <span class="n">counts_payload</span> <span class="o">=</span> <span class="n">write_counts_summaries</span><span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">out_dir</span><span class="p">,</span>
@@ -352,26 +352,26 @@
             <span class="n">precomputed_depth_totals</span><span class="o">=</span><span class="n">precomputed_depth_totals</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">telemetry</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">telemetry</span><span class="p">)</span>
-        <span class="n">telemetry</span><span class="p">[</span><span class="s2">&quot;output_counts&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">counts_payload</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"output_counts"</span><span class="p">]</span> <span class="o">=</span> <span class="n">counts_payload</span>
         <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">with_updates</span><span class="p">(</span><span class="n">total_written</span><span class="o">=</span><span class="n">total_written</span><span class="p">,</span> <span class="n">telemetry</span><span class="o">=</span><span class="n">telemetry</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_properties</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write HiPS properties using the computed totals.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Write HiPS properties using the computed totals."""</span>
         <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">total_written</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Pipeline context missing written counts.&quot;</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Pipeline context missing written counts."</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
         <span class="n">write_properties</span><span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">out_dir</span><span class="p">,</span>
             <span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
             <span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">,</span>
             <span class="n">context</span><span class="o">.</span><span class="n">total_written</span><span class="p">,</span>
-            <span class="n">tile_format</span><span class="o">=</span><span class="s2">&quot;tsv&quot;</span><span class="p">,</span>
+            <span class="n">tile_format</span><span class="o">=</span><span class="s2">"tsv"</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">context</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_normalize_selection</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate configuration and normalize selection parameters.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Validate configuration and normalize selection parameters."""</span>
         <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">ddf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Pipeline context missing input DDF.&quot;</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Pipeline context missing input DDF."</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
         <span class="n">mode_entry</span><span class="o">.</span><span class="n">validate_fn</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
         <span class="n">normalized_ddf</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">mode_entry</span><span class="o">.</span><span class="n">normalize_fn</span><span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">ddf</span><span class="p">,</span>
@@ -384,37 +384,37 @@
         <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">with_updates</span><span class="p">(</span><span class="n">ddf</span><span class="o">=</span><span class="n">normalized_ddf</span><span class="p">,</span> <span class="n">selection_params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
 
     <span class="n">pipeline_stages</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">&quot;prepare_input&quot;</span><span class="p">,</span> <span class="n">_stage_prepare_input</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">&quot;dask_prepare_input&quot;</span><span class="p">),</span>
-        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">&quot;input_total&quot;</span><span class="p">,</span> <span class="n">_stage_count_input</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">&quot;dask_input_total&quot;</span><span class="p">),</span>
-        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">&quot;normalize_selection&quot;</span><span class="p">,</span> <span class="n">_stage_normalize_selection</span><span class="p">),</span>
-        <span class="n">PipelineStage</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;prepare_</span><span class="si">{</span><span class="n">selection_mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_stage_prepare_selection</span><span class="p">),</span>
-        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">&quot;densmaps&quot;</span><span class="p">,</span> <span class="n">_stage_densmaps</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">&quot;dask_densmaps&quot;</span><span class="p">),</span>
-        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">&quot;static_products&quot;</span><span class="p">,</span> <span class="n">_stage_static_products</span><span class="p">),</span>
-        <span class="n">PipelineStage</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;run_</span><span class="si">{</span><span class="n">selection_mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_stage_run_selection</span><span class="p">),</span>
-        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">&quot;counts&quot;</span><span class="p">,</span> <span class="n">_stage_counts</span><span class="p">),</span>
-        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">&quot;properties&quot;</span><span class="p">,</span> <span class="n">_stage_properties</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"prepare_input"</span><span class="p">,</span> <span class="n">_stage_prepare_input</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">"dask_prepare_input"</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"input_total"</span><span class="p">,</span> <span class="n">_stage_count_input</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">"dask_input_total"</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"normalize_selection"</span><span class="p">,</span> <span class="n">_stage_normalize_selection</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="sa">f</span><span class="s2">"prepare_</span><span class="si">{</span><span class="n">selection_mode</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">_stage_prepare_selection</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"densmaps"</span><span class="p">,</span> <span class="n">_stage_densmaps</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">"dask_densmaps"</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"static_products"</span><span class="p">,</span> <span class="n">_stage_static_products</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="sa">f</span><span class="s2">"run_</span><span class="si">{</span><span class="n">selection_mode</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">_stage_run_selection</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"counts"</span><span class="p">,</span> <span class="n">_stage_counts</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="n">_stage_properties</span><span class="p">),</span>
     <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_core_pipeline</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the ordered pipeline stages with telemetry updates.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Execute the ordered pipeline stages with telemetry updates."""</span>
         <span class="n">final_ctx</span> <span class="o">=</span> <span class="n">run_stages</span><span class="p">(</span><span class="n">pipeline_stages</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
         <span class="n">telemetry</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">final_ctx</span><span class="o">.</span><span class="n">telemetry</span><span class="p">)</span>
-        <span class="n">telemetry</span><span class="p">[</span><span class="s2">&quot;selection_mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">selection_mode</span>
-        <span class="n">telemetry</span><span class="p">[</span><span class="s2">&quot;level_limit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span>
-        <span class="n">telemetry</span><span class="p">[</span><span class="s2">&quot;moc_order&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">&quot;moc_order&quot;</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">)</span>
-        <span class="n">telemetry</span><span class="p">[</span><span class="s2">&quot;input_rows&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_ctx</span><span class="o">.</span><span class="n">input_total</span>
-        <span class="n">telemetry</span><span class="p">[</span><span class="s2">&quot;output_rows&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_ctx</span><span class="o">.</span><span class="n">total_written</span>
-        <span class="n">telemetry</span><span class="p">[</span><span class="s2">&quot;total_duration_s&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"selection_mode"</span><span class="p">]</span> <span class="o">=</span> <span class="n">selection_mode</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"level_limit"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"moc_order"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"moc_order"</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">)</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"input_rows"</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_ctx</span><span class="o">.</span><span class="n">input_total</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"output_rows"</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_ctx</span><span class="o">.</span><span class="n">total_written</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"total_duration_s"</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t0</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">suppress</span>
 
         <span class="k">with</span> <span class="n">suppress</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-            <span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">&quot;telemetry.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">telemetry</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="s2">"telemetry.json"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">telemetry</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">diagnostics_mode</span> <span class="o">==</span> <span class="s2">&quot;global&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">diagnostics_mode</span> <span class="o">==</span> <span class="s2">"global"</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">dask.distributed</span><span class="w"> </span><span class="kn">import</span> <span class="n">performance_report</span>
 
-            <span class="n">global_report</span> <span class="o">=</span> <span class="n">report_dir</span> <span class="o">/</span> <span class="s2">&quot;dask_global.html&quot;</span>
+            <span class="n">global_report</span> <span class="o">=</span> <span class="n">report_dir</span> <span class="o">/</span> <span class="s2">"dask_global.html"</span>
             <span class="k">with</span> <span class="n">performance_report</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">global_report</span><span class="p">)):</span>
                 <span class="n">_run_core_pipeline</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
