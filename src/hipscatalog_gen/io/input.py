@@ -145,11 +145,12 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
                 needed_cols.append(c)
                 seen_needed.add(c)
 
-        # If columns.keep is None → open all columns.
+        # If columns.keep is None -> open all columns explicitly. LSDB may
+        # otherwise lazily expose only a subset of catalog columns.
         if needed_cols and not keep_all_columns:
             cat0 = cast(LsdbCatalog, lsdb.open_catalog(hats_path, columns=needed_cols))
         else:
-            cat0 = cast(LsdbCatalog, lsdb.open_catalog(hats_path))
+            cat0 = cast(LsdbCatalog, lsdb.open_catalog(hats_path, columns="all"))
 
         available_cols = list(cat0.columns)
 

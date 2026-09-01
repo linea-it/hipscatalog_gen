@@ -124,9 +124,9 @@ def test_build_input_ddf_hats_keep_all(monkeypatch):
         def __getitem__(self, cols: list[str]):
             return ddf[cols]
 
-    def fake_open(path: str, columns: list[str] | None = None):
+    def fake_open(path: str, columns: list[str] | str | None = None):
         call_args["columns"] = columns
-        cols = list(pdf.columns) if columns is None else list(columns)
+        cols = list(pdf.columns) if columns in (None, "all") else list(columns)
         return FakeCatalog(cols)
 
     monkeypatch.setattr(io_input.lsdb, "open_catalog", fake_open)
@@ -134,7 +134,7 @@ def test_build_input_ddf_hats_keep_all(monkeypatch):
     cfg = _base_cfg("hats", selection_mode="score_density_hybrid", sdh_score_column="score")
     ddf_out, ra, dec, keep_cols = _build_input_ddf(["/tmp/cat.hats"], cfg)
 
-    assert call_args["columns"] is None
+    assert call_args["columns"] == "all"
     assert (ra, dec) == ("RA", "DEC")
     assert keep_cols == ["RA", "DEC", "score", "EXTRA"]
     assert list(ddf_out.columns) == keep_cols
@@ -153,9 +153,9 @@ def test_build_input_ddf_hats_keep_none_preserves_catalog_order(monkeypatch):
         def __getitem__(self, cols: list[str]):
             return ddf[cols]
 
-    def fake_open(path: str, columns: list[str] | None = None):
+    def fake_open(path: str, columns: list[str] | str | None = None):
         call_args["columns"] = columns
-        cols = list(pdf.columns) if columns is None else list(columns)
+        cols = list(pdf.columns) if columns in (None, "all") else list(columns)
         return FakeCatalog(cols)
 
     monkeypatch.setattr(io_input.lsdb, "open_catalog", fake_open)
@@ -163,7 +163,7 @@ def test_build_input_ddf_hats_keep_none_preserves_catalog_order(monkeypatch):
     cfg = _base_cfg("hats", selection_mode="score_global", score_column="SCORE")
     ddf_out, ra, dec, keep_cols = _build_input_ddf(["/tmp/cat.hats"], cfg)
 
-    assert call_args["columns"] is None
+    assert call_args["columns"] == "all"
     assert (ra, dec) == ("RA", "DEC")
     assert keep_cols == ["SCORE", "DEC", "RA", "EXTRA"]
     assert list(ddf_out.columns) == keep_cols
@@ -220,8 +220,8 @@ def test_build_input_ddf_hats_mag_and_flux(monkeypatch):
         def __getitem__(self, cols: list[str]):
             return dd.from_pandas(pdf[cols], npartitions=1)
 
-    def fake_open(path: str, columns: list[str] | None = None):
-        cols = list(columns) if columns is not None else list(pdf.columns)
+    def fake_open(path: str, columns: list[str] | str | None = None):
+        cols = list(pdf.columns) if columns in (None, "all") else list(columns)
         call_args["columns"] = columns
         return FakeCatalog(cols)
 
@@ -231,7 +231,7 @@ def test_build_input_ddf_hats_mag_and_flux(monkeypatch):
     cfg.algorithm.flux_column = "FLUX"
     ddf_out, ra, dec, keep_cols = _build_input_ddf(["/tmp/cat.hats"], cfg)
 
-    assert call_args["columns"] is None  # keep_all_columns path
+    assert call_args["columns"] == "all"  # keep_all_columns path
     assert keep_cols[:4] == ["RA", "DEC", "MAG", "FLUX"]
     assert list(ddf_out.columns) == keep_cols
 
