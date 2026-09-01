@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3
+
+- Open HATS/LSDB catalogs with `columns="all"` when `columns.keep` is omitted or `null`, ensuring all catalog columns are available before preserving the full input column order.
+- Keep explicit `columns.keep` behavior unchanged for HATS/LSDB inputs, still requesting only the required RA/DEC, selection dependencies, mag/flux columns, and user-requested output columns.
+- Run the pre-commit `mypy` hook once against `src` instead of letting pre-commit split source files into batches, avoiding intermittent `mypy 2.3.0` internal errors in GitHub Actions.
+
 ## 0.3.2
 
 - Avoid backend `sort_values` calls in score-density top-k selection to preserve compatibility with catalogs backed by nested/categorical data.
