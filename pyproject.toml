@@ -1,6 +1,6 @@
 [project]
 name = "hipscatalog-gen"
-version = "0.3.2"
+version = "0.3.3"
 license = "MIT"
 license-files = ["LICENSE"]
 readme = { file = "README.md", content-type = "text/markdown" }
