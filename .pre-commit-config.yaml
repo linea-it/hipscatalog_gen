@@ -113,9 +113,11 @@ repos:
         language: system
         types: [python]
         files: ^src/
+        pass_filenames: false
         args:
           [
             "--ignore-missing-imports", # Ignore imports without type hints
+            "src",
           ]
 
   # Make sure Sphinx can build the documentation (notebooks excluded)
