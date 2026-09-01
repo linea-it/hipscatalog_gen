@@ -107,7 +107,7 @@ ignore = [
 "tests/**/*" = ["S101","S108"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_unused_ignores = true
 check_untyped_defs = true
 ignore_missing_imports = true
