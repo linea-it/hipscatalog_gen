@@ -1,0 +1,6 @@
+﻿hipscatalog\_gen.photometry.working\_photometry\_columns
+========================================================
+
+.. currentmodule:: hipscatalog_gen.photometry
+
+.. autofunction:: working_photometry_columns

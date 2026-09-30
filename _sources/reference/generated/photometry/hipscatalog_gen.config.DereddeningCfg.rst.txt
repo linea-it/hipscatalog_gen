@@ -1,0 +1,32 @@
+﻿hipscatalog\_gen.config.DereddeningCfg
+======================================
+
+.. currentmodule:: hipscatalog_gen.config
+
+.. autoclass:: DereddeningCfg
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DereddeningCfg.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DereddeningCfg.ebv_column
+      ~DereddeningCfg.enabled
+      ~DereddeningCfg.keep_observed_magnitudes
+      ~DereddeningCfg.output_suffix
+      ~DereddeningCfg.coefficients
+   
+   

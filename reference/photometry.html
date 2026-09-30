@@ -1,0 +1,274 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photometry &mdash; hipscatalog-gen 0.3.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d5a15cff"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=d07363f3"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="hipscatalog_gen.config.PhotometryCfg" href="generated/photometry/hipscatalog_gen.config.PhotometryCfg.html" />
+    <link rel="prev" title="hipscatalog_gen.pipeline.logging_utils.setup_structured_logger" href="generated/pipeline/hipscatalog_gen.pipeline.logging_utils.setup_structured_logger.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            hipscatalog-gen
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">Pipeline overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html">Pipeline</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Photometry</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#equations">Equations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#invalid-values-and-row-counts">Invalid values and row counts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-columns-and-projection">Output columns and projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#derived-columns-in-selection-modes">Derived columns in selection modes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="generated/photometry/hipscatalog_gen.config.PhotometryCfg.html">hipscatalog_gen.config.PhotometryCfg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html">hipscatalog_gen.config.PhotometryMeasurementCfg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/photometry/hipscatalog_gen.config.DereddeningCfg.html">hipscatalog_gen.config.DereddeningCfg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/photometry/hipscatalog_gen.photometry.PhotometryPlan.html">hipscatalog_gen.photometry.PhotometryPlan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/photometry/hipscatalog_gen.photometry.build_photometry_plan.html">hipscatalog_gen.photometry.build_photometry_plan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/photometry/hipscatalog_gen.photometry.apply_photometry.html">hipscatalog_gen.photometry.apply_photometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/photometry/hipscatalog_gen.photometry.working_photometry_columns.html">hipscatalog_gen.photometry.working_photometry_columns</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mag_global.html">mag_global</a></li>
+<li class="toctree-l2"><a class="reference internal" href="score_global.html">score_global</a></li>
+<li class="toctree-l2"><a class="reference internal" href="score_density_hybrid.html">score_density_hybrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="selection.html">Selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="healpix.html">Healpix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cluster.html">Cluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">hipscatalog-gen</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Reference</a></li>
+      <li class="breadcrumb-item active">Photometry</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="photometry">
+<h1>Photometry<a class="headerlink" href="#photometry" title="Link to this heading"></a></h1>
+<p>The optional top-level <code class="docutils literal notranslate"><span class="pre">photometry</span></code> block derives magnitudes lazily from
+physical flux columns. It can process multiple bands in one vectorized pass per
+partition, optionally propagate flux errors, and optionally apply a row-wise
+E(B-V) correction.</p>
+<section id="equations">
+<h2>Equations<a class="headerlink" href="#equations" title="Link to this heading"></a></h2>
+<p>For a finite, positive flux <span class="math notranslate nohighlight">\(F\)</span>, the derived magnitude is</p>
+<div class="math notranslate nohighlight">
+\[m = Z - 2.5 \log_{10}(F),\]</div>
+<p>where <span class="math notranslate nohighlight">\(Z\)</span> is <code class="docutils literal notranslate"><span class="pre">photometry.mag_offset</span></code>. When a finite, non-negative flux
+error <span class="math notranslate nohighlight">\(\sigma_F\)</span> is configured, its propagated magnitude error is</p>
+<div class="math notranslate nohighlight">
+\[\sigma_m = \frac{2.5}{\ln(10)} \frac{\sigma_F}{F}.\]</div>
+<p>When dereddening is enabled, the corrected magnitude for band <span class="math notranslate nohighlight">\(b\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[m_{b,\mathrm{corrected}} = m_b - A_b E(B-V).\]</div>
+<p>The corrected magnitude error currently equals the flux-derived magnitude
+error. Uncertainty in E(B-V) and in <span class="math notranslate nohighlight">\(A_b\)</span> is not propagated.</p>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h2>
+<p>The top-level block described here is distinct from
+<code class="docutils literal notranslate"><span class="pre">algorithm.mag_global.flux_column</span></code>. That mode-specific option is a
+single-column convenience for the internal <code class="docutils literal notranslate"><span class="pre">mag_global</span></code> selection value. Use
+top-level <code class="docutils literal notranslate"><span class="pre">photometry</span></code> when derived columns must be written, multiple bands
+must be transformed, dereddening is required, or a score mode uses the result.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">expand</span></code> when input and output columns follow regular templates. The
+following names and coefficients are illustrative only:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">photometry</span><span class="p">:</span>
+  <span class="n">mag_offset</span><span class="p">:</span> <span class="mf">25.0</span>
+  <span class="n">invalid_value</span><span class="p">:</span> <span class="n">nan</span>
+  <span class="n">replace_fluxes</span><span class="p">:</span> <span class="n">true</span>
+  <span class="n">expand</span><span class="p">:</span>
+    <span class="n">bands</span><span class="p">:</span> <span class="p">[</span><span class="n">g</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span>
+    <span class="n">flux_template</span><span class="p">:</span> <span class="s2">"</span><span class="si">{band}</span><span class="s2">_flux"</span>
+    <span class="n">flux_error_template</span><span class="p">:</span> <span class="s2">"</span><span class="si">{band}</span><span class="s2">_flux_error"</span>
+    <span class="n">mag_template</span><span class="p">:</span> <span class="s2">"</span><span class="si">{band}</span><span class="s2">_mag"</span>
+    <span class="n">mag_error_template</span><span class="p">:</span> <span class="s2">"</span><span class="si">{band}</span><span class="s2">_mag_error"</span>
+  <span class="n">dereddening</span><span class="p">:</span>
+    <span class="n">enabled</span><span class="p">:</span> <span class="n">true</span>
+    <span class="n">ebv_column</span><span class="p">:</span> <span class="n">extinction_ebv</span>
+    <span class="n">keep_observed_magnitudes</span><span class="p">:</span> <span class="n">false</span>
+    <span class="n">output_suffix</span><span class="p">:</span> <span class="s2">"_corrected"</span>
+    <span class="n">coefficients</span><span class="p">:</span>
+      <span class="n">g</span><span class="p">:</span> <span class="mf">3.0</span>
+      <span class="n">r</span><span class="p">:</span> <span class="mf">2.0</span>
+</pre></div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">measurements</span></code> instead of <code class="docutils literal notranslate"><span class="pre">expand</span></code> for irregular schemas:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">photometry</span><span class="p">:</span>
+  <span class="n">mag_offset</span><span class="p">:</span> <span class="mf">25.0</span>
+  <span class="n">measurements</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">band</span><span class="p">:</span> <span class="n">r</span>
+      <span class="n">flux_column</span><span class="p">:</span> <span class="n">flux_r</span>
+      <span class="n">flux_error_column</span><span class="p">:</span> <span class="n">flux_error_r</span>
+      <span class="n">mag_column</span><span class="p">:</span> <span class="n">magnitude_r</span>
+      <span class="n">mag_error_column</span><span class="p">:</span> <span class="n">magnitude_error_r</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">measurements</span></code> and <code class="docutils literal notranslate"><span class="pre">expand</span></code> are mutually exclusive. A flux error column and
+its magnitude error output must be configured together. Dereddening requires an
+E(B-V) column and one finite coefficient for every configured band.</p>
+</section>
+<section id="invalid-values-and-row-counts">
+<h2>Invalid values and row counts<a class="headerlink" href="#invalid-values-and-row-counts" title="Link to this heading"></a></h2>
+<p>The transformation does not filter rows. Invalid numerical inputs produce
+<code class="docutils literal notranslate"><span class="pre">NaN</span></code> outputs:</p>
+<ul class="simple">
+<li><p>flux must be finite and greater than zero;</p></li>
+<li><p>flux error must be finite and non-negative;</p></li>
+<li><p>E(B-V) must be finite for corrected outputs.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">invalid_value</span></code> currently accepts only <code class="docutils literal notranslate"><span class="pre">nan</span></code>. To retain objects whose
+derived selection value is invalid, configure the active selection block with
+<code class="docutils literal notranslate"><span class="pre">adaptive_range:</span> <span class="pre">complete</span></code> and <code class="docutils literal notranslate"><span class="pre">keep_invalid_values:</span> <span class="pre">true</span></code>. The selection
+maps invalid values to a sentinel in the last slice. At least one finite
+selection value is required to resolve the range.</p>
+</section>
+<section id="output-columns-and-projection">
+<h2>Output columns and projection<a class="headerlink" href="#output-columns-and-projection" title="Link to this heading"></a></h2>
+<p>With <code class="docutils literal notranslate"><span class="pre">replace_fluxes:</span> <span class="pre">true</span></code>, source flux and flux-error columns remain
+physical read dependencies but are omitted from the output schema. With
+<code class="docutils literal notranslate"><span class="pre">replace_fluxes:</span> <span class="pre">false</span></code>, they may be retained according to <code class="docutils literal notranslate"><span class="pre">columns.keep</span></code>.</p>
+<p>When dereddening is enabled, <code class="docutils literal notranslate"><span class="pre">keep_observed_magnitudes</span></code> controls whether the
+uncorrected magnitude columns are written alongside the corrected columns.
+Every configured photometry output is retained when <code class="docutils literal notranslate"><span class="pre">columns.keep</span></code> is empty;
+for a non-empty list, required coordinates, selection dependencies, and
+photometry outputs are added automatically.</p>
+<p>Only required physical Parquet columns are projected into the read graph. HATS
+catalogs retain LSDB-native projection and partition operations whenever the
+catalog supports them; conversion to a Dask DataFrame is used only as a
+compatibility fallback for the transformation operation.</p>
+</section>
+<section id="derived-columns-in-selection-modes">
+<h2>Derived columns in selection modes<a class="headerlink" href="#derived-columns-in-selection-modes" title="Link to this heading"></a></h2>
+<p>Photometry runs before selection normalization. A derived magnitude or error
+column can therefore be used by <code class="docutils literal notranslate"><span class="pre">mag_global</span></code> or directly in score expressions
+for <code class="docutils literal notranslate"><span class="pre">score_global</span></code> and <code class="docutils literal notranslate"><span class="pre">score_density_hybrid</span></code>.</p>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg" title="hipscatalog_gen.config.PhotometryCfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.config.PhotometryCfg</span></code></a></p></td>
+<td><p>Optional survey-independent flux-to-magnitude transformations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html#hipscatalog_gen.config.PhotometryMeasurementCfg" title="hipscatalog_gen.config.PhotometryMeasurementCfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.config.PhotometryMeasurementCfg</span></code></a></p></td>
+<td><p>One flux/error pair and its derived magnitude column names.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/photometry/hipscatalog_gen.config.DereddeningCfg.html#hipscatalog_gen.config.DereddeningCfg" title="hipscatalog_gen.config.DereddeningCfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.config.DereddeningCfg</span></code></a></p></td>
+<td><p>Per-row Galactic-extinction correction configuration.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/photometry/hipscatalog_gen.photometry.PhotometryPlan.html#hipscatalog_gen.photometry.PhotometryPlan" title="hipscatalog_gen.photometry.PhotometryPlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.photometry.PhotometryPlan</span></code></a></p></td>
+<td><p>Physical dependencies and derived schemas for one pipeline run.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/photometry/hipscatalog_gen.photometry.build_photometry_plan.html#hipscatalog_gen.photometry.build_photometry_plan" title="hipscatalog_gen.photometry.build_photometry_plan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.photometry.build_photometry_plan</span></code></a></p></td>
+<td><p>Validate physical dependencies and compile derived column names.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/photometry/hipscatalog_gen.photometry.apply_photometry.html#hipscatalog_gen.photometry.apply_photometry" title="hipscatalog_gen.photometry.apply_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.photometry.apply_photometry</span></code></a></p></td>
+<td><p>Attach configured magnitudes lazily using one task per input partition.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/photometry/hipscatalog_gen.photometry.working_photometry_columns.html#hipscatalog_gen.photometry.working_photometry_columns" title="hipscatalog_gen.photometry.working_photometry_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.photometry.working_photometry_columns</span></code></a></p></td>
+<td><p>Return final output plus selection-only columns needed downstream.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="generated/pipeline/hipscatalog_gen.pipeline.logging_utils.setup_structured_logger.html" class="btn btn-neutral float-left" title="hipscatalog_gen.pipeline.logging_utils.setup_structured_logger" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generated/photometry/hipscatalog_gen.config.PhotometryCfg.html" class="btn btn-neutral float-right" title="hipscatalog_gen.config.PhotometryCfg" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

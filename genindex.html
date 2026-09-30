@@ -45,6 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks.html">Notebooks</a></li>
 </ul>
@@ -81,6 +82,7 @@
  | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
@@ -106,6 +108,14 @@
       <ul>
         <li><a href="reference/generated/core/hipscatalog_gen.Config.html#hipscatalog_gen.Config.__init__">(Config method)</a>
 </li>
+        <li><a href="reference/generated/photometry/hipscatalog_gen.config.DereddeningCfg.html#hipscatalog_gen.config.DereddeningCfg.__init__">(DereddeningCfg method)</a>
+</li>
+        <li><a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg.__init__">(PhotometryCfg method)</a>
+</li>
+        <li><a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html#hipscatalog_gen.config.PhotometryMeasurementCfg.__init__">(PhotometryMeasurementCfg method)</a>
+</li>
+        <li><a href="reference/generated/photometry/hipscatalog_gen.photometry.PhotometryPlan.html#hipscatalog_gen.photometry.PhotometryPlan.__init__">(PhotometryPlan method)</a>
+</li>
         <li><a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext.__init__">(PipelineContext method)</a>
 </li>
         <li><a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineStage.html#hipscatalog_gen.pipeline.structure.PipelineStage.__init__">(PipelineStage method)</a>
@@ -117,12 +127,12 @@
 </li>
       <li><a href="reference/generated/utils/hipscatalog_gen.utils._detect_hats_catalog_root.html#hipscatalog_gen.utils._detect_hats_catalog_root">_detect_hats_catalog_root() (in module hipscatalog_gen.utils)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/generated/utils/hipscatalog_gen.utils._fmt_dur.html#hipscatalog_gen.utils._fmt_dur">_fmt_dur() (in module hipscatalog_gen.utils)</a>
 </li>
       <li><a href="reference/generated/utils/hipscatalog_gen.utils._get_dask_base.html#hipscatalog_gen.utils._get_dask_base">_get_dask_base() (in module hipscatalog_gen.utils)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/generated/utils/hipscatalog_gen.utils._get_meta_df.html#hipscatalog_gen.utils._get_meta_df">_get_meta_df() (in module hipscatalog_gen.utils)</a>
 </li>
       <li><a href="reference/generated/utils/hipscatalog_gen.utils._log_depth_stats.html#hipscatalog_gen.utils._log_depth_stats">_log_depth_stats() (in module hipscatalog_gen.utils)</a>
@@ -163,12 +173,18 @@
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.Config.algorithm">algorithm (Config attribute)</a>, <a href="api/hipscatalog_gen.html#hipscatalog_gen.config.Config.algorithm">[1]</a>, <a href="reference/generated/core/hipscatalog_gen.Config.html#hipscatalog_gen.Config.algorithm">[2]</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.TSVTileWriter.allsky_path">allsky_path() (TSVTileWriter method)</a>, <a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter.allsky_path">[1]</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.TSVTileWriter.allsky_tmp">allsky_tmp() (TSVTileWriter method)</a>, <a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.TSVTileWriter.allsky_tmp">[1]</a>
 </li>
+      <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.apply_photometry">apply_photometry() (in module hipscatalog_gen.photometry)</a>, <a href="reference/generated/photometry/hipscatalog_gen.photometry.apply_photometry.html#hipscatalog_gen.photometry.apply_photometry">[1]</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.core.apply_photometry">(in module hipscatalog_gen.photometry.core)</a>
+</li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.InputCfg.ascii_format">ascii_format (InputCfg attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.assign_level_edges">assign_level_edges() (in module hipscatalog_gen.selection)</a>, <a href="reference/generated/selection/hipscatalog_gen.selection.assign_level_edges.html#hipscatalog_gen.selection.assign_level_edges">[1]</a>
@@ -185,14 +201,22 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryMeasurementCfg.band">band (PhotometryMeasurementCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html#hipscatalog_gen.config.PhotometryMeasurementCfg.band">[1]</a>
+</li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.build_and_prepare_input">build_and_prepare_input() (in module hipscatalog_gen.pipeline.common)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.common.build_and_prepare_input.html#hipscatalog_gen.pipeline.common.build_and_prepare_input">[1]</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.build_header_line_from_keep">build_header_line_from_keep() (in module hipscatalog_gen.io)</a>
 
       <ul>
         <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.build_header_line_from_keep">(in module hipscatalog_gen.io.output)</a>, <a href="reference/generated/io/hipscatalog_gen.io.output.build_header_line_from_keep.html#hipscatalog_gen.io.output.build_header_line_from_keep">[1]</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.build_photometry_plan">build_photometry_plan() (in module hipscatalog_gen.photometry)</a>, <a href="reference/generated/photometry/hipscatalog_gen.photometry.build_photometry_plan.html#hipscatalog_gen.photometry.build_photometry_plan">[1]</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.core.build_photometry_plan">(in module hipscatalog_gen.photometry.core)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -225,6 +249,8 @@
         <li><a href="api/hipscatalog_gen.cluster.html#hipscatalog_gen.cluster.runtime.ClusterRuntime">(class in hipscatalog_gen.cluster.runtime)</a>, <a href="reference/generated/cluster/hipscatalog_gen.cluster.runtime.ClusterRuntime.html#hipscatalog_gen.cluster.runtime.ClusterRuntime">[1]</a>
 </li>
       </ul></li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.DereddeningCfg.coefficients">coefficients (DereddeningCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.DereddeningCfg.html#hipscatalog_gen.config.DereddeningCfg.coefficients">[1]</a>
+</li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.Config.columns">columns (Config attribute)</a>, <a href="api/hipscatalog_gen.html#hipscatalog_gen.config.Config.columns">[1]</a>, <a href="reference/generated/core/hipscatalog_gen.Config.html#hipscatalog_gen.Config.columns">[2]</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ColumnsCfg">ColumnsCfg (class in hipscatalog_gen.config)</a>
@@ -291,11 +317,17 @@
         <li><a href="api/hipscatalog_gen.healpix.html#hipscatalog_gen.healpix.densmap.densmap_for_depth_delayed">(in module hipscatalog_gen.healpix.densmap)</a>, <a href="reference/generated/healpix/hipscatalog_gen.healpix.densmap.densmap_for_depth_delayed.html#hipscatalog_gen.healpix.densmap.densmap_for_depth_delayed">[1]</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.densmaps">densmaps (PipelineContext attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext.densmaps">[1]</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.LogContext.depth">depth (LogContext attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryCfg.dereddening">dereddening (PhotometryCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg.dereddening">[1]</a>
+</li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.DereddeningCfg">DereddeningCfg (class in hipscatalog_gen.config)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.DereddeningCfg.html#hipscatalog_gen.config.DereddeningCfg">[1]</a>
+</li>
+      <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.PhotometryPlan.derived_columns">derived_columns (PhotometryPlan attribute)</a>, <a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.core.PhotometryPlan.derived_columns">[1]</a>, <a href="reference/generated/photometry/hipscatalog_gen.photometry.PhotometryPlan.html#hipscatalog_gen.photometry.PhotometryPlan.derived_columns">[2]</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.description">description (SelectionMode attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.modes.SelectionMode.html#hipscatalog_gen.pipeline.modes.SelectionMode.description">[1]</a>
 </li>
@@ -314,6 +346,18 @@
   </ul></td>
 </tr></table>
 
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.DereddeningCfg.ebv_column">ebv_column (DereddeningCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.DereddeningCfg.html#hipscatalog_gen.config.DereddeningCfg.ebv_column">[1]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.DereddeningCfg.enabled">enabled (DereddeningCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.DereddeningCfg.html#hipscatalog_gen.config.DereddeningCfg.enabled">[1]</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -323,9 +367,15 @@
         <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.finalize_write_tiles">(in module hipscatalog_gen.io.output)</a>, <a href="reference/generated/io/hipscatalog_gen.io.output.finalize_write_tiles.html#hipscatalog_gen.io.output.finalize_write_tiles">[1]</a>
 </li>
       </ul></li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.flux_column">flux_column (AlgoOpts attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryMeasurementCfg.flux_column">(PhotometryMeasurementCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html#hipscatalog_gen.config.PhotometryMeasurementCfg.flux_column">[1]</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.flux_column">flux_column (AlgoOpts attribute)</a>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryMeasurementCfg.flux_error_column">flux_error_column (PhotometryMeasurementCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html#hipscatalog_gen.config.PhotometryMeasurementCfg.flux_error_column">[1]</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage.fn">fn (PipelineStage attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineStage.html#hipscatalog_gen.pipeline.structure.PipelineStage.fn">[1]</a>
 </li>
@@ -432,6 +482,20 @@
 </li>
       </ul></li>
       <li>
+    hipscatalog_gen.photometry
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.photometry.html#module-hipscatalog_gen.photometry">module</a>
+</li>
+      </ul></li>
+      <li>
+    hipscatalog_gen.photometry.core
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.photometry.html#module-hipscatalog_gen.photometry.core">module</a>
+</li>
+      </ul></li>
+      <li>
     hipscatalog_gen.pipeline
 
       <ul>
@@ -445,6 +509,8 @@
         <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.common">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     hipscatalog_gen.pipeline.logging_utils
 
@@ -452,8 +518,6 @@
         <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline.logging_utils">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     hipscatalog_gen.pipeline.main
 
@@ -573,6 +637,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryCfg.invalid_value">invalid_value (PhotometryCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg.invalid_value">[1]</a>
+</li>
       <li><a href="api/hipscatalog_gen.healpix.html#hipscatalog_gen.healpix.ipix_for_depth">ipix_for_depth() (in module hipscatalog_gen.healpix)</a>
 
       <ul>
@@ -591,13 +657,15 @@
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.k_2">k_2 (AlgoOpts attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.k_3">k_3 (AlgoOpts attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ColumnsCfg.keep">keep (ColumnsCfg attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.keep_cols">keep_cols (PipelineContext attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext.keep_cols">[1]</a>
+</li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.DereddeningCfg.keep_observed_magnitudes">keep_observed_magnitudes (DereddeningCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.DereddeningCfg.html#hipscatalog_gen.config.DereddeningCfg.keep_observed_magnitudes">[1]</a>
 </li>
   </ul></td>
 </tr></table>
@@ -638,6 +706,12 @@
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_adaptive_range">mag_adaptive_range (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_column">mag_column (AlgoOpts attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryMeasurementCfg.mag_column">(PhotometryMeasurementCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html#hipscatalog_gen.config.PhotometryMeasurementCfg.mag_column">[1]</a>
+</li>
+      </ul></li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryMeasurementCfg.mag_error_column">mag_error_column (PhotometryMeasurementCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html#hipscatalog_gen.config.PhotometryMeasurementCfg.mag_error_column">[1]</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_hist_nbins">mag_hist_nbins (AlgoOpts attribute)</a>
 </li>
@@ -656,7 +730,11 @@
 </li>
       </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_offset">mag_offset (AlgoOpts attribute)</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryCfg.mag_offset">(PhotometryCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg.mag_offset">[1]</a>
 </li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts.mag_tie_column">mag_tie_column (AlgoOpts attribute)</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.params.MagGlobalParams">MagGlobalParams (class in hipscatalog_gen.pipeline.params)</a>
@@ -664,6 +742,8 @@
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.cli.main">main() (in module hipscatalog_gen.cli)</a>, <a href="reference/generated/core/hipscatalog_gen.cli.main.html#hipscatalog_gen.cli.main">[1]</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.common.maybe_persist_ddf">maybe_persist_ddf() (in module hipscatalog_gen.pipeline.common)</a>
+</li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryCfg.measurements">measurements (PhotometryCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg.measurements">[1]</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg.memory_per_worker">memory_per_worker (ClusterCfg attribute)</a>
 </li>
@@ -700,6 +780,10 @@
         <li><a href="api/hipscatalog_gen.mag_global.html#module-hipscatalog_gen.mag_global">hipscatalog_gen.mag_global</a>
 </li>
         <li><a href="api/hipscatalog_gen.mag_global.html#module-hipscatalog_gen.mag_global.pipeline">hipscatalog_gen.mag_global.pipeline</a>
+</li>
+        <li><a href="api/hipscatalog_gen.photometry.html#module-hipscatalog_gen.photometry">hipscatalog_gen.photometry</a>
+</li>
+        <li><a href="api/hipscatalog_gen.photometry.html#module-hipscatalog_gen.photometry.core">hipscatalog_gen.photometry.core</a>
 </li>
         <li><a href="api/hipscatalog_gen.pipeline.html#module-hipscatalog_gen.pipeline">hipscatalog_gen.pipeline</a>
 </li>
@@ -796,6 +880,10 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.Config.output">output (Config attribute)</a>, <a href="api/hipscatalog_gen.html#hipscatalog_gen.config.Config.output">[1]</a>, <a href="reference/generated/core/hipscatalog_gen.Config.html#hipscatalog_gen.Config.output">[2]</a>
 </li>
+      <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.PhotometryPlan.output_columns">output_columns (PhotometryPlan attribute)</a>, <a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.core.PhotometryPlan.output_columns">[1]</a>, <a href="reference/generated/photometry/hipscatalog_gen.photometry.PhotometryPlan.html#hipscatalog_gen.photometry.PhotometryPlan.output_columns">[2]</a>
+</li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.DereddeningCfg.output_suffix">output_suffix (DereddeningCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.DereddeningCfg.html#hipscatalog_gen.config.DereddeningCfg.output_suffix">[1]</a>
+</li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.OutputCfg">OutputCfg (class in hipscatalog_gen.config)</a>
 </li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.OutputCfg.overwrite">overwrite (OutputCfg attribute)</a>
@@ -814,14 +902,26 @@
       </ul></li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.persist_ddfs">persist_ddfs (PipelineContext attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext.persist_ddfs">[1]</a>
 </li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.Config.photometry">photometry (Config attribute)</a>, <a href="api/hipscatalog_gen.html#hipscatalog_gen.config.Config.photometry">[1]</a>, <a href="reference/generated/core/hipscatalog_gen.Config.html#hipscatalog_gen.Config.photometry">[2]</a>
+</li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryCfg">PhotometryCfg (class in hipscatalog_gen.config)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg">[1]</a>
+</li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryMeasurementCfg">PhotometryMeasurementCfg (class in hipscatalog_gen.config)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html#hipscatalog_gen.config.PhotometryMeasurementCfg">[1]</a>
+</li>
+      <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.PhotometryPlan">PhotometryPlan (class in hipscatalog_gen.photometry)</a>, <a href="reference/generated/photometry/hipscatalog_gen.photometry.PhotometryPlan.html#hipscatalog_gen.photometry.PhotometryPlan">[1]</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.core.PhotometryPlan">(class in hipscatalog_gen.photometry.core)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext">PipelineContext (class in hipscatalog_gen.pipeline.structure)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext">[1]</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineStage">PipelineStage (class in hipscatalog_gen.pipeline.structure)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineStage.html#hipscatalog_gen.pipeline.structure.PipelineStage">[1]</a>
 </li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.prepare_fn">prepare_fn (SelectionMode attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.modes.SelectionMode.html#hipscatalog_gen.pipeline.modes.SelectionMode.prepare_fn">[1]</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.prepare_mag_global">prepare_mag_global() (in module hipscatalog_gen.mag_global)</a>
 
       <ul>
@@ -858,6 +958,10 @@
       </ul></li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.remainder_ddf">remainder_ddf (PipelineContext attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext.remainder_ddf">[1]</a>
 </li>
+      <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.PhotometryCfg.replace_fluxes">replace_fluxes (PhotometryCfg attribute)</a>, <a href="reference/generated/photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg.replace_fluxes">[1]</a>
+</li>
+      <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.PhotometryPlan.replaced_columns">replaced_columns (PhotometryPlan attribute)</a>, <a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.core.PhotometryPlan.replaced_columns">[1]</a>, <a href="reference/generated/photometry/hipscatalog_gen.photometry.PhotometryPlan.html#hipscatalog_gen.photometry.PhotometryPlan.replaced_columns">[2]</a>
+</li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.report_dir">report_dir (PipelineContext attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext.report_dir">[1]</a>
 </li>
       <li><a href="api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.resolve_value_range">resolve_value_range() (in module hipscatalog_gen.selection)</a>, <a href="reference/generated/selection/hipscatalog_gen.selection.resolve_value_range.html#hipscatalog_gen.selection.resolve_value_range">[1]</a>
@@ -866,10 +970,10 @@
         <li><a href="api/hipscatalog_gen.selection.html#hipscatalog_gen.selection.score.resolve_value_range">(in module hipscatalog_gen.selection.score)</a>
 </li>
       </ul></li>
-      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.run_fn">run_fn (SelectionMode attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.modes.SelectionMode.html#hipscatalog_gen.pipeline.modes.SelectionMode.run_fn">[1]</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.modes.SelectionMode.run_fn">run_fn (SelectionMode attribute)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.modes.SelectionMode.html#hipscatalog_gen.pipeline.modes.SelectionMode.run_fn">[1]</a>
+</li>
       <li><a href="api/hipscatalog_gen.mag_global.html#hipscatalog_gen.mag_global.run_mag_global_selection">run_mag_global_selection() (in module hipscatalog_gen.mag_global)</a>
 
       <ul>
@@ -1030,6 +1134,8 @@
       </ul></li>
       <li><a href="api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg.slurm">slurm (ClusterCfg attribute)</a>
 </li>
+      <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.PhotometryPlan.source_columns">source_columns (PhotometryPlan attribute)</a>, <a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.core.PhotometryPlan.source_columns">[1]</a>, <a href="reference/generated/photometry/hipscatalog_gen.photometry.PhotometryPlan.html#hipscatalog_gen.photometry.PhotometryPlan.source_columns">[2]</a>
+</li>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.logging_utils.LogContext.stage">stage (LogContext attribute)</a>
 </li>
   </ul></td>
@@ -1088,6 +1194,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.pipeline.html#hipscatalog_gen.pipeline.structure.PipelineContext.with_updates">with_updates() (PipelineContext method)</a>, <a href="reference/generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html#hipscatalog_gen.pipeline.structure.PipelineContext.with_updates">[1]</a>
 </li>
+      <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.working_photometry_columns">working_photometry_columns() (in module hipscatalog_gen.photometry)</a>, <a href="reference/generated/photometry/hipscatalog_gen.photometry.working_photometry_columns.html#hipscatalog_gen.photometry.working_photometry_columns">[1]</a>
+
+      <ul>
+        <li><a href="api/hipscatalog_gen.photometry.html#hipscatalog_gen.photometry.core.working_photometry_columns">(in module hipscatalog_gen.photometry.core)</a>
+</li>
+      </ul></li>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.write_arguments">write_arguments() (in module hipscatalog_gen.io)</a>
 
       <ul>
@@ -1104,14 +1216,14 @@
         <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_densmap_fits">(in module hipscatalog_gen.io.output)</a>, <a href="reference/generated/io/hipscatalog_gen.io.output.write_densmap_fits.html#hipscatalog_gen.io.output.write_densmap_fits">[1]</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.write_index_html">write_index_html() (in module hipscatalog_gen.io)</a>
 
       <ul>
-        <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_index_html">(in module hipscatalog_gen.io.output)</a>
+        <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.output.write_index_html">(in module hipscatalog_gen.io.output)</a>, <a href="reference/generated/io/hipscatalog_gen.io.output.write_index_html.html#hipscatalog_gen.io.output.write_index_html">[1]</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/hipscatalog_gen.io.html#hipscatalog_gen.io.write_metadata_xml">write_metadata_xml() (in module hipscatalog_gen.io)</a>
 
       <ul>
@@ -1144,7 +1256,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

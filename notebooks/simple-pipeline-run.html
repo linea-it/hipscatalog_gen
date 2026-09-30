@@ -50,6 +50,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Reference</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../notebooks.html">Notebooks</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Simple Pipeline Run</a><ul>
@@ -90,7 +91,7 @@
              
   <section id="Running-the-HIPS-Catalog-pipeline-step-by-step">
 <h1>Running the HIPS Catalog pipeline step by step<a class="headerlink" href="#Running-the-HIPS-Catalog-pipeline-step-by-step" title="Link to this heading"></a></h1>
-<p>This notebook walks through a minimal pipeline run with explanatory comments so you can adapt it to your own data. It assumes the package is installed in editable mode and that example data are available (see <code class="docutils literal notranslate"><span class="pre">examples/data</span></code>).</p>
+<p>This notebook walks through a minimal pipeline run with explanatory comments so you can adapt it to your own catalog. It assumes the package is installed in editable mode.</p>
 <section id="1.-Import-the-pipeline-helpers">
 <h2>1. Import the pipeline helpers<a class="headerlink" href="#1.-Import-the-pipeline-helpers" title="Link to this heading"></a></h2>
 <p>We import the configuration helpers to load or inspect available presets and the main <code class="docutils literal notranslate"><span class="pre">run_pipeline</span></code> entry point.</p>
@@ -136,6 +137,7 @@ Top-level sections
 ------------------
 input      [required]
 columns    [required]
+photometry [optional]
 algorithm  [required]
 cluster    [required]
 output     [required]
@@ -160,14 +162,42 @@ dec   [required] str
 keep  [optional, default=None] list[str] or null
     Controls which columns are kept in the HiPS tiles:
       - Not set / null (default):
-          Keep all input columns preserving original input order.
+          Without photometry, keep all input columns in original order. With
+          photometry, add every derived output and, when replace_fluxes=True,
+          omit the source flux/error columns from output.
       - Empty list []:
-          Keep only the essential set: RA, DEC, score deps, and mag/flux
-          (if mag_global), with RA/DEC first.
+          Keep RA, DEC, active selection dependencies, and every configured
+          photometry output. Transformation source columns may still be read
+          internally without being written.
       - Non-empty list:
           Use the provided keep order when it already contains all essential
           columns. Otherwise, prepend missing essential columns before the keep
-          order (with RA/DEC first if they are missing).
+          order (with RA/DEC first if they are missing). Configured photometry
+          outputs are part of the essential set.
+
+photometry
+-----------
+Optional top-level flux-to-magnitude transformation block. If omitted or null,
+the input catalog is unchanged.
+
+Use this block for output magnitudes, multiple bands, dereddening, or derived
+scores in any selection mode. algorithm.mag_global.flux_column is a separate
+single-column convenience used only by mag_global selection.
+
+mag_offset       [required] finite float
+replace_fluxes   [optional, default=True] bool
+invalid_value    [optional, default=&#34;nan&#34;]
+    Currently only &#34;nan&#34; is supported.
+measurements     [required unless expand is used] list[dict]
+    Each item requires band, flux_column and mag_column. flux_error_column and
+    mag_error_column are optional but must be provided together.
+expand           [alternative to measurements] dict
+    Template shorthand with bands, flux_template, mag_template, and optional
+    flux_error_template/mag_error_template. Templates use &#34;{band}&#34;.
+dereddening      [optional] dict
+    enabled, ebv_column, coefficients, keep_observed_magnitudes, output_suffix.
+    When enabled, ebv_column and one finite coefficient per configured band are
+    required.
 
 algorithm (block-based)
 -----------------------
@@ -182,6 +212,8 @@ selection_defaults     [optional] dict
       - hist_nbins        (int, default 2048)
       - adaptive_range    (&#34;complete&#34; | &#34;hist_peak&#34;, default &#34;complete&#34;)
       - order_desc        (bool, default False)
+      - keep_invalid_values (bool, default False)
+      - tie_column        (str or null, default null)
       - density_bias_n1/n2/n3 (float, default 1.0 for SDH)
 
 mag_global block
@@ -195,6 +227,8 @@ mag_global.hist_nbins        [optional, default=selection_defaults.hist_nbins or
 mag_global.k_1/k_2/k_3       [optional] int, &#34;per active tile&#34; aliases for n_*
 mag_global.n_1/n_2/n_3       [optional] int (must be provided in order)
 mag_global.order_desc        [optional, default=selection_defaults.order_desc or False]
+mag_global.keep_invalid_values [optional, default=selection_defaults.keep_invalid_values or False]
+mag_global.tie_column        [optional, default=selection_defaults.tie_column or null]
 
 score_global block
 ^^^^^^^^^^^^^^^^^^
@@ -205,6 +239,8 @@ score_global.hist_nbins      [optional, default=selection_defaults.hist_nbins or
 score_global.k_1/k_2/k_3     [optional] int, &#34;per active tile&#34; aliases for n_*
 score_global.n_1/n_2/n_3     [optional] int (must be provided in order)
 score_global.order_desc      [optional, default=selection_defaults.order_desc or False]
+score_global.keep_invalid_values [optional, default=selection_defaults.keep_invalid_values or False]
+score_global.tie_column      [optional, default=selection_defaults.tie_column or null]
 
 score_density_hybrid block
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -219,6 +255,8 @@ score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)
 score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]
     float in [0,1]
 score_density_hybrid.order_desc     [optional, default=selection_defaults.order_desc or False]
+score_density_hybrid.keep_invalid_values [optional, default=selection_defaults.keep_invalid_values or False]
+score_density_hybrid.tie_column     [optional, default=selection_defaults.tie_column or null]
 
 cluster
 -------
@@ -228,7 +266,7 @@ n_workers                [optional, default=3] int
 threads_per_worker       [optional, default=1] int
 memory_per_worker        [optional, default=&#34;2GB&#34;] str
 slurm                    [optional, default=None] dict
-low_memory_mode          [optional, default=True] bool
+low_memory_mode          [deprecated, default unset] bool
     DEPRECATED: kept only for backward compatibility and has no effect.
     The pipeline now always uses:
       - no DataFrame persistence of large intermediates
@@ -270,30 +308,30 @@ Minimal configuration (YAML)
 </section>
 <section id="3.-Build-a-configuration-inline">
 <h2>3. Build a configuration inline<a class="headerlink" href="#3.-Build-a-configuration-inline" title="Link to this heading"></a></h2>
-<p>Here we define a minimal configuration dictionary pointing to the sample DES DR2 parquet files. In real runs, adjust paths, output locations, and processing options as needed.</p>
+<p>Here we define a minimal configuration dictionary using generic column names and placeholder locations. Replace them with values appropriate for your catalog.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cfg</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"input"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># source parquet files (wildcards allowed)</span>
-        <span class="s2">"paths"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"../../../hipscatalog_gen/tests/data/des_dr2_small_sample/*.parquet"</span><span class="p">],</span>
+        <span class="s2">"paths"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"catalog/input-*.parquet"</span><span class="p">],</span>
     <span class="p">},</span>
     <span class="s2">"columns"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># column mapping for sky coordinates</span>
-        <span class="s2">"ra"</span><span class="p">:</span> <span class="s2">"RA"</span><span class="p">,</span>
-        <span class="s2">"dec"</span><span class="p">:</span> <span class="s2">"DEC"</span><span class="p">,</span>
+        <span class="s2">"ra"</span><span class="p">:</span> <span class="s2">"ra"</span><span class="p">,</span>
+        <span class="s2">"dec"</span><span class="p">:</span> <span class="s2">"dec"</span><span class="p">,</span>
     <span class="p">},</span>
     <span class="s2">"algorithm"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># HEALPix and selection parameters</span>
         <span class="s2">"level_limit"</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
         <span class="s2">"selection_mode"</span><span class="p">:</span> <span class="s2">"mag_global"</span><span class="p">,</span>
         <span class="s2">"mag_global"</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">"mag_column"</span><span class="p">:</span> <span class="s2">"MAG_AUTO_I_DERED"</span><span class="p">,</span>
+            <span class="s2">"mag_column"</span><span class="p">:</span> <span class="s2">"mag_r"</span><span class="p">,</span>
         <span class="p">},</span>
     <span class="p">},</span>
     <span class="s2">"cluster"</span><span class="p">:</span> <span class="p">{},</span>  <span class="c1"># use defaults for clustering</span>
     <span class="s2">"output"</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># where outputs and catalog names are stored</span>
-        <span class="s2">"out_dir"</span><span class="p">:</span> <span class="s2">"../../../hipscatalog_gen/outputs/DES_DR2_small_sample"</span><span class="p">,</span>
-        <span class="s2">"cat_name"</span><span class="p">:</span> <span class="s2">"DES_DR2_small_sample"</span><span class="p">,</span>
+        <span class="s2">"out_dir"</span><span class="p">:</span> <span class="s2">"output/example_catalog"</span><span class="p">,</span>
+        <span class="s2">"cat_name"</span><span class="p">:</span> <span class="s2">"example_catalog"</span><span class="p">,</span>
     <span class="p">},</span>
 <span class="p">}</span>
 
@@ -318,7 +356,7 @@ Minimal configuration (YAML)
 <section id="Next-steps">
 <h2>Next steps<a class="headerlink" href="#Next-steps" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>Swap the input paths to point to your own data or a different survey sample.</p></li>
+<li><p>Replace the placeholder input and output locations with your own.</p></li>
 <li><p>Explore the <code class="docutils literal notranslate"><span class="pre">examples/configs</span></code> templates for richer configurations and options.</p></li>
 <li><p>Integrate this notebook in an automated workflow (e.g., scheduled jobs) to keep catalogs up to date.</p></li>
 </ul>
@@ -335,7 +373,7 @@ Minimal configuration (YAML)
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

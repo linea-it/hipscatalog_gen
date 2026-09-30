@@ -1,0 +1,6 @@
+﻿hipscatalog\_gen.photometry.build\_photometry\_plan
+===================================================
+
+.. currentmodule:: hipscatalog_gen.photometry
+
+.. autofunction:: build_photometry_plan

@@ -1,0 +1,21 @@
+hipscatalog\_gen.photometry package
+===================================
+
+Submodules
+----------
+
+hipscatalog\_gen.photometry.core module
+---------------------------------------
+
+.. automodule:: hipscatalog_gen.photometry.core
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hipscatalog_gen.photometry
+   :members:
+   :show-inheritance:
+   :undoc-members:

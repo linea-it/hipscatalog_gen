@@ -1,0 +1,6 @@
+﻿hipscatalog\_gen.photometry.apply\_photometry
+=============================================
+
+.. currentmodule:: hipscatalog_gen.photometry
+
+.. autofunction:: apply_photometry

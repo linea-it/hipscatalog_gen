@@ -1,0 +1,336 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hipscatalog_gen.photometry.core &mdash; hipscatalog-gen 0.3.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d5a15cff"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=d07363f3"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            hipscatalog-gen
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">Pipeline overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">hipscatalog-gen</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../hipscatalog_gen.html">hipscatalog_gen</a></li>
+      <li class="breadcrumb-item active">hipscatalog_gen.photometry.core</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hipscatalog_gen.photometry.core</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Planning and vectorized execution for derived photometric columns."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">PhotometryCfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_get_dask_base</span><span class="p">,</span> <span class="n">_get_meta_df</span><span class="p">,</span> <span class="n">_score_deps</span>
+
+<span class="n">_MAG_ERROR_FACTOR</span> <span class="o">=</span> <span class="mf">2.5</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="PhotometryPlan">
+<a class="viewcode-back" href="../../../reference/generated/photometry/hipscatalog_gen.photometry.PhotometryPlan.html#hipscatalog_gen.photometry.core.PhotometryPlan">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhotometryPlan</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Physical dependencies and derived schemas for one pipeline run."""</span>
+
+    <span class="n">source_columns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">replaced_columns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">derived_columns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="n">output_columns</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_append_unique</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Append a non-empty string once while preserving order."""</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target</span><span class="p">:</span>
+        <span class="n">target</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="build_photometry_plan">
+<a class="viewcode-back" href="../../../reference/generated/photometry/hipscatalog_gen.photometry.build_photometry_plan.html#hipscatalog_gen.photometry.core.build_photometry_plan">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_photometry_plan</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">,</span>
+    <span class="n">available_columns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhotometryPlan</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Validate physical dependencies and compile derived column names."""</span>
+    <span class="n">photometry</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">photometry</span>
+    <span class="k">if</span> <span class="n">photometry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">available</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">available_columns</span><span class="p">)</span>
+    <span class="n">available_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">available</span><span class="p">)</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">replaced</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">derived</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dered</span> <span class="o">=</span> <span class="n">photometry</span><span class="o">.</span><span class="n">dereddening</span>
+
+    <span class="k">for</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="n">photometry</span><span class="o">.</span><span class="n">measurements</span><span class="p">:</span>
+        <span class="n">_append_unique</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">measurement</span><span class="o">.</span><span class="n">flux_column</span><span class="p">)</span>
+        <span class="n">_append_unique</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">measurement</span><span class="o">.</span><span class="n">flux_error_column</span><span class="p">)</span>
+        <span class="n">_append_unique</span><span class="p">(</span><span class="n">replaced</span><span class="p">,</span> <span class="n">measurement</span><span class="o">.</span><span class="n">flux_column</span><span class="p">)</span>
+        <span class="n">_append_unique</span><span class="p">(</span><span class="n">replaced</span><span class="p">,</span> <span class="n">measurement</span><span class="o">.</span><span class="n">flux_error_column</span><span class="p">)</span>
+        <span class="n">_append_unique</span><span class="p">(</span><span class="n">derived</span><span class="p">,</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span><span class="p">)</span>
+        <span class="n">_append_unique</span><span class="p">(</span><span class="n">derived</span><span class="p">,</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">)</span>
+
+        <span class="n">observed</span> <span class="o">=</span> <span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">:</span>
+            <span class="n">observed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dered</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+            <span class="n">corrected</span> <span class="o">=</span> <span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span> <span class="o">+</span> <span class="n">dered</span><span class="o">.</span><span class="n">output_suffix</span><span class="p">]</span>
+            <span class="n">_append_unique</span><span class="p">(</span><span class="n">derived</span><span class="p">,</span> <span class="n">corrected</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">:</span>
+                <span class="n">corrected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span> <span class="o">+</span> <span class="n">dered</span><span class="o">.</span><span class="n">output_suffix</span><span class="p">)</span>
+                <span class="n">_append_unique</span><span class="p">(</span><span class="n">derived</span><span class="p">,</span> <span class="n">corrected</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">dered</span><span class="o">.</span><span class="n">keep_observed_magnitudes</span><span class="p">:</span>
+                <span class="n">outputs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">observed</span><span class="p">)</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">corrected</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">observed</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dered</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+        <span class="n">_append_unique</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">dered</span><span class="o">.</span><span class="n">ebv_column</span><span class="p">)</span>
+
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">sources</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_set</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Photometry source column(s) not found in input: </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+
+    <span class="n">collisions</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">derived</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">available_set</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">collisions</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"Photometry output column(s) already exist in the input: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">collisions</span><span class="si">}</span><span class="s2">. Choose different output names."</span>
+        <span class="p">)</span>
+
+    <span class="n">protected</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">ra</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">dec</span><span class="p">)}</span>
+    <span class="n">protected_collisions</span> <span class="o">=</span> <span class="n">protected</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">derived</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">protected_collisions</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Photometry outputs cannot overwrite coordinate columns: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">protected_collisions</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">PhotometryPlan</span><span class="p">(</span>
+        <span class="n">source_columns</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">sources</span><span class="p">),</span>
+        <span class="n">replaced_columns</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">replaced</span><span class="p">),</span>
+        <span class="n">derived_columns</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">derived</span><span class="p">),</span>
+        <span class="n">output_columns</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">outputs</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_numeric_array</span><span class="p">(</span><span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Convert a Series to float64 with non-numeric values represented by NaN."""</span>
+    <span class="n">numeric</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">numeric</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">,</span> <span class="n">na_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_transform_partition</span><span class="p">(</span><span class="n">pdf</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">photometry</span><span class="p">:</span> <span class="n">PhotometryCfg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Derive every configured band in one vectorized partition pass."""</span>
+    <span class="k">if</span> <span class="n">pdf</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">pdf</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="n">photometry</span><span class="o">.</span><span class="n">measurements</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">photometry</span><span class="o">.</span><span class="n">dereddening</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+                <span class="n">suffix</span> <span class="o">=</span> <span class="n">photometry</span><span class="o">.</span><span class="n">dereddening</span><span class="o">.</span><span class="n">output_suffix</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">:</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">pdf</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">dered</span> <span class="o">=</span> <span class="n">photometry</span><span class="o">.</span><span class="n">dereddening</span>
+    <span class="n">ebv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">valid_ebv</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">dered</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dered</span><span class="o">.</span><span class="n">ebv_column</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - config validation</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Dereddening requires ebv_column."</span><span class="p">)</span>
+        <span class="n">ebv</span> <span class="o">=</span> <span class="n">_numeric_array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="n">dered</span><span class="o">.</span><span class="n">ebv_column</span><span class="p">])</span>
+        <span class="n">valid_ebv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ebv</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="n">photometry</span><span class="o">.</span><span class="n">measurements</span><span class="p">:</span>
+        <span class="n">flux</span> <span class="o">=</span> <span class="n">_numeric_array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">flux_column</span><span class="p">])</span>
+        <span class="n">valid_flux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">flux</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">flux</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="n">magnitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+        <span class="n">magnitude</span><span class="p">[</span><span class="n">valid_flux</span><span class="p">]</span> <span class="o">=</span> <span class="n">photometry</span><span class="o">.</span><span class="n">mag_offset</span> <span class="o">-</span> <span class="mf">2.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">flux</span><span class="p">[</span><span class="n">valid_flux</span><span class="p">])</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">magnitude</span>
+
+        <span class="n">magnitude_error</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">flux_error_column</span> <span class="ow">and</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">:</span>
+            <span class="n">flux_error</span> <span class="o">=</span> <span class="n">_numeric_array</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">flux_error_column</span><span class="p">])</span>
+            <span class="n">valid_error</span> <span class="o">=</span> <span class="n">valid_flux</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">flux_error</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">flux_error</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">)</span>
+            <span class="n">magnitude_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+            <span class="n">magnitude_error</span><span class="p">[</span><span class="n">valid_error</span><span class="p">]</span> <span class="o">=</span> <span class="n">_MAG_ERROR_FACTOR</span> <span class="o">*</span> <span class="n">flux_error</span><span class="p">[</span><span class="n">valid_error</span><span class="p">]</span> <span class="o">/</span> <span class="n">flux</span><span class="p">[</span><span class="n">valid_error</span><span class="p">]</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">magnitude_error</span>
+
+        <span class="k">if</span> <span class="n">dered</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ebv</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">valid_ebv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover - defensive</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Missing E(B-V) values for dereddening."</span><span class="p">)</span>
+            <span class="n">corrected</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+            <span class="n">valid_corrected</span> <span class="o">=</span> <span class="n">valid_flux</span> <span class="o">&amp;</span> <span class="n">valid_ebv</span>
+            <span class="n">corrected</span><span class="p">[</span><span class="n">valid_corrected</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">magnitude</span><span class="p">[</span><span class="n">valid_corrected</span><span class="p">]</span> <span class="o">-</span> <span class="n">dered</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">band</span><span class="p">]</span> <span class="o">*</span> <span class="n">ebv</span><span class="p">[</span><span class="n">valid_corrected</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span> <span class="o">+</span> <span class="n">dered</span><span class="o">.</span><span class="n">output_suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">corrected</span>
+            <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span> <span class="ow">and</span> <span class="n">magnitude_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">corrected_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid_ebv</span><span class="p">,</span> <span class="n">magnitude_error</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span> <span class="o">+</span> <span class="n">dered</span><span class="o">.</span><span class="n">output_suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">corrected_error</span>
+
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="working_photometry_columns">
+<a class="viewcode-back" href="../../../reference/generated/photometry/hipscatalog_gen.photometry.working_photometry_columns.html#hipscatalog_gen.photometry.core.working_photometry_columns">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">working_photometry_columns</span><span class="p">(</span>
+    <span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">,</span>
+    <span class="n">available_columns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">output_columns</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return final output plus selection-only columns needed downstream."""</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">photometry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">output_columns</span><span class="p">)</span>
+
+    <span class="n">algo</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">selection_mode</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">available</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">available_columns</span><span class="p">)</span>
+    <span class="n">internal</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"score_global"</span><span class="p">:</span>
+        <span class="n">internal</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_score_deps</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">score_column</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">),</span> <span class="n">available</span><span class="p">))</span>
+        <span class="n">tie_column</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">score_tie_column</span> <span class="ow">or</span> <span class="n">algo</span><span class="o">.</span><span class="n">tie_column</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"score_density_hybrid"</span><span class="p">:</span>
+        <span class="n">internal</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_score_deps</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">sdh_score_column</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">),</span> <span class="n">available</span><span class="p">))</span>
+        <span class="n">tie_column</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">sdh_tie_column</span> <span class="ow">or</span> <span class="n">algo</span><span class="o">.</span><span class="n">tie_column</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="n">algo</span><span class="o">.</span><span class="n">mag_column</span><span class="p">,</span> <span class="n">algo</span><span class="o">.</span><span class="n">flux_column</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">available</span><span class="p">:</span>
+                <span class="n">internal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">tie_column</span> <span class="o">=</span> <span class="n">algo</span><span class="o">.</span><span class="n">mag_tie_column</span> <span class="ow">or</span> <span class="n">algo</span><span class="o">.</span><span class="n">tie_column</span>
+    <span class="k">if</span> <span class="n">tie_column</span> <span class="ow">and</span> <span class="n">tie_column</span> <span class="ow">in</span> <span class="n">available</span><span class="p">:</span>
+        <span class="n">internal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tie_column</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">([</span><span class="o">*</span><span class="n">output_columns</span><span class="p">,</span> <span class="o">*</span><span class="n">internal</span><span class="p">]))</span></div>
+
+
+
+<div class="viewcode-block" id="apply_photometry">
+<a class="viewcode-back" href="../../../reference/generated/photometry/hipscatalog_gen.photometry.apply_photometry.html#hipscatalog_gen.photometry.core.apply_photometry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_photometry</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Attach configured magnitudes lazily using one task per input partition."""</span>
+    <span class="n">photometry</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">photometry</span>
+    <span class="k">if</span> <span class="n">photometry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ddf_like</span>
+
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="n">photometry</span><span class="o">.</span><span class="n">measurements</span><span class="p">:</span>
+        <span class="n">meta</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">:</span>
+            <span class="n">meta</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">photometry</span><span class="o">.</span><span class="n">dereddening</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+            <span class="n">suffix</span> <span class="o">=</span> <span class="n">photometry</span><span class="o">.</span><span class="n">dereddening</span><span class="o">.</span><span class="n">output_suffix</span>
+            <span class="n">meta</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">:</span>
+                <span class="n">meta</span><span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"float64"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">"map_partitions"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ddf_like</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span><span class="n">_transform_partition</span><span class="p">,</span> <span class="n">photometry</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">)</span>
+
+    <span class="n">base</span> <span class="o">=</span> <span class="n">_get_dask_base</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="n">require_map_partitions</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span><span class="n">_transform_partition</span><span class="p">,</span> <span class="n">photometry</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

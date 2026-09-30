@@ -1,0 +1,32 @@
+﻿hipscatalog\_gen.config.PhotometryCfg
+=====================================
+
+.. currentmodule:: hipscatalog_gen.config
+
+.. autoclass:: PhotometryCfg
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PhotometryCfg.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PhotometryCfg.invalid_value
+      ~PhotometryCfg.replace_fluxes
+      ~PhotometryCfg.mag_offset
+      ~PhotometryCfg.measurements
+      ~PhotometryCfg.dereddening
+   
+   

@@ -1,0 +1,32 @@
+﻿hipscatalog\_gen.config.PhotometryMeasurementCfg
+================================================
+
+.. currentmodule:: hipscatalog_gen.config
+
+.. autoclass:: PhotometryMeasurementCfg
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PhotometryMeasurementCfg.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PhotometryMeasurementCfg.flux_error_column
+      ~PhotometryMeasurementCfg.mag_error_column
+      ~PhotometryMeasurementCfg.band
+      ~PhotometryMeasurementCfg.flux_column
+      ~PhotometryMeasurementCfg.mag_column
+   
+   

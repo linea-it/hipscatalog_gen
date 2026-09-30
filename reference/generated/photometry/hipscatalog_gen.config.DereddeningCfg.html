@@ -1,0 +1,236 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hipscatalog_gen.config.DereddeningCfg &mdash; hipscatalog-gen 0.3.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d5a15cff"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=d07363f3"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="hipscatalog_gen.photometry.PhotometryPlan" href="hipscatalog_gen.photometry.PhotometryPlan.html" />
+    <link rel="prev" title="hipscatalog_gen.config.PhotometryMeasurementCfg" href="hipscatalog_gen.config.PhotometryMeasurementCfg.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            hipscatalog-gen
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">Pipeline overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../core.html">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline.html">Pipeline</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../photometry.html">Photometry</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../photometry.html#equations">Equations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../photometry.html#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../photometry.html#invalid-values-and-row-counts">Invalid values and row counts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../photometry.html#output-columns-and-projection">Output columns and projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../photometry.html#derived-columns-in-selection-modes">Derived columns in selection modes</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../photometry.html#api">API</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.config.PhotometryCfg.html">hipscatalog_gen.config.PhotometryCfg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.config.PhotometryMeasurementCfg.html">hipscatalog_gen.config.PhotometryMeasurementCfg</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">hipscatalog_gen.config.DereddeningCfg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.photometry.PhotometryPlan.html">hipscatalog_gen.photometry.PhotometryPlan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.photometry.build_photometry_plan.html">hipscatalog_gen.photometry.build_photometry_plan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.photometry.apply_photometry.html">hipscatalog_gen.photometry.apply_photometry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hipscatalog_gen.photometry.working_photometry_columns.html">hipscatalog_gen.photometry.working_photometry_columns</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../mag_global.html">mag_global</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../score_global.html">score_global</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../score_density_hybrid.html">score_density_hybrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../selection.html">Selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../healpix.html">Healpix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../io.html">I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cluster.html">Cluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../utils.html">Utils</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">hipscatalog-gen</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Reference</a></li>
+          <li class="breadcrumb-item"><a href="../../photometry.html">Photometry</a></li>
+      <li class="breadcrumb-item active">hipscatalog_gen.config.DereddeningCfg</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hipscatalog-gen-config-dereddeningcfg">
+<h1>hipscatalog_gen.config.DereddeningCfg<a class="headerlink" href="#hipscatalog-gen-config-dereddeningcfg" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="hipscatalog_gen.config.DereddeningCfg">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DereddeningCfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ebv_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_observed_magnitudes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_suffix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_dered'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/config.html#DereddeningCfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.config.DereddeningCfg" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Per-row Galactic-extinction correction configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>enabled</strong> (<em>bool</em>)</p></li>
+<li><p><strong>ebv_column</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>coefficients</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>keep_observed_magnitudes</strong> (<em>bool</em>)</p></li>
+<li><p><strong>output_suffix</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="hipscatalog_gen.config.DereddeningCfg.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ebv_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coefficients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_observed_magnitudes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_suffix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_dered'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipscatalog_gen.config.DereddeningCfg.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>enabled</strong> (<em>bool</em>)</p></li>
+<li><p><strong>ebv_column</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>coefficients</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>float</em><em>]</em>)</p></li>
+<li><p><strong>keep_observed_magnitudes</strong> (<em>bool</em>)</p></li>
+<li><p><strong>output_suffix</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.config.DereddeningCfg.__init__" title="hipscatalog_gen.config.DereddeningCfg.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([enabled, ebv_column, ...])</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.config.DereddeningCfg.ebv_column" title="hipscatalog_gen.config.DereddeningCfg.ebv_column"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ebv_column</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hipscatalog_gen.config.DereddeningCfg.enabled" title="hipscatalog_gen.config.DereddeningCfg.enabled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enabled</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.config.DereddeningCfg.keep_observed_magnitudes" title="hipscatalog_gen.config.DereddeningCfg.keep_observed_magnitudes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">keep_observed_magnitudes</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#hipscatalog_gen.config.DereddeningCfg.output_suffix" title="hipscatalog_gen.config.DereddeningCfg.output_suffix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">output_suffix</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.config.DereddeningCfg.coefficients" title="hipscatalog_gen.config.DereddeningCfg.coefficients"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coefficients</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.config.DereddeningCfg.enabled">
+<span class="sig-name descname"><span class="pre">enabled</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#hipscatalog_gen.config.DereddeningCfg.enabled" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.config.DereddeningCfg.ebv_column">
+<span class="sig-name descname"><span class="pre">ebv_column</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#hipscatalog_gen.config.DereddeningCfg.ebv_column" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.config.DereddeningCfg.coefficients">
+<span class="sig-name descname"><span class="pre">coefficients</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#hipscatalog_gen.config.DereddeningCfg.coefficients" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.config.DereddeningCfg.keep_observed_magnitudes">
+<span class="sig-name descname"><span class="pre">keep_observed_magnitudes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#hipscatalog_gen.config.DereddeningCfg.keep_observed_magnitudes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="hipscatalog_gen.config.DereddeningCfg.output_suffix">
+<span class="sig-name descname"><span class="pre">output_suffix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'_dered'</span></span><a class="headerlink" href="#hipscatalog_gen.config.DereddeningCfg.output_suffix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="hipscatalog_gen.config.PhotometryMeasurementCfg.html" class="btn btn-neutral float-left" title="hipscatalog_gen.config.PhotometryMeasurementCfg" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="hipscatalog_gen.photometry.PhotometryPlan.html" class="btn btn-neutral float-right" title="hipscatalog_gen.photometry.PhotometryPlan" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
