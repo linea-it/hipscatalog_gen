@@ -1,0 +1,94 @@
+# LSST DP2 object catalog: convert PSF fluxes to dereddened magnitudes on the fly.
+input:
+  paths:
+    - "<path-to-data>/object/*.parq"
+  format: parquet
+
+columns:
+  ra: coord_ra
+  dec: coord_dec
+  # Flux and E(B-V) columns are read only for the photometric transformation.
+  # They are replaced in the output by the derived columns listed below.
+  keep:
+    - "objectId"
+    - "detect_fromBlend"
+    - "detect_isDeblendedModelSource"
+    - "detect_isIsolated"
+    - "refExtendedness"
+    - "tract"
+    - "patch"
+    - "u_psfMag_dered"
+    - "u_psfMagErr_dered"
+    - "g_psfMag_dered"
+    - "g_psfMagErr_dered"
+    - "r_psfMag_dered"
+    - "r_psfMagErr_dered"
+    - "i_psfMag_dered"
+    - "i_psfMagErr_dered"
+    - "z_psfMag_dered"
+    - "z_psfMagErr_dered"
+    - "y_psfMag_dered"
+    - "y_psfMagErr_dered"
+
+photometry:
+  mag_offset: 31.4
+  invalid_value: "nan"
+  replace_fluxes: true
+  expand:
+    bands: ["u", "g", "r", "i", "z", "y"]
+    flux_template: "{band}_psfFlux"
+    flux_error_template: "{band}_psfFluxErr"
+    mag_template: "{band}_psfMag"
+    mag_error_template: "{band}_psfMagErr"
+  dereddening:
+    enabled: true
+    ebv_column: "ebv"
+    keep_observed_magnitudes: false
+    output_suffix: "_dered"
+    coefficients:
+      u: 4.81
+      g: 3.64
+      r: 2.70
+      i: 2.06
+      z: 1.58
+      y: 1.31
+
+algorithm:
+  selection_mode: "score_density_hybrid"
+  level_limit: 10
+  moc_order: 10
+  selection_defaults:
+    hist_nbins: 2048
+    adaptive_range: "complete"
+    order_desc: false
+    keep_invalid_values: true
+    tie_column: null
+  score_density_hybrid:
+    score_column: "i_psfMag_dered"
+    adaptive_range: "complete"
+    order_desc: false
+    keep_invalid_values: true
+    tie_column: null
+
+cluster:
+  mode: "slurm"
+  n_workers: 22
+  # SLURMCluster maps this to four cores and uses one process per worker job.
+  threads_per_worker: 4
+  memory_per_worker: "32GB"
+  slurm:
+    queue: "cpu_pipelines"
+    account: "hpc-pipelines"
+    interface: "ib0"
+    job_extra_directives:
+      - "--time=12:00:00"
+  # "off" → disabled, "per_step" → per-stage, "global" → full pipeline
+  diagnostics_mode: "global"
+
+output:
+  out_dir: "<path-omitted>/LSST_DP2"
+  cat_name: "LSST_DP2"
+  target: "0 0"
+  creator_did: "ivo://PRIVATE_USER/LSST_DP2"
+  obs_title: "LSST DP2 catalog"
+  overwrite: false

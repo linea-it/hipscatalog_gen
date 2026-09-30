@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import math
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping
 
 import yaml  # type: ignore[import-untyped, unused-ignore]
@@ -13,6 +14,9 @@ __all__ = [
     "ColumnsCfg",
     "InputCfg",
     "ClusterCfg",
+    "PhotometryMeasurementCfg",
+    "DereddeningCfg",
+    "PhotometryCfg",
     "OutputCfg",
     "Config",
     "load_config",
@@ -121,6 +125,39 @@ class ColumnsCfg:
     keep: List[str] | None = None  # optional explicit list of columns to keep
 
 
+@dataclass(frozen=True)
+class PhotometryMeasurementCfg:
+    """One flux/error pair and its derived magnitude column names."""
+
+    band: str
+    flux_column: str
+    mag_column: str
+    flux_error_column: str | None = None
+    mag_error_column: str | None = None
+
+
+@dataclass(frozen=True)
+class DereddeningCfg:
+    """Per-row Galactic-extinction correction configuration."""
+
+    enabled: bool = False
+    ebv_column: str | None = None
+    coefficients: Dict[str, float] = field(default_factory=dict)
+    keep_observed_magnitudes: bool = False
+    output_suffix: str = "_dered"
+
+
+@dataclass(frozen=True)
+class PhotometryCfg:
+    """Optional survey-independent flux-to-magnitude transformations."""
+
+    mag_offset: float
+    measurements: List[PhotometryMeasurementCfg]
+    invalid_value: str = "nan"
+    replace_fluxes: bool = True
+    dereddening: DereddeningCfg = field(default_factory=DereddeningCfg)
+
+
 @dataclass
 class InputCfg:
     """Input catalog configuration."""
@@ -165,6 +202,7 @@ class Config:
     algorithm: AlgoOpts
     cluster: ClusterCfg
     output: OutputCfg
+    photometry: PhotometryCfg | None = None
 
 
 _CONFIG_HELP_TEXT = """
@@ -175,6 +213,7 @@ Top-level sections
 ------------------
 input      [required]
 columns    [required]
+photometry [optional]
 algorithm  [required]
 cluster    [required]
 output     [required]
@@ -199,14 +238,42 @@ dec   [required] str
 keep  [optional, default=None] list[str] or null
     Controls which columns are kept in the HiPS tiles:
       - Not set / null (default):
-          Keep all input columns preserving original input order.
+          Without photometry, keep all input columns in original order. With
+          photometry, add every derived output and, when replace_fluxes=True,
+          omit the source flux/error columns from output.
       - Empty list []:
-          Keep only the essential set: RA, DEC, score deps, and mag/flux
-          (if mag_global), with RA/DEC first.
+          Keep RA, DEC, active selection dependencies, and every configured
+          photometry output. Transformation source columns may still be read
+          internally without being written.
       - Non-empty list:
           Use the provided keep order when it already contains all essential
           columns. Otherwise, prepend missing essential columns before the keep
-          order (with RA/DEC first if they are missing).
+          order (with RA/DEC first if they are missing). Configured photometry
+          outputs are part of the essential set.
+
+photometry
+-----------
+Optional top-level flux-to-magnitude transformation block. If omitted or null,
+the input catalog is unchanged.
+
+Use this block for output magnitudes, multiple bands, dereddening, or derived
+scores in any selection mode. algorithm.mag_global.flux_column is a separate
+single-column convenience used only by mag_global selection.
+
+mag_offset       [required] finite float
+replace_fluxes   [optional, default=True] bool
+invalid_value    [optional, default="nan"]
+    Currently only "nan" is supported.
+measurements     [required unless expand is used] list[dict]
+    Each item requires band, flux_column and mag_column. flux_error_column and
+    mag_error_column are optional but must be provided together.
+expand           [alternative to measurements] dict
+    Template shorthand with bands, flux_template, mag_template, and optional
+    flux_error_template/mag_error_template. Templates use "{band}".
+dereddening      [optional] dict
+    enabled, ebv_column, coefficients, keep_observed_magnitudes, output_suffix.
+    When enabled, ebv_column and one finite coefficient per configured band are
+    required.
 
 algorithm (block-based)
 -----------------------
@@ -221,6 +288,8 @@ selection_defaults     [optional] dict
       - hist_nbins        (int, default 2048)
       - adaptive_range    (\"complete\" | \"hist_peak\", default \"complete\")
       - order_desc        (bool, default False)
+      - keep_invalid_values (bool, default False)
+      - tie_column        (str or null, default null)
       - density_bias_n1/n2/n3 (float, default 1.0 for SDH)
 
 mag_global block
@@ -234,6 +303,8 @@ mag_global.hist_nbins        [optional, default=selection_defaults.hist_nbins or
 mag_global.k_1/k_2/k_3       [optional] int, \"per active tile\" aliases for n_*
 mag_global.n_1/n_2/n_3       [optional] int (must be provided in order)
 mag_global.order_desc        [optional, default=selection_defaults.order_desc or False]
+mag_global.keep_invalid_values [optional, default=selection_defaults.keep_invalid_values or False]
+mag_global.tie_column        [optional, default=selection_defaults.tie_column or null]
 
 score_global block
 ^^^^^^^^^^^^^^^^^^
@@ -244,6 +315,8 @@ score_global.hist_nbins      [optional, default=selection_defaults.hist_nbins or
 score_global.k_1/k_2/k_3     [optional] int, \"per active tile\" aliases for n_*
 score_global.n_1/n_2/n_3     [optional] int (must be provided in order)
 score_global.order_desc      [optional, default=selection_defaults.order_desc or False]
+score_global.keep_invalid_values [optional, default=selection_defaults.keep_invalid_values or False]
+score_global.tie_column      [optional, default=selection_defaults.tie_column or null]
 
 score_density_hybrid block
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -258,6 +331,8 @@ score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)
 score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]
     float in [0,1]
 score_density_hybrid.order_desc     [optional, default=selection_defaults.order_desc or False]
+score_density_hybrid.keep_invalid_values [optional, default=selection_defaults.keep_invalid_values or False]
+score_density_hybrid.tie_column     [optional, default=selection_defaults.tie_column or null]
 
 cluster
 -------
@@ -267,7 +342,7 @@ n_workers                [optional, default=3] int
 threads_per_worker       [optional, default=1] int
 memory_per_worker        [optional, default="2GB"] str
 slurm                    [optional, default=None] dict
-low_memory_mode          [optional, default=True] bool
+low_memory_mode          [deprecated, default unset] bool
     DEPRECATED: kept only for backward compatibility and has no effect.
     The pipeline now always uses:
       - no DataFrame persistence of large intermediates
@@ -321,6 +396,149 @@ def display_available_configs() -> None:
         display_available_configs()
     """
     print(_CONFIG_HELP_TEXT)
+
+
+def _parse_photometry(raw: Any) -> PhotometryCfg | None:
+    """Parse and validate the optional photometric transformation block."""
+    if raw is None:
+        return None
+    if not isinstance(raw, Mapping):
+        raise ValueError("photometry must be a mapping or null.")
+
+    try:
+        mag_offset = float(raw["mag_offset"])
+    except KeyError as err:
+        raise ValueError("photometry.mag_offset is required.") from err
+    except (TypeError, ValueError) as err:
+        raise ValueError("photometry.mag_offset must be a finite number.") from err
+    if not math.isfinite(mag_offset):
+        raise ValueError("photometry.mag_offset must be a finite number.")
+
+    invalid_value = str(raw.get("invalid_value", "nan")).lower()
+    if invalid_value != "nan":
+        raise ValueError("photometry.invalid_value currently supports only 'nan'.")
+
+    raw_measurements = raw.get("measurements")
+    raw_expand = raw.get("expand")
+    if raw_measurements is not None and raw_expand is not None:
+        raise ValueError("photometry.measurements and photometry.expand are mutually exclusive.")
+
+    entries: list[Mapping[str, Any]] = []
+    if raw_expand is not None:
+        if not isinstance(raw_expand, Mapping):
+            raise ValueError("photometry.expand must be a mapping.")
+        bands = raw_expand.get("bands")
+        if not isinstance(bands, list) or not bands:
+            raise ValueError("photometry.expand.bands must be a non-empty list.")
+        required_templates = ("flux_template", "mag_template")
+        missing_templates = [name for name in required_templates if not raw_expand.get(name)]
+        if missing_templates:
+            raise ValueError("photometry.expand requires: " + ", ".join(missing_templates) + ".")
+        for band_raw in bands:
+            band = str(band_raw)
+            values: dict[str, Any] = {"band": band}
+            for source, target in (
+                ("flux_template", "flux_column"),
+                ("flux_error_template", "flux_error_column"),
+                ("mag_template", "mag_column"),
+                ("mag_error_template", "mag_error_column"),
+            ):
+                template = raw_expand.get(source)
+                if template is not None:
+                    try:
+                        values[target] = str(template).format(band=band)
+                    except (KeyError, ValueError) as err:
+                        raise ValueError(
+                            f"photometry.expand.{source} must use a valid '{{band}}' template."
+                        ) from err
+            entries.append(values)
+    else:
+        if not isinstance(raw_measurements, list) or not raw_measurements:
+            raise ValueError("photometry.measurements must be a non-empty list when expand is not used.")
+        if not all(isinstance(item, Mapping) for item in raw_measurements):
+            raise ValueError("Each photometry.measurements entry must be a mapping.")
+        entries = list(raw_measurements)
+
+    measurements: list[PhotometryMeasurementCfg] = []
+    generated_names: set[str] = set()
+    for idx, entry in enumerate(entries):
+        missing = [name for name in ("band", "flux_column", "mag_column") if not entry.get(name)]
+        if missing:
+            raise ValueError(f"photometry.measurements[{idx}] requires: {', '.join(missing)}.")
+        flux_error = entry.get("flux_error_column")
+        mag_error = entry.get("mag_error_column")
+        if bool(flux_error) != bool(mag_error):
+            raise ValueError(
+                f"photometry.measurements[{idx}] must set flux_error_column and mag_error_column together."
+            )
+        measurement = PhotometryMeasurementCfg(
+            band=str(entry["band"]),
+            flux_column=str(entry["flux_column"]),
+            flux_error_column=str(flux_error) if flux_error else None,
+            mag_column=str(entry["mag_column"]),
+            mag_error_column=str(mag_error) if mag_error else None,
+        )
+        outputs = [measurement.mag_column]
+        if measurement.mag_error_column:
+            outputs.append(measurement.mag_error_column)
+        duplicates = generated_names.intersection(outputs)
+        if duplicates:
+            raise ValueError(f"Duplicate photometry output column(s): {sorted(duplicates)}.")
+        generated_names.update(outputs)
+        measurements.append(measurement)
+
+    raw_dered = raw.get("dereddening", {}) or {}
+    if not isinstance(raw_dered, Mapping):
+        raise ValueError("photometry.dereddening must be a mapping.")
+    dered_enabled = bool(raw_dered.get("enabled", False))
+    ebv_column = raw_dered.get("ebv_column")
+    suffix = str(raw_dered.get("output_suffix", "_dered"))
+    coeff_raw = raw_dered.get("coefficients", {}) or {}
+    if not isinstance(coeff_raw, Mapping):
+        raise ValueError("photometry.dereddening.coefficients must be a mapping.")
+    coefficients: Dict[str, float] = {}
+    for band, value in coeff_raw.items():
+        try:
+            coefficient = float(value)
+        except (TypeError, ValueError) as err:
+            raise ValueError(f"photometry.dereddening.coefficients.{band} must be finite.") from err
+        if not math.isfinite(coefficient):
+            raise ValueError(f"photometry.dereddening.coefficients.{band} must be finite.")
+        coefficients[str(band)] = coefficient
+
+    if dered_enabled:
+        if not ebv_column:
+            raise ValueError("photometry.dereddening.ebv_column is required when enabled.")
+        if not suffix:
+            raise ValueError("photometry.dereddening.output_suffix cannot be empty.")
+        missing_bands = [m.band for m in measurements if m.band not in coefficients]
+        if missing_bands:
+            raise ValueError(
+                "Missing extinction coefficient(s) for band(s): " + ", ".join(missing_bands) + "."
+            )
+        corrected_names: list[str] = []
+        for measurement in measurements:
+            corrected_names.append(measurement.mag_column + suffix)
+            if measurement.mag_error_column:
+                corrected_names.append(measurement.mag_error_column + suffix)
+        collisions = generated_names.intersection(corrected_names)
+        if collisions or len(corrected_names) != len(set(corrected_names)):
+            raise ValueError("Dereddened photometry output column names collide.")
+
+    dereddening = DereddeningCfg(
+        enabled=dered_enabled,
+        ebv_column=str(ebv_column) if ebv_column else None,
+        coefficients=coefficients,
+        keep_observed_magnitudes=bool(raw_dered.get("keep_observed_magnitudes", False)),
+        output_suffix=suffix,
+    )
+    return PhotometryCfg(
+        mag_offset=mag_offset,
+        measurements=measurements,
+        invalid_value=invalid_value,
+        replace_fluxes=bool(raw.get("replace_fluxes", True)),
+        dereddening=dereddening,
+    )
 
 
 def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
@@ -553,6 +771,7 @@ def _build_config_from_mapping(y: Mapping[str, Any]) -> Config:
             obs_title=y["output"].get("obs_title"),
             overwrite=bool(y["output"].get("overwrite", False)),
         ),
+        photometry=_parse_photometry(y.get("photometry")),
     )
 
     # ------------------------------------------------------------------

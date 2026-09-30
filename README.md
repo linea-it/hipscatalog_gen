@@ -21,6 +21,10 @@ The pipeline supports three selection modes, configured in the YAML file under a
 - **score_global** — global selection driven by an arbitrary score/expression.
 - **score_density_hybrid** — density-driven depths 1..`density_up_to_depth` (default 4) with score-based distribution afterwards.
 
+An optional top-level `photometry` block derives magnitudes and errors lazily
+from flux columns, optionally applies an E(B-V) correction, and exposes the
+derived columns to every selection mode.
+
 -------------------------------------------------------------------------------
 
 ## Quick Start (PyPI)
@@ -88,6 +92,13 @@ Selection modes live under ``algorithm.selection_mode``:
 Mode-specific parameters live inside blocks ``algorithm.mag_global``, ``algorithm.score_global``, and
 ``algorithm.score_density_hybrid`` (with optional shared defaults in ``algorithm.selection_defaults``).
 
+Use top-level ``photometry`` when derived magnitudes must be written, when
+multiple bands are converted, when dereddening is required, or when a derived
+column is used by a score mode. ``algorithm.mag_global.flux_column`` remains a
+separate single-column convenience used only by ``mag_global`` selection. See
+the photometry reference in the project documentation for formulas, invalid
+value handling, naming, and output projection.
+
 Cluster memory policy (current behavior):
 
 - The pipeline now uses fixed defaults optimized for large catalogs:
@@ -137,6 +148,10 @@ Summarize an existing telemetry.json:
 
     hipscatalog-gen --telemetry /path/to/telemetry.json
 
+Preview a generated catalog locally:
+
+    hipscatalog-gen serve --out output/example_catalog
+
 ## Output Structure
 
 Each run generates a HiPS-compliant directory structure under output.out_dir:
@@ -147,7 +162,8 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - Moc.fits / Moc.json     → Multi-Order Coverage maps.
 - properties / metadata.xml → HiPS metadata descriptors.
 - process.log / arguments  → Run logs and configuration snapshot (optional process.jsonl when `--json-logs`).
-- telemetry.json          → Run summary with per-stage durations and input/output counts.
+- telemetry.json          → Schema-versioned run summary with per-stage durations and input/output counts.
+- index.html              → Local catalog preview entry point.
 - Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.
 
 -------------------------------------------------------------------------------
