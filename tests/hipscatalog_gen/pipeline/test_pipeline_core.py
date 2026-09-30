@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import sys
 from contextlib import nullcontext
@@ -839,7 +840,13 @@ def test_run_pipeline_happy_path(monkeypatch, tmp_path, log_capture):
 
     def fake_write_counts_summaries(*args, **kwargs):
         captured_counts_kwargs.update(kwargs)
-        return (1, {"output": {}, "input": {}})
+        return (
+            1,
+            {
+                "output": {"total": 1, "depth_totals": {"1": 1}, "depths": {}},
+                "input": {"total": 1},
+            },
+        )
 
     monkeypatch.setattr(main, "write_counts_summaries", fake_write_counts_summaries)
     monkeypatch.setattr(main, "write_properties", lambda *_, **__: None)
@@ -848,6 +855,14 @@ def test_run_pipeline_happy_path(monkeypatch, tmp_path, log_capture):
     assert dummy_mode.normalize_called and dummy_mode.prepare_called and dummy_mode.run_called
     assert captured_counts_kwargs.get("precomputed_depth_totals") == {"1": 1}
     assert any("START HiPS" in m for m in logs)
+    telemetry = json.loads((tmp_path / "telemetry.json").read_text(encoding="utf-8"))
+    assert telemetry["schema_version"] == 1
+    assert telemetry["counts"] == {
+        "output": {"total": 1, "depth_totals": {"1": 1}, "depths": {}},
+        "input": {"total": 1},
+    }
+    assert "output_counts" not in telemetry
+    assert "photometry" in telemetry["stages"]
 
 
 def test_run_pipeline_overwrite_file(monkeypatch, tmp_path, log_capture):

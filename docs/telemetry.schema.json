@@ -48,6 +48,28 @@
         "additionalProperties": true
       }
     },
+    "photometry": {
+      "type": "object",
+      "required": ["measurements", "dereddening", "replace_fluxes", "output_columns"],
+      "properties": {
+        "measurements": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "dereddening": {
+          "type": "boolean"
+        },
+        "replace_fluxes": {
+          "type": "boolean"
+        },
+        "output_columns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    },
     "counts": {
       "type": "object",
       "required": ["input", "output"],

@@ -28,6 +28,7 @@ from pathlib import Path
 from ..cluster.runtime import setup_cluster, shutdown_cluster
 from ..config import Config
 from ..io.output import write_properties
+from ..photometry import apply_photometry, working_photometry_columns
 from ..utils import _mkdirs, _ts
 from .common import (
     build_and_prepare_input,
@@ -140,6 +141,37 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
             context.ddf, context.diag_ctx, context.log_fn, context.avoid_computes
         )
         return context.with_updates(input_total=input_total)
+
+    def _stage_photometry(context: PipelineContext) -> PipelineContext:
+        """Attach configured photometry lazily and discard internal source columns."""
+        photometry = getattr(context.cfg, "photometry", None)
+        if photometry is None:
+            return context
+        if context.ddf is None or context.keep_cols is None:
+            raise RuntimeError("Pipeline context missing photometry inputs.")  # pragma: no cover
+
+        transformed = apply_photometry(context.ddf, context.cfg)
+        working_columns = working_photometry_columns(
+            context.cfg,
+            list(transformed.columns),
+            context.keep_cols,
+        )
+        transformed = transformed[working_columns]
+        dered = photometry.dereddening
+        context.log_fn(
+            "[photometry] derived "
+            f"{len(photometry.measurements)} measurement(s) in one partition-wise pass; "
+            f"dereddening={dered.enabled}; replace_fluxes={photometry.replace_fluxes}.",
+            always=True,
+        )
+        telemetry = dict(context.telemetry)
+        telemetry["photometry"] = {
+            "measurements": len(photometry.measurements),
+            "dereddening": dered.enabled,
+            "replace_fluxes": photometry.replace_fluxes,
+            "output_columns": list(context.keep_cols),
+        }
+        return context.with_updates(ddf=transformed, telemetry=telemetry)
 
     def _stage_prepare_selection(context: PipelineContext) -> PipelineContext:
         """Prepare remainder DDF for tile writing after selection normalization."""
@@ -273,7 +305,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
             precomputed_depth_totals=precomputed_depth_totals,
         )
         telemetry = dict(context.telemetry)
-        telemetry["output_counts"] = counts_payload
+        telemetry["counts"] = counts_payload
         return context.with_updates(total_written=total_written, telemetry=telemetry)
 
     def _stage_properties(context: PipelineContext) -> PipelineContext:
@@ -307,6 +339,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     pipeline_stages = [
         PipelineStage("prepare_input", _stage_prepare_input, diag_label="dask_prepare_input"),
         PipelineStage("input_total", _stage_count_input, diag_label="dask_input_total"),
+        PipelineStage("photometry", _stage_photometry, diag_label="dask_photometry"),
         PipelineStage("normalize_selection", _stage_normalize_selection),
         PipelineStage(f"prepare_{selection_mode}", _stage_prepare_selection),
         PipelineStage("densmaps", _stage_densmaps, diag_label="dask_densmaps"),
@@ -320,6 +353,7 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         """Execute the ordered pipeline stages with telemetry updates."""
         final_ctx = run_stages(pipeline_stages, ctx)
         telemetry = dict(final_ctx.telemetry)
+        telemetry["schema_version"] = 1
         telemetry["selection_mode"] = selection_mode
         telemetry["level_limit"] = cfg.algorithm.level_limit
         telemetry["moc_order"] = getattr(cfg.algorithm, "moc_order", cfg.algorithm.level_limit)

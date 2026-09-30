@@ -9,6 +9,7 @@ Curated, autosummary-driven API reference grouped by domain.
 
    core
    pipeline
+   photometry
 
 .. toctree::
    :maxdepth: 1

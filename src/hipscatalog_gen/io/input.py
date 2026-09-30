@@ -12,7 +12,8 @@ from dask import compute as dask_compute
 from lsdb.catalog import Catalog as LsdbCatalog
 
 from ..config import Config
-from ..utils import _ID_RE, _get_dask_base, _get_meta_df, _resolve_col_name, _score_deps
+from ..photometry import PhotometryPlan, build_photometry_plan
+from ..utils import _ID_RE, _resolve_col_name, _score_deps
 
 __all__ = [
     "_build_input_ddf",
@@ -74,6 +75,86 @@ def _resolve_keep_columns_order(
     return [*lead_missing, *rest_missing, *requested_keep_unique]
 
 
+def _active_selection_dependencies(cfg: Config, available_columns: List[str]) -> List[str]:
+    """Resolve physical or virtual columns needed by the active selection mode."""
+    algo = cfg.algorithm
+    mode = str(algo.selection_mode).lower()
+    dependencies: List[str] = []
+
+    if mode == "score_global":
+        dependencies.extend(_score_deps(str(algo.score_column or ""), available_columns))
+        tie_column = algo.score_tie_column or algo.tie_column
+    elif mode == "score_density_hybrid":
+        dependencies.extend(_score_deps(str(algo.sdh_score_column or ""), available_columns))
+        tie_column = algo.sdh_tie_column or algo.tie_column
+    else:
+        for name in (algo.mag_column, algo.flux_column):
+            if name and name in available_columns:
+                dependencies.append(name)
+        tie_column = algo.mag_tie_column or algo.tie_column
+
+    if tie_column and tie_column in available_columns:
+        dependencies.append(tie_column)
+    return list(dict.fromkeys(dependencies))
+
+
+def _plan_input_columns(
+    *,
+    available_columns: List[str],
+    ra_name: str,
+    dec_name: str,
+    cfg: Config,
+) -> tuple[List[str], List[str], PhotometryPlan | None]:
+    """Separate physical read dependencies from final output columns."""
+    photometry_plan = build_photometry_plan(cfg, available_columns)
+    derived = list(photometry_plan.derived_columns) if photometry_plan else []
+    logical_columns = [*available_columns, *derived]
+    selection_dependencies = _active_selection_dependencies(cfg, logical_columns)
+
+    if photometry_plan is None:
+        output_available = list(available_columns)
+        output_required = [ra_name, dec_name, *selection_dependencies]
+    else:
+        replaced = (
+            set(photometry_plan.replaced_columns)
+            if cfg.photometry is not None and cfg.photometry.replace_fluxes
+            else set()
+        )
+        output_available = [name for name in available_columns if name not in replaced]
+        output_available.extend(photometry_plan.output_columns)
+        selection_output_dependencies = [
+            name
+            for name in selection_dependencies
+            if name not in replaced and (name in available_columns or name in photometry_plan.output_columns)
+        ]
+        output_required = [
+            ra_name,
+            dec_name,
+            *photometry_plan.output_columns,
+            *selection_output_dependencies,
+        ]
+
+    output_columns = _resolve_keep_columns_order(
+        available_cols=output_available,
+        ra_name=ra_name,
+        dec_name=dec_name,
+        must_keep=output_required,
+        requested_keep_cfg=cfg.columns.keep,
+    )
+
+    read_required = [name for name in output_columns if name in available_columns]
+    read_required.extend(name for name in selection_dependencies if name in available_columns)
+    if photometry_plan is not None:
+        read_required.extend(photometry_plan.source_columns)
+
+    if cfg.columns.keep is None:
+        read_columns = list(available_columns)
+    else:
+        read_columns = _unique_available(read_required, available_columns)
+
+    return read_columns, output_columns, photometry_plan
+
+
 def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List[str]]:
     """Build the main input collection for the pipeline.
 
@@ -94,109 +175,58 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
         raise ValueError("No input files matched.")
 
     fmt = cfg.input.format.lower()
-    # Single declaration for the whole function (avoid no-redef)
-    mag_col_cfg: str | None = None
-    flux_col_cfg: str | None = None
-    score_global_expr = getattr(cfg.algorithm, "score_column", None) or ""
-    sdh_score_expr = getattr(cfg.algorithm, "sdh_score_column", None) or ""
-    selection_mode = getattr(cfg.algorithm, "selection_mode", "mag_global").lower()
-    if selection_mode == "score_global":
-        active_score_expr = score_global_expr
-    elif selection_mode == "score_density_hybrid":
-        active_score_expr = sdh_score_expr
-    else:
-        active_score_expr = ""
-    if selection_mode == "mag_global":
-        mag_col_cfg = cfg.algorithm.mag_column
-        flux_col_cfg = getattr(cfg.algorithm, "flux_column", None)
 
-    # If columns.keep is None, preserve all input columns.
-    keep_all_columns = cfg.columns.keep is None
-
-    # ------------------------------------------------------------------
-    # HATS / LSDB input: keep LSDB structure
-    # ------------------------------------------------------------------
     if fmt == "hats":
         if len(paths) != 1:
             raise ValueError(
                 "For input.format='hats', please specify exactly one HATS catalog path in input.paths."
             )
 
-        hats_path = paths[0]
-
-        # Columns explicitly requested by the user in the YAML.
-        requested_keep_cfg = cfg.columns.keep
-        requested_keep = requested_keep_cfg or []
-
-        # Extract potential score dependencies from the score expression.
-        score_tokens = set(_ID_RE.findall(str(active_score_expr))) if active_score_expr else set()
-
-        # Always request RA, DEC and score dependencies; mag/flux if applicable.
-        must_keep = [cfg.columns.ra, cfg.columns.dec, *score_tokens]
-        if mag_col_cfg:
-            must_keep.append(mag_col_cfg)
-        if flux_col_cfg:
-            must_keep.append(flux_col_cfg)
-
-        needed_cols: List[str] = []
-        seen_needed: set[str] = set()
-        for c in [*must_keep, *requested_keep]:
-            if c and (c not in seen_needed):
-                needed_cols.append(c)
-                seen_needed.add(c)
-
-        # If columns.keep is None -> open all columns explicitly. LSDB may
-        # otherwise lazily expose only a subset of catalog columns.
-        if needed_cols and not keep_all_columns:
-            cat0 = cast(LsdbCatalog, lsdb.open_catalog(hats_path, columns=needed_cols))
+        # Preserve the established narrow LSDB open when no transformation
+        # needs schema-wide collision checks. Projection remains a native
+        # Catalog operation in both branches.
+        if cfg.photometry is None and cfg.columns.keep is not None:
+            mode = str(cfg.algorithm.selection_mode).lower()
+            if mode == "score_global":
+                expression = str(cfg.algorithm.score_column or "")
+            elif mode == "score_density_hybrid":
+                expression = str(cfg.algorithm.sdh_score_column or "")
+            else:
+                expression = ""
+            requested = [
+                cfg.columns.ra,
+                cfg.columns.dec,
+                *_ID_RE.findall(expression),
+            ]
+            if mode == "mag_global":
+                requested.extend(
+                    name for name in (cfg.algorithm.mag_column, cfg.algorithm.flux_column) if name
+                )
+            requested.extend(cfg.columns.keep)
+            requested = list(dict.fromkeys(requested))
+            cat0 = cast(LsdbCatalog, lsdb.open_catalog(paths[0], columns=requested))
         else:
-            cat0 = cast(LsdbCatalog, lsdb.open_catalog(hats_path, columns="all"))
-
+            cat0 = cast(LsdbCatalog, lsdb.open_catalog(paths[0], columns="all"))
         available_cols = list(cat0.columns)
-
-        # HATS catalog always has named columns → header=True.
-        ra_col = _resolve_col_name(
+        RA_NAME = _resolve_col_name(
             cfg.columns.ra,
             cat0,  # type: ignore[arg-type]
             header=True,
         )
-        dec_col = _resolve_col_name(
+        DEC_NAME = _resolve_col_name(
             cfg.columns.dec,
             cat0,  # type: ignore[arg-type]
             header=True,
         )
-        RA_NAME = ra_col
-        DEC_NAME = dec_col
-
-        score_dependencies = [c for c in score_tokens if c in available_cols]
-
-        must_keep_resolved = [RA_NAME, DEC_NAME, *score_dependencies]
-        if mag_col_cfg and mag_col_cfg in available_cols:
-            must_keep_resolved.append(mag_col_cfg)
-        if flux_col_cfg and flux_col_cfg in available_cols:
-            must_keep_resolved.append(flux_col_cfg)
-
-        keep_cols_out = _resolve_keep_columns_order(
-            available_cols=available_cols,
+        read_cols, keep_cols, _ = _plan_input_columns(
+            available_columns=available_cols,
             ra_name=RA_NAME,
             dec_name=DEC_NAME,
-            must_keep=must_keep_resolved,
-            requested_keep_cfg=requested_keep_cfg,
+            cfg=cfg,
         )
+        projected = cast(Any, cat0)[read_cols]
+        return projected, RA_NAME, DEC_NAME, keep_cols
 
-        # Sub-select via LSDB API; returns a new Catalog. Convert to a Dask DF-friendly
-        # object to keep meta valid for future Dask releases.
-        ddf_sel = cast(Any, cat0)[keep_cols_out]
-        ddf_base = _get_dask_base(ddf_sel, require_map_partitions=True)
-        meta = _get_meta_df(ddf_base)
-        ddf = ddf_base.map_partitions(lambda pdf: pdf, meta=meta)
-        return ddf, RA_NAME, DEC_NAME, keep_cols_out
-
-    # ------------------------------------------------------------------
-    # Standard Parquet / CSV / TSV input
-    # ------------------------------------------------------------------
-
-    # 1) Base read to discover columns and resolve RA/DEC.
     if fmt == "parquet":
         ddf0 = dd.read_parquet(paths, engine="pyarrow")
     elif fmt in ("csv", "tsv"):
@@ -215,44 +245,26 @@ def _build_input_ddf(paths: List[str], cfg: Config) -> tuple[Any, str, str, List
     else:
         raise ValueError("Unsupported input.format; use 'parquet', 'csv', 'tsv', or 'hats'.")
 
-    # Resolve RA/DEC.
-    ra_col = _resolve_col_name(
+    RA_NAME = _resolve_col_name(
         cfg.columns.ra,
         ddf0,
         header=(fmt == "parquet" or cfg.input.header),
     )
-    dec_col = _resolve_col_name(
+    DEC_NAME = _resolve_col_name(
         cfg.columns.dec,
         ddf0,
         header=(fmt == "parquet" or cfg.input.header),
     )
-    RA_NAME = ra_col
-    DEC_NAME = dec_col
-
-    # 2) Column selection (preserve order; ensure score deps).
     available_cols = list(ddf0.columns)
-    score_dependencies = _score_deps(active_score_expr, available_cols)
-
-    requested_keep_cfg = cfg.columns.keep
-
-    flux_col_cfg = getattr(cfg.algorithm, "flux_column", None)
-
-    must_keep = [RA_NAME, DEC_NAME, *score_dependencies]
-    if mag_col_cfg and mag_col_cfg in available_cols:
-        must_keep.append(mag_col_cfg)
-    if flux_col_cfg and flux_col_cfg in available_cols:
-        must_keep.append(flux_col_cfg)
-
-    keep_cols_out_2 = _resolve_keep_columns_order(
-        available_cols=available_cols,
+    read_cols, keep_cols, _ = _plan_input_columns(
+        available_columns=available_cols,
         ra_name=RA_NAME,
         dec_name=DEC_NAME,
-        must_keep=must_keep,
-        requested_keep_cfg=requested_keep_cfg,
+        cfg=cfg,
     )
 
-    ddf = ddf0[keep_cols_out_2]
-    return ddf, RA_NAME, DEC_NAME, keep_cols_out_2
+    # Dask's Parquet optimizer pushes this projection into the Arrow read.
+    return ddf0[read_cols], RA_NAME, DEC_NAME, keep_cols
 
 
 # =============================================================================

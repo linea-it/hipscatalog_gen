@@ -6,6 +6,7 @@ import glob
 import json
 import time
 from contextlib import suppress
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -25,7 +26,13 @@ from ..io.output import (
     write_metadata_xml,
     write_moc,
 )
-from ..utils import _detect_hats_catalog_root, _fmt_dur, _get_dask_base, _validate_and_normalize_radec
+from ..utils import (
+    _detect_hats_catalog_root,
+    _fmt_dur,
+    _get_dask_base,
+    _get_meta_df,
+    _validate_and_normalize_radec,
+)
 
 __all__ = [
     "build_and_prepare_input",
@@ -369,7 +376,7 @@ def write_common_static_products(
     dens_lc = densmaps[moc_order]
     write_moc(out_dir, moc_order, dens_lc)
 
-    dtypes_map = ddf.dtypes.to_dict()
+    dtypes_map = _get_meta_df(ddf).dtypes.to_dict()
     cols: List[Tuple[str, str, str | None]] = [(c, str(dtypes_map.get(c, "object")), None) for c in keep_cols]
     ra_idx = keep_cols.index(ra_col)
     dec_idx = keep_cols.index(dec_col)
@@ -386,6 +393,13 @@ def write_common_static_products(
         ("columns.ra", ra_col),
         ("columns.dec", dec_col),
         ("columns.keep", getattr(cfg.columns, "keep", None)),
+        ("# photometry", None),
+        (
+            "photometry",
+            asdict(cfg.photometry)
+            if is_dataclass(getattr(cfg, "photometry", None))
+            else getattr(cfg, "photometry", None),
+        ),
         ("# algorithm.common", None),
         ("algorithm.selection_mode", getattr(cfg.algorithm, "selection_mode", None)),
         ("algorithm.level_limit", getattr(cfg.algorithm, "level_limit", None)),
