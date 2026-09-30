@@ -32,8 +32,8 @@ dependencies = [
   "astropy>=6,<9",
   "healpy>=1.17,<2.0",
   "mocpy>=0.12,<1.0",
-  "hats>=0.6,<1.0",
-  "lsdb>=0.6,<1.0",
+  "hats>=0.11,<1.0",
+  "lsdb>=0.11,<1.0",
   "pyyaml>=6,<7",
   "scipy>=1.13",
 ]
