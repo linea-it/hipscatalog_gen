@@ -23,7 +23,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Pipeline overview" href="pipeline.html" /> 
+    <link rel="next" title="Reference" href="reference/index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,7 +47,6 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="notebooks.html">Notebooks</a></li>
 </ul>
@@ -89,9 +88,6 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">score_density_hybrid</span></code>: density-driven depths 1..``density_up_to_depth`` (default 4) with score-driven remainder (see <code class="docutils literal notranslate"><span class="pre">algorithm.score_density_hybrid.*</span></code>).</p></li>
 </ul>
 </li>
-<li><p>Optional lazy photometry converts configured flux/error pairs to magnitudes,
-optionally applies an E(B-V) correction, and makes derived columns available
-to every selection mode. See <a class="reference internal" href="reference/photometry.html"><span class="doc">Photometry</span></a>.</p></li>
 <li><p>Runs locally or on SLURM-backed Dask clusters; outputs full HiPS layouts (tiles, all-sky, MOC, metadata, density maps).</p></li>
 </ul>
 </section>
@@ -131,11 +127,6 @@ to every selection mode. See <a class="reference internal" href="reference/photo
 <h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p>Start from <code class="docutils literal notranslate"><span class="pre">examples/configs/config.template.yaml</span></code> (copy to <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>). Adjust input paths, column mapping, and selection parameters inside the per-mode blocks under <code class="docutils literal notranslate"><span class="pre">algorithm</span></code>. More examples live under <code class="docutils literal notranslate"><span class="pre">examples/configs/</span></code>.</p></li>
-<li><p>Add the optional top-level <code class="docutils literal notranslate"><span class="pre">photometry</span></code> block only when magnitudes must be
-derived from fluxes. Derived magnitudes may be referenced directly by
-<code class="docutils literal notranslate"><span class="pre">mag_global</span></code>, <code class="docutils literal notranslate"><span class="pre">score_global</span></code>, or <code class="docutils literal notranslate"><span class="pre">score_density_hybrid</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">photometry.replace_fluxes:</span> <span class="pre">true</span></code> keeps source fluxes as internal read
-dependencies but replaces them with derived photometry in the output schema.</p></li>
 <li><p>When installed from PyPI, fetch the template with <code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">-O</span> <span class="pre">https://raw.githubusercontent.com/linea-it/hipscatalog_gen/main/examples/configs/config.template.yaml</span></code>.</p></li>
 <li><p>Cluster memory policy is fixed: the pipeline does not persist large intermediate DataFrames and avoids early large computes whenever possible.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">cluster.low_memory_mode</span></code> is deprecated (warning only, no effect). <code class="docutils literal notranslate"><span class="pre">cluster.persist_ddfs</span></code> and <code class="docutils literal notranslate"><span class="pre">cluster.avoid_computes_wherever_possible</span></code> are deprecated and ignored.</p></li>
@@ -169,9 +160,6 @@ dependencies but replaces them with derived photometry in the output schema.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">Moc.fits</span></code> / <code class="docutils literal notranslate"><span class="pre">Moc.json</span></code>: MOC maps.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">properties</span></code> and <code class="docutils literal notranslate"><span class="pre">metadata.xml</span></code>: HiPS metadata descriptors.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">process.log</span></code> and <code class="docutils literal notranslate"><span class="pre">arguments</span></code>: logs and config snapshot.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">telemetry.json</span></code>: schema-versioned stage timings and input/output counts.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">index.html</span></code>: local catalog preview entry point; serve it with
-<code class="docutils literal notranslate"><span class="pre">hipscatalog-gen</span> <span class="pre">serve</span> <span class="pre">--out</span> <span class="pre">output/example_catalog</span></code>.</p></li>
 <li><p>Existing <code class="docutils literal notranslate"><span class="pre">output.out_dir</span></code> causes an error; set <code class="docutils literal notranslate"><span class="pre">output.overwrite:</span> <span class="pre">true</span></code> to clear it before writing.</p></li>
 </ul>
 </section>
@@ -190,13 +178,13 @@ dependencies but replaces them with derived photometry in the output schema.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="pipeline.html" class="btn btn-neutral float-right" title="Pipeline overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reference/index.html" class="btn btn-neutral float-right" title="Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

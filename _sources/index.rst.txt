@@ -13,10 +13,6 @@ Overview
   - ``score_global``: selection driven by an arbitrary score/expression (see ``algorithm.score_global.*``).
   - ``score_density_hybrid``: density-driven depths 1..``density_up_to_depth`` (default 4) with score-driven remainder (see ``algorithm.score_density_hybrid.*``).
 
-- Optional lazy photometry converts configured flux/error pairs to magnitudes,
-  optionally applies an E(B-V) correction, and makes derived columns available
-  to every selection mode. See :doc:`reference/photometry`.
-
 - Runs locally or on SLURM-backed Dask clusters; outputs full HiPS layouts (tiles, all-sky, MOC, metadata, density maps).
 
 Quick start
@@ -59,11 +55,6 @@ Configuration
 -------------
 
 - Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters inside the per-mode blocks under ``algorithm``. More examples live under ``examples/configs/``.
-- Add the optional top-level ``photometry`` block only when magnitudes must be
-  derived from fluxes. Derived magnitudes may be referenced directly by
-  ``mag_global``, ``score_global``, or ``score_density_hybrid``.
-- ``photometry.replace_fluxes: true`` keeps source fluxes as internal read
-  dependencies but replaces them with derived photometry in the output schema.
 - When installed from PyPI, fetch the template with ``curl -O https://raw.githubusercontent.com/linea-it/hipscatalog_gen/main/examples/configs/config.template.yaml``.
 - Cluster memory policy is fixed: the pipeline does not persist large intermediate DataFrames and avoids early large computes whenever possible.
 - ``cluster.low_memory_mode`` is deprecated (warning only, no effect). ``cluster.persist_ddfs`` and ``cluster.avoid_computes_wherever_possible`` are deprecated and ignored.
@@ -101,9 +92,6 @@ Outputs (HiPS layout)
 - ``Moc.fits`` / ``Moc.json``: MOC maps.
 - ``properties`` and ``metadata.xml``: HiPS metadata descriptors.
 - ``process.log`` and ``arguments``: logs and config snapshot.
-- ``telemetry.json``: schema-versioned stage timings and input/output counts.
-- ``index.html``: local catalog preview entry point; serve it with
-  ``hipscatalog-gen serve --out output/example_catalog``.
 - Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.
 
 Navigation
@@ -116,6 +104,5 @@ Navigation
    :hidden:
 
    Home page <self>
-   Pipeline overview <pipeline>
    Reference <reference/index>
    Notebooks <notebooks>

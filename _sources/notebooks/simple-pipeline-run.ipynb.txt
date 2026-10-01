@@ -7,7 +7,7 @@
    "source": [
     "# Running the HIPS Catalog pipeline step by step\n",
     "\n",
-    "This notebook walks through a minimal pipeline run with explanatory comments so you can adapt it to your own catalog. It assumes the package is installed in editable mode.\n"
+    "This notebook walks through a minimal pipeline run with explanatory comments so you can adapt it to your own data. It assumes the package is installed in editable mode and that example data are available (see `examples/data`).\n"
    ]
   },
   {
@@ -55,7 +55,7 @@
    "metadata": {},
    "source": [
     "## 3. Build a configuration inline\n",
-    "Here we define a minimal configuration dictionary using generic column names and placeholder locations. Replace them with values appropriate for your catalog.\n"
+    "Here we define a minimal configuration dictionary pointing to the sample DES DR2 parquet files. In real runs, adjust paths, output locations, and processing options as needed.\n"
    ]
   },
   {
@@ -67,23 +67,23 @@
    "source": [
     "cfg = {\n",
     "    \"input\": {  # source parquet files (wildcards allowed)\n",
-    "        \"paths\": [\"catalog/input-*.parquet\"],\n",
+    "        \"paths\": [\"../../../hipscatalog_gen/tests/data/des_dr2_small_sample/*.parquet\"],\n",
     "    },\n",
     "    \"columns\": {  # column mapping for sky coordinates\n",
-    "        \"ra\": \"ra\",\n",
-    "        \"dec\": \"dec\",\n",
+    "        \"ra\": \"RA\",\n",
+    "        \"dec\": \"DEC\",\n",
     "    },\n",
     "    \"algorithm\": {  # HEALPix and selection parameters\n",
     "        \"level_limit\": 11,\n",
     "        \"selection_mode\": \"mag_global\",\n",
     "        \"mag_global\": {\n",
-    "            \"mag_column\": \"mag_r\",\n",
+    "            \"mag_column\": \"MAG_AUTO_I_DERED\",\n",
     "        },\n",
     "    },\n",
     "    \"cluster\": {},  # use defaults for clustering\n",
     "    \"output\": {  # where outputs and catalog names are stored\n",
-    "        \"out_dir\": \"output/example_catalog\",\n",
-    "        \"cat_name\": \"example_catalog\",\n",
+    "        \"out_dir\": \"../../../hipscatalog_gen/outputs/DES_DR2_small_sample\",\n",
+    "        \"cat_name\": \"DES_DR2_small_sample\",\n",
     "    },\n",
     "}\n",
     "\n",
@@ -116,7 +116,7 @@
    "metadata": {},
    "source": [
     "## Next steps\n",
-    "- Replace the placeholder input and output locations with your own.\n",
+    "- Swap the input paths to point to your own data or a different survey sample.\n",
     "- Explore the `examples/configs` templates for richer configurations and options.\n",
     "- Integrate this notebook in an automated workflow (e.g., scheduled jobs) to keep catalogs up to date.\n"
    ]
@@ -124,7 +124,7 @@
  ],
  "metadata": {
   "kernelspec": {
-   "display_name": "Python 3",
+   "display_name": "hipscatalog_gen_env_dev",
    "language": "python",
    "name": "python3"
   },

@@ -48,11 +48,9 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="core.html">Core</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pipeline.html">Pipeline</a></li>
-<li class="toctree-l2"><a class="reference internal" href="photometry.html">Photometry</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mag_global.html">mag_global</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score_global.html">score_global</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score_density_hybrid.html">score_density_hybrid</a></li>
@@ -69,7 +67,6 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/io/hipscatalog_gen.io.output.write_metadata_xml.html">hipscatalog_gen.io.output.write_metadata_xml</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/io/hipscatalog_gen.io.output.write_moc.html">hipscatalog_gen.io.output.write_moc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/io/hipscatalog_gen.io.output.write_densmap_fits.html">hipscatalog_gen.io.output.write_densmap_fits</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/io/hipscatalog_gen.io.output.write_index_html.html">hipscatalog_gen.io.output.write_index_html</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="cluster.html">Cluster</a></li>
@@ -108,9 +105,8 @@
 <p>Input loaders and HiPS writer utilities.</p>
 <p>Typical flow:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hipscatalog_gen.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">_build_input_ddf</span><span class="p">,</span> <span class="n">write_properties</span>
-<span class="n">ddf</span><span class="p">,</span> <span class="n">ra</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">keep_cols</span> <span class="o">=</span> <span class="n">_build_input_ddf</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
-<span class="c1"># Reuse the row count already computed by the pipeline; avoid len(ddf).</span>
-<span class="n">write_properties</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">,</span> <span class="n">n_src</span><span class="o">=</span><span class="n">input_total</span><span class="p">)</span>
+<span class="n">ddf</span><span class="p">,</span> <span class="n">ra</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">keep_cols</span> <span class="o">=</span> <span class="n">_build_input_ddf</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)[:</span><span class="mi">4</span><span class="p">]</span>
+<span class="n">write_properties</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">,</span> <span class="n">n_src</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">ddf</span><span class="p">))</span>
 </pre></div>
 </div>
 <table class="autosummary longtable docutils align-default">
@@ -145,9 +141,6 @@
 <tr class="row-even"><td><p><a class="reference internal" href="generated/io/hipscatalog_gen.io.output.write_densmap_fits.html#hipscatalog_gen.io.output.write_densmap_fits" title="hipscatalog_gen.io.output.write_densmap_fits"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.io.output.write_densmap_fits</span></code></a></p></td>
 <td><p>Write densmap_o&lt;depth&gt;.fits for depths &lt; 13.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/io/hipscatalog_gen.io.output.write_index_html.html#hipscatalog_gen.io.output.write_index_html" title="hipscatalog_gen.io.output.write_index_html"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.io.output.write_index_html</span></code></a></p></td>
-<td><p>Write a simple index.html page for quick local catalog inspection.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -163,7 +156,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

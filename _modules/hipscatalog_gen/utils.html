@@ -45,7 +45,6 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../notebooks.html">Notebooks</a></li>
 </ul>
@@ -317,21 +316,14 @@
     <span class="k">if</span> <span class="n">_has_required</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ddf_like</span>
 
-    <span class="c1"># Prefer LSDB's public conversion only when a downstream operation is not</span>
-    <span class="c1"># available natively. The private _ddf fallback supports older LSDB releases.</span>
+    <span class="c1"># For LSDB catalogs without public Dask-like methods, fall back to the underlying Dask DataFrame.</span>
     <span class="k">if</span> <span class="n">LsdbCatalog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="n">LsdbCatalog</span><span class="p">):</span>
-        <span class="n">to_dask</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">"to_dask_dataframe"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">to_dask</span><span class="p">):</span>
-            <span class="n">base</span> <span class="o">=</span> <span class="n">to_dask</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">_has_required</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">base</span>
-
         <span class="n">base</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ddf_like</span><span class="p">,</span> <span class="s2">"_ddf"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_has_required</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"LSDB catalog missing _ddf attribute; cannot extract Dask base."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_has_required</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">base</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="s2">"LSDB catalog does not expose the required operation natively or through to_dask_dataframe()."</span>
-        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"LSDB catalog _ddf does not expose required dask-like methods."</span><span class="p">)</span>
 
     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"Object is not Dask-like (missing groupby/map_partitions/to_delayed)."</span><span class="p">)</span></div>
 
@@ -566,7 +558,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
