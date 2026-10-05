@@ -190,6 +190,27 @@ def test_validation_helpers_errors():
     with pytest.raises(ValueError):
         validation.validate_score_density_hybrid_cfg(bad_stage1_depth)
 
+    incompatible_depths = SimpleNamespace(
+        algorithm=SimpleNamespace(
+            sdh_score_column="S",
+            sdh_score_hist_nbins=4,
+            sdh_density_up_to_depth=4,
+            level_limit=3,
+        )
+    )
+    with pytest.raises(ValueError, match=r"density_up_to_depth \(4\) must be <= level_limit \(3\)"):
+        validation.validate_score_density_hybrid_cfg(incompatible_depths)
+
+    compatible_depths = SimpleNamespace(
+        algorithm=SimpleNamespace(
+            sdh_score_column="S",
+            sdh_score_hist_nbins=4,
+            sdh_density_up_to_depth=3,
+            level_limit=3,
+        )
+    )
+    validation.validate_score_density_hybrid_cfg(compatible_depths)
+
     cfg_common_fields = SimpleNamespace(
         algorithm=SimpleNamespace(level_limit=1, moc_order=1),
         cluster=SimpleNamespace(
@@ -827,7 +848,7 @@ def test_run_pipeline_happy_path(monkeypatch, tmp_path, log_capture):
         ),
     )
     monkeypatch.setattr(main, "shutdown_cluster", lambda runtime: None)
-    monkeypatch.setattr(main, "validate_common_cfg", lambda cfg: None)
+    monkeypatch.setattr(main, "validate_config", lambda cfg: None)
     monkeypatch.setattr(
         main,
         "build_and_prepare_input",
@@ -899,7 +920,7 @@ def test_run_pipeline_overwrite_file(monkeypatch, tmp_path, log_capture):
         ),
     )
     monkeypatch.setattr(main, "shutdown_cluster", lambda runtime: None)
-    monkeypatch.setattr(main, "validate_common_cfg", lambda cfg: None)
+    monkeypatch.setattr(main, "validate_config", lambda cfg: None)
     monkeypatch.setattr(
         main,
         "build_and_prepare_input",
@@ -954,7 +975,7 @@ def test_run_pipeline_diagnostics_global(monkeypatch, tmp_path, log_capture):
         ),
     )
     monkeypatch.setattr(main, "shutdown_cluster", lambda runtime: None)
-    monkeypatch.setattr(main, "validate_common_cfg", lambda cfg: None)
+    monkeypatch.setattr(main, "validate_config", lambda cfg: None)
     monkeypatch.setattr(
         main,
         "build_and_prepare_input",
@@ -1000,7 +1021,7 @@ def test_run_pipeline_fails_when_selection_does_not_emit_write_stats(monkeypatch
         ),
     )
     monkeypatch.setattr(main, "shutdown_cluster", lambda runtime: None)
-    monkeypatch.setattr(main, "validate_common_cfg", lambda cfg: None)
+    monkeypatch.setattr(main, "validate_config", lambda cfg: None)
     monkeypatch.setattr(
         main,
         "build_and_prepare_input",
@@ -1033,8 +1054,36 @@ def test_run_pipeline_invalid_mode(tmp_path):
         main.run_pipeline(cfg)
 
 
-def test_run_pipeline_level_limit_guard(tmp_path):
-    """Invalid level_limit outside [4,11] raises."""
-    cfg = _cfg_pipeline(tmp_path, selection_mode="mag_global", level_limit=2)
-    with pytest.raises(ValueError):
+def test_run_pipeline_level_limit_must_be_positive_without_touching_output(tmp_path):
+    """Invalid level_limit fails before an existing output is removed."""
+    out_dir = tmp_path / "existing"
+    out_dir.mkdir()
+    marker = out_dir / "keep.txt"
+    marker.write_text("keep", encoding="utf-8")
+    cfg = _cfg_pipeline(out_dir, selection_mode="mag_global", level_limit=0, moc_order=0)
+
+    with pytest.raises(ValueError, match="level_limit must be positive"):
         main.run_pipeline(cfg)
+
+    assert marker.read_text(encoding="utf-8") == "keep"
+
+
+def test_run_pipeline_sdh_depth_mismatch_does_not_touch_output(tmp_path):
+    """Mode-specific validation also runs before overwrite handling."""
+    out_dir = tmp_path / "existing"
+    out_dir.mkdir()
+    marker = out_dir / "keep.txt"
+    marker.write_text("keep", encoding="utf-8")
+    cfg = _cfg_pipeline(
+        out_dir,
+        selection_mode="score_density_hybrid",
+        level_limit=3,
+        moc_order=3,
+        sdh_score_column="SCORE",
+        sdh_density_up_to_depth=4,
+    )
+
+    with pytest.raises(ValueError, match=r"density_up_to_depth \(4\) must be <= level_limit \(3\)"):
+        main.run_pipeline(cfg)
+
+    assert marker.read_text(encoding="utf-8") == "keep"

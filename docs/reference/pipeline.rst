@@ -9,6 +9,12 @@ Use these helpers to wire configs, run the pipeline, or extend selection modes::
    mode = get_selection_mode("mag_global")
    run_pipeline(cfg)
 
+The CLI ``--check-config`` path and ``run_pipeline`` call the same
+``validate_config`` preflight. Common and active-mode validation completes
+before the output location is created, cleared, or written. ``level_limit``
+must be positive; the hybrid mode additionally requires
+``density_up_to_depth <= level_limit``.
+
 .. autosummary::
    :toctree: generated/pipeline
    :nosignatures:
@@ -19,6 +25,7 @@ Use these helpers to wire configs, run the pipeline, or extend selection modes::
    hipscatalog_gen.pipeline.structure.PipelineStage
    hipscatalog_gen.pipeline.structure.PipelineContext
    hipscatalog_gen.pipeline.structure.run_stages
+   hipscatalog_gen.pipeline.validation.validate_config
    hipscatalog_gen.pipeline.validation.validate_common_cfg
    hipscatalog_gen.pipeline.validation.validate_mag_global_cfg
    hipscatalog_gen.pipeline.validation.validate_score_global_cfg

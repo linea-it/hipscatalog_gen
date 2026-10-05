@@ -474,7 +474,7 @@ def test_run_selection_targets_but_no_candidates(monkeypatch, diag_ctx, log_capt
     """Targets exist but targets_per_tile_map empty -> depth skip path."""
     logs, log_fn = log_capture
     ddf = dd.from_pandas(pd.DataFrame({"__score__": [1.0], "__sdh_id__": [1]}), npartitions=1)
-    cfg = _cfg(level_limit=1)
+    cfg = _cfg(level_limit=2, sdh_density_up_to_depth=1)
     params = SimpleNamespace(score_min=0.0, score_max=1.0, sentinel=None)
 
     monkeypatch.setattr(
@@ -483,13 +483,20 @@ def test_run_selection_targets_but_no_candidates(monkeypatch, diag_ctx, log_capt
     )
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline.assign_level_edges",
-        lambda **kwargs: (np.array([0.0, 1.0]), np.array([1.0])),
+        lambda **kwargs: (np.array([0.0, 0.5, 1.0]), np.array([1.0, 0.0])),
     )
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline._targets_stage1_by_depth",
         lambda **kwargs: {1: 1},
     )
-    densmaps = {1: np.zeros(hp.nside2npix(2), dtype="int64")}  # no active tiles
+    densmaps = {
+        1: np.zeros(hp.nside2npix(2), dtype="int64"),
+        2: np.zeros(hp.nside2npix(4), dtype="int64"),
+    }  # no active tiles
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.select_by_score_slices",
+        lambda **kwargs: {"depth_totals": {}, "depth_tiles": {}},
+    )
 
     sdh_pipeline.run_score_density_hybrid_selection(
         remainder_ddf=ddf,
@@ -512,7 +519,7 @@ def test_run_selection_depth_with_empty_selection(monkeypatch, diag_ctx, log_cap
     logs, log_fn = log_capture
     pdf = pd.DataFrame({"RA": [0.0], "DEC": [0.0], "__score__": [0.5], "__sdh_id__": [1]})
     ddf = dd.from_pandas(pdf, npartitions=1)
-    cfg = _cfg(level_limit=1)
+    cfg = _cfg(level_limit=2, sdh_density_up_to_depth=1)
     params = SimpleNamespace(score_min=0.0, score_max=1.0, sentinel=None)
 
     monkeypatch.setattr(
@@ -521,7 +528,7 @@ def test_run_selection_depth_with_empty_selection(monkeypatch, diag_ctx, log_cap
     )
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline.assign_level_edges",
-        lambda **kwargs: (np.array([0.0, 1.0]), np.array([1.0])),
+        lambda **kwargs: (np.array([0.0, 0.5, 1.0]), np.array([1.0, 0.0])),
     )
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline._targets_stage1_by_depth",
@@ -540,10 +547,17 @@ def test_run_selection_depth_with_empty_selection(monkeypatch, diag_ctx, log_cap
         "hipscatalog_gen.score_density_hybrid.pipeline.reduce_topk_by_group_dask",
         lambda cand_ddf, **kwargs: cand_ddf.map_partitions(lambda pdf: pdf.iloc[0:0], meta=cand_ddf._meta),
     )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.select_by_score_slices",
+        lambda **kwargs: {"depth_totals": {}, "depth_tiles": {}},
+    )
 
     sdh_pipeline.run_score_density_hybrid_selection(
         remainder_ddf=ddf,
-        densmaps={1: np.ones(hp.nside2npix(2), dtype="int64")},
+        densmaps={
+            1: np.ones(hp.nside2npix(2), dtype="int64"),
+            2: np.ones(hp.nside2npix(4), dtype="int64"),
+        },
         keep_cols=["RA", "DEC", "__score__"],
         ra_col="RA",
         dec_col="DEC",
@@ -561,7 +575,7 @@ def test_run_selection_cdf_zero(monkeypatch, diag_ctx, log_capture):
     """cdf_hist zero branch is taken when histogram has zero counts but n_tot_score>0."""
     _, log_fn = log_capture
     ddf = dd.from_pandas(pd.DataFrame({"__score__": [1.0]}), npartitions=1)
-    cfg = _cfg(level_limit=1)
+    cfg = _cfg(level_limit=2, sdh_density_up_to_depth=1)
     params = SimpleNamespace(score_min=0.0, score_max=1.0, sentinel=None)
 
     monkeypatch.setattr(
@@ -576,10 +590,14 @@ def test_run_selection_cdf_zero(monkeypatch, diag_ctx, log_capture):
         "hipscatalog_gen.score_density_hybrid.pipeline._targets_stage1_by_depth",
         lambda **kwargs: {1: 0},
     )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.select_by_score_slices",
+        lambda **kwargs: {"depth_totals": {}, "depth_tiles": {}},
+    )
 
     sdh_pipeline.run_score_density_hybrid_selection(
         remainder_ddf=ddf,
-        densmaps={1: np.ones(1, dtype="int64")},
+        densmaps={1: np.ones(1, dtype="int64"), 2: np.ones(1, dtype="int64")},
         keep_cols=["__score__"],
         ra_col="RA",
         dec_col="DEC",
@@ -643,7 +661,7 @@ def test_run_selection_stage1_and_stage2(monkeypatch, diag_ctx, log_capture):
     captured_writes: list[dict] = []
     monkeypatch.setattr(
         "hipscatalog_gen.score_density_hybrid.pipeline.write_tiles_with_allsky",
-        lambda **kwargs: (captured_writes.append(kwargs) or ({0: len(kwargs["selected"])}, None)),
+        lambda **kwargs: captured_writes.append(kwargs) or ({0: len(kwargs["selected"])}, None),
     )
 
     captured_stage2: list[dict] = []
@@ -745,6 +763,77 @@ def test_run_selection_density_up_to_depth_overrides_stage_split(monkeypatch, di
     )
 
     assert captured_stage2 and captured_stage2[0]["depths_sel"] == [5]
+
+
+def test_run_selection_terminal_density_depth_absorbs_quota_shortfall(monkeypatch, diag_ctx, log_capture):
+    """The deepest density level writes every row left after earlier levels."""
+    logs, log_fn = log_capture
+    pdf = pd.DataFrame(
+        {
+            "RA": [0.0, 10.0, 20.0, 30.0],
+            "DEC": [0.0, 1.0, 2.0, 3.0],
+            "__score__": [0.1, 0.2, 0.3, 0.4],
+            "__sdh_id__": [10, 11, 12, 13],
+        }
+    )
+    ddf = dd.from_pandas(pdf, npartitions=1)
+    cfg = _cfg(level_limit=4, sdh_density_up_to_depth=4)
+    params = SimpleNamespace(score_min=0.0, score_max=1.0, sentinel=None)
+    densmaps = {depth: np.ones(hp.nside2npix(1 << depth), dtype="int64") for depth in range(1, 5)}
+
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.compute_score_histogram_ddf",
+        lambda *_, **__: (np.array([4], dtype="int64"), np.array([0.0, 1.0]), 4),
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.assign_level_edges",
+        lambda **kwargs: (np.linspace(0.0, 1.0, 5), np.ones(4)),
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline._targets_stage1_by_depth",
+        lambda **kwargs: {1: 1, 2: 0, 3: 0, 4: 1},
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.targets_per_tile",
+        lambda counts, depth_total, bias: {0: depth_total},
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.add_ipix_column",
+        lambda frame, depth, ra_col, dec_col: frame.assign(__ipix__=0),
+    )
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.reduce_topk_by_group_dask",
+        lambda cand_ddf, **kwargs: cand_ddf.map_partitions(lambda frame: frame.head(1), meta=cand_ddf._meta),
+    )
+
+    writes: list[tuple[int, int]] = []
+
+    def fake_write_tiles_with_allsky(**kwargs):
+        selected = kwargs["selected"]
+        writes.append((kwargs["depth"], len(selected)))
+        return ({0: len(selected)}, None)
+
+    monkeypatch.setattr(
+        "hipscatalog_gen.score_density_hybrid.pipeline.write_tiles_with_allsky",
+        fake_write_tiles_with_allsky,
+    )
+
+    summary = sdh_pipeline.run_score_density_hybrid_selection(
+        remainder_ddf=ddf,
+        densmaps=densmaps,
+        keep_cols=["RA", "DEC"],
+        ra_col="RA",
+        dec_col="DEC",
+        cfg=cfg,
+        out_dir="/tmp",
+        diag_ctx=diag_ctx,
+        log_fn=log_fn,
+        params=params,
+    )
+
+    assert writes == [(1, 1), (4, 3)]
+    assert sum(summary["depth_totals"].values()) == len(pdf)
+    assert any("terminal spillover selected all 3 remaining rows" in msg for msg in logs)
 
 
 def test_run_selection_merges_stage2_depth_stats(monkeypatch, diag_ctx, log_capture):

@@ -92,6 +92,10 @@ Selection modes live under ``algorithm.selection_mode``:
 Mode-specific parameters live inside blocks ``algorithm.mag_global``, ``algorithm.score_global``, and
 ``algorithm.score_density_hybrid`` (with optional shared defaults in ``algorithm.selection_defaults``).
 
+``algorithm.level_limit`` must be at least 1. In ``score_density_hybrid``,
+``density_up_to_depth`` defaults to 4 and must be between 1 and
+``level_limit``; set it explicitly when using ``level_limit < 4``.
+
 Use top-level ``photometry`` when derived magnitudes must be written, when
 multiple bands are converted, when dereddening is required, or when a derived
 column is used by a score mode. ``algorithm.mag_global.flux_column`` remains a
@@ -140,6 +144,9 @@ Validate a config without running:
 
     hipscatalog-gen --check-config config.yaml
 
+The check command and a real run use the same preflight validation. Validation
+finishes before the output location is created, cleared, or written.
+
 Enable JSON logs (process.jsonl) via CLI flag (when running the pipeline):
 
     hipscatalog-gen --config config.yaml --json-logs
@@ -164,7 +171,7 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - process.log / arguments  → Run logs and configuration snapshot (optional process.jsonl when `--json-logs`).
 - telemetry.json          → Schema-versioned run summary with per-stage durations and input/output counts.
 - index.html              → Local catalog preview entry point.
-- Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.
+- Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it after configuration preflight succeeds.
 
 -------------------------------------------------------------------------------
 
@@ -173,7 +180,7 @@ Each run generates a HiPS-compliant directory structure under output.out_dir:
 - **mag_global**: magnitude-complete slices across all depths.
 - mag_global hist_peak default bounds: when `adaptive_range=hist_peak` and `mag_min`/`mag_max` are not provided, the histogram range clips the global min/max to [-2, 40] (mag_min clipped to >= -2; mag_max from the peak within [-2, min(global_max, 40)]).
 - **score_global**: score-based slices across all depths.
-- **score_density_hybrid**: density-driven tiles for depths 1..`density_up_to_depth` (default 4), then score slices for deeper levels.
+- **score_density_hybrid**: density-driven tiles for depths 1..`density_up_to_depth` (default 4), then score slices for deeper levels. `density_up_to_depth` must not exceed `level_limit`. When they are equal, the deepest level absorbs every row left by earlier density levels so per-tile quota shortfalls do not drop input rows.
 - For deeper streamed depths, bucket processing runs on Dask workers (`Client.submit`) and keeps the driver lightweight (orchestration only).
 - Stream merge uses bounded fan-in (auto-tuned from worker concurrency + `RLIMIT_NOFILE`) to reduce `EMFILE` (`Too many open files`) risk.
 - Ordering and ties: `order_desc` controls ascending/descending (default ascending); optional `tie_column` breaks ties before falling back to RA/DEC.

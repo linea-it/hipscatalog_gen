@@ -127,24 +127,9 @@ def main(argv: List[str] | None = None) -> None:
 
     if getattr(args, "check_config", None):
         cfg = load_config(args.check_config)
-        # Validation runs inside run_pipeline, but we surface success here.
-        from .pipeline.validation import (
-            validate_common_cfg,
-            validate_mag_global_cfg,
-            validate_score_density_hybrid_cfg,
-            validate_score_global_cfg,
-        )
+        from .pipeline.validation import validate_config
 
-        validate_common_cfg(cfg)
-        mode = (getattr(cfg.algorithm, "selection_mode", "") or "").lower()
-        if mode == "mag_global":
-            validate_mag_global_cfg(cfg)
-        elif mode == "score_global":
-            validate_score_global_cfg(cfg)
-        elif mode == "score_density_hybrid":
-            validate_score_density_hybrid_cfg(cfg)
-        else:
-            raise ValueError(f"Unsupported selection_mode '{mode}' during config check.")
+        validate_config(cfg)
         print("Configuration is valid.")
         return
 

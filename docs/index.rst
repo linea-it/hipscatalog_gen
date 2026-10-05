@@ -11,7 +11,11 @@ Overview
   - ``mag_global``: magnitude-complete selection (see ``algorithm.mag_global.*``).
   - ``mag_global`` hist_peak defaults: when no ``mag_min``/``mag_max`` are provided, the histogram range clips global min/max to [-2, 40] (min clipped to >= -2; max from the peak within [-2, min(global_max, 40)]).
   - ``score_global``: selection driven by an arbitrary score/expression (see ``algorithm.score_global.*``).
-  - ``score_density_hybrid``: density-driven depths 1..``density_up_to_depth`` (default 4) with score-driven remainder (see ``algorithm.score_density_hybrid.*``).
+  - ``score_density_hybrid``: density-driven depths
+    1..``density_up_to_depth`` (default 4) with score-driven remainder. The
+    density depth must not exceed ``level_limit``; when both are equal, the
+    terminal depth absorbs every row left by earlier levels (see
+    ``algorithm.score_density_hybrid.*``).
 
 - Optional lazy photometry converts configured flux/error pairs to magnitudes,
   optionally applies an E(B-V) correction, and makes derived columns available
@@ -69,6 +73,9 @@ Configuration
 - ``cluster.low_memory_mode`` is deprecated (warning only, no effect). ``cluster.persist_ddfs`` and ``cluster.avoid_computes_wherever_possible`` are deprecated and ignored.
 - Streamed stage-2 writes require an active ``dask.distributed`` client and execute bucket processing on workers (driver remains orchestration-only).
 - Stage-2 stream merge uses bounded fan-in (auto-tuned from worker concurrency + ``RLIMIT_NOFILE``) to reduce ``EMFILE`` risk on large runs.
+- ``algorithm.level_limit`` must be at least 1. For
+  ``score_density_hybrid``, ``density_up_to_depth`` defaults to 4 and must be
+  between 1 and ``level_limit``; set it explicitly when ``level_limit < 4``.
 
 Run the pipeline
 ----------------
@@ -93,6 +100,10 @@ CLI:
 No dedicated ``sbatch`` wrapper script is required. For HPC usage, set
 ``cluster.mode: slurm`` in the YAML and run the same command above.
 
+Validate without running with ``hipscatalog-gen --check-config config.yaml``.
+The check command and the real pipeline share the same preflight validation,
+which completes before the output location is created, cleared, or written.
+
 Outputs (HiPS layout)
 ---------------------
 
@@ -104,7 +115,8 @@ Outputs (HiPS layout)
 - ``telemetry.json``: schema-versioned stage timings and input/output counts.
 - ``index.html``: local catalog preview entry point; serve it with
   ``hipscatalog-gen serve --out output/example_catalog``.
-- Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.
+- Existing ``output.out_dir`` causes an error; set ``output.overwrite: true``
+  to clear it after configuration preflight succeeds.
 
 Navigation
 ----------

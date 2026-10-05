@@ -111,7 +111,7 @@ algorithm:
   # Common settings (all modes)
   # ==============================
   selection_mode: "score_density_hybrid"  # "mag_global" | "score_global" | "score_density_hybrid"
-  level_limit: 11             # HiPS max depth (4..11)
+  level_limit: 11             # HiPS max depth (>=1)
   # moc_order: 11             # Optional MOC order (defaults to level_limit)
   selection_defaults:
     hist_nbins: 2048

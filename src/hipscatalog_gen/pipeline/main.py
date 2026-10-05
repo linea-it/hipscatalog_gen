@@ -42,7 +42,7 @@ from .common import (
 from .logging_utils import setup_structured_logger
 from .modes import get_selection_mode
 from .structure import PipelineContext, PipelineStage, run_stages
-from .validation import validate_common_cfg
+from .validation import validate_config
 
 __all__ = ["run_pipeline"]
 
@@ -61,11 +61,17 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
 
     Raises:
         ValueError: If ``output.out_dir`` already exists without ``output.overwrite`` set.
-        ValueError: If ``level_limit`` is outside the supported range [4, 11].
+        ValueError: If ``level_limit`` is not positive.
         ValueError: If the configured ``selection_mode`` is unsupported.
     """
     out_dir = Path(cfg.output.out_dir)
     t0 = time.time()
+
+    # Validate the complete configuration before creating, deleting, or writing
+    # anything under output.out_dir.
+    validate_config(cfg)
+    selection_mode = (getattr(cfg.algorithm, "selection_mode", "mag_global") or "mag_global").lower()
+    mode_entry = get_selection_mode(selection_mode)
 
     overwrite = bool(getattr(cfg.output, "overwrite", False))
     if out_dir.exists():
@@ -93,14 +99,6 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
     )
 
     log_prologue(cfg, out_dir, _log)
-
-    if not (4 <= int(cfg.algorithm.level_limit) <= 11):
-        raise ValueError("level_limit (lM) must be within [4, 11] to mirror the CDS tool.")
-
-    validate_common_cfg(cfg)
-
-    selection_mode = (getattr(cfg.algorithm, "selection_mode", "mag_global") or "mag_global").lower()
-    mode_entry = get_selection_mode(selection_mode)
 
     runtime, diag_ctx = setup_cluster(cfg.cluster, report_dir, _log)
     persist_ddfs = False
@@ -325,7 +323,6 @@ def run_pipeline(cfg: Config, *, json_logs: bool = False) -> None:
         """Validate configuration and normalize selection parameters."""
         if context.ddf is None:
             raise RuntimeError("Pipeline context missing input DDF.")  # pragma: no cover
-        mode_entry.validate_fn(context.cfg)
         normalized_ddf, params = mode_entry.normalize_fn(
             context.ddf,
             context.cfg,

@@ -280,7 +280,7 @@ algorithm (block-based)
 selection_mode         [required]
     "mag_global" | "score_global" | "score_density_hybrid".
 level_limit            [required] int
-    Maximum HiPS order (NorderL). Must be in [4, 11].
+    Maximum HiPS order (NorderL). Must be >= 1.
 moc_order              [optional, default=level_limit] int
     HiPS order used for the MOC.
 selection_defaults     [optional] dict
@@ -325,7 +325,8 @@ score_density_hybrid.score_min/max  [optional] float
 score_density_hybrid.adaptive_range [optional, default=selection_defaults.adaptive_range or \"complete\"]
 score_density_hybrid.hist_nbins     [optional, default=selection_defaults.hist_nbins or 2048]
 score_density_hybrid.density_up_to_depth [optional, default=4]
-    Max depth handled by stage-1 density pass (clamped to level_limit).
+    Max depth handled by stage-1 density pass. Must be <= level_limit. When
+    level_limit < 4, override this default explicitly with a compatible value.
 score_density_hybrid.k_1/k_2/k_3    [optional] int, \"per active tile\" aliases for n_*
 score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)
 score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]
