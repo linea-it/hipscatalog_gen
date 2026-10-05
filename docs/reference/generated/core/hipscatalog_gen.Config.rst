@@ -23,6 +23,7 @@
 
    .. autosummary::
    
+      ~Config.photometry
       ~Config.input
       ~Config.columns
       ~Config.algorithm

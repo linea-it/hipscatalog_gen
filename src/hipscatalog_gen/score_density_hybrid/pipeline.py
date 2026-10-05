@@ -20,7 +20,12 @@ else:  # Optional LSDB import for HATS catalogs.
 from ..io.output import build_header_line_from_keep
 from ..pipeline.common import maybe_persist_ddf, write_tiles_with_allsky
 from ..pipeline.params import ScoreDensityHybridParams
-from ..selection.common import add_ipix_column, reduce_topk_by_group_dask, targets_per_tile
+from ..selection.common import (
+    _sort_by_plain_keys,
+    add_ipix_column,
+    reduce_topk_by_group_dask,
+    targets_per_tile,
+)
 from ..selection.levels import assign_level_edges
 from ..selection.score import (
     _finite_min_max,
@@ -504,19 +509,15 @@ def run_score_density_hybrid_selection(
     for depth in [d for d in depths_sel if d <= stage1_depth_max]:
         depth_t0 = time.time()
         depth_total = int(stage1_totals.get(depth, 0))
-        if depth_total <= 0:
+        # If the density stage reaches level_limit there is no stage 2 to absorb
+        # per-tile quota shortfalls. Make the deepest level a catch-all for the
+        # remainder so every row in the resolved score window is written once.
+        terminal_catchall = depth == cfg.algorithm.level_limit and stage1_depth_max == depth
+        if depth_total <= 0 and not terminal_catchall:
             log_fn(f"[DEPTH {depth}] score_density_hybrid: target is 0 → skipping.", always=True)
             continue
 
         counts = densmaps[depth]
-        bias = float(getattr(algo, f"sdh_density_bias_n{depth}", 1.0))
-        targets_per_tile_map = targets_per_tile(counts, depth_total, bias)
-        if not targets_per_tile_map:
-            log_fn(
-                f"[DEPTH {depth}] score_density_hybrid: no active tiles or zero targets → skipping.",
-                always=True,
-            )
-            continue
 
         with diag_ctx(f"dask_sdh_depth_{depth:02d}_candidates"):
             meta_ipix = _get_meta_df(available_ddf).copy()
@@ -529,19 +530,50 @@ def run_score_density_hybrid_selection(
                 meta=meta_ipix,
             )
 
-            target_tiles = list(targets_per_tile_map.keys())
-            cand_ddf = ddf_with_ipix[ddf_with_ipix["__ipix__"].isin(target_tiles)]
-            selected_ddf = reduce_topk_by_group_dask(
-                cand_ddf,
-                group_col="__ipix__",
-                score_col=score_col_internal,
-                order_desc=order_desc,
-                k_per_group=targets_per_tile_map,
-                ra_col=ra_col,
-                dec_col=dec_col,
-                tie_col=tie_col,
+            if terminal_catchall:
+                selected_pdf = ddf_with_ipix.compute()
+                sort_cols = [score_col_internal]
+                ascending = [not order_desc]
+                if tie_col and tie_col in selected_pdf.columns:
+                    sort_cols.append(tie_col)
+                    ascending.append(True)
+                if ra_col in selected_pdf.columns:
+                    sort_cols.append(ra_col)
+                    ascending.append(True)
+                if dec_col in selected_pdf.columns:
+                    sort_cols.append(dec_col)
+                    ascending.append(True)
+                selected_pdf = _sort_by_plain_keys(selected_pdf, sort_cols, ascending)
+            else:
+                bias = float(getattr(algo, f"sdh_density_bias_n{depth}", 1.0))
+                targets_per_tile_map = targets_per_tile(counts, depth_total, bias)
+                if not targets_per_tile_map:
+                    log_fn(
+                        f"[DEPTH {depth}] score_density_hybrid: no active tiles or zero targets → skipping.",
+                        always=True,
+                    )
+                    continue
+
+                target_tiles = list(targets_per_tile_map.keys())
+                cand_ddf = ddf_with_ipix[ddf_with_ipix["__ipix__"].isin(target_tiles)]
+                selected_ddf = reduce_topk_by_group_dask(
+                    cand_ddf,
+                    group_col="__ipix__",
+                    score_col=score_col_internal,
+                    order_desc=order_desc,
+                    k_per_group=targets_per_tile_map,
+                    ra_col=ra_col,
+                    dec_col=dec_col,
+                    tie_col=tie_col,
+                )
+                selected_pdf = selected_ddf.compute()
+
+        if terminal_catchall:
+            log_fn(
+                f"[DEPTH {depth}] score_density_hybrid: terminal spillover selected "
+                f"all {len(selected_pdf)} remaining rows (nominal target={depth_total}).",
+                always=True,
             )
-            selected_pdf = selected_ddf.compute()
 
         _log_depth_stats(log_fn, depth, "selected", counts=counts, selected_len=len(selected_pdf))
 
@@ -569,10 +601,11 @@ def run_score_density_hybrid_selection(
         stage1_depth_totals[str(depth)] = int(sum(written_per_ipix.values())) if written_per_ipix else 0
         stage1_depth_tiles[str(depth)] = int(len(written_per_ipix)) if written_per_ipix else 0
 
-        ids_used = selected_pdf["__sdh_id__"].dropna().astype("int64").tolist()
-        if ids_used:
-            meta_avail = _get_meta_df(available_ddf)
-            available_ddf = available_ddf.map_partitions(_drop_selected_ids, ids_used, meta=meta_avail)
+        if not terminal_catchall:
+            ids_used = selected_pdf["__sdh_id__"].dropna().astype("int64").tolist()
+            if ids_used:
+                meta_avail = _get_meta_df(available_ddf)
+                available_ddf = available_ddf.map_partitions(_drop_selected_ids, ids_used, meta=meta_avail)
 
         log_fn(f"[DEPTH {depth}] done in {_fmt_dur(time.time() - depth_t0)}", always=True)
 

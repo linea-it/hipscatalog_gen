@@ -216,14 +216,21 @@ def _get_dask_base(
     if _has_required(ddf_like):
         return ddf_like
 
-    # For LSDB catalogs without public Dask-like methods, fall back to the underlying Dask DataFrame.
+    # Prefer LSDB's public conversion only when a downstream operation is not
+    # available natively. The private _ddf fallback supports older LSDB releases.
     if LsdbCatalog is not None and isinstance(ddf_like, LsdbCatalog):
+        to_dask = getattr(ddf_like, "to_dask_dataframe", None)
+        if callable(to_dask):
+            base = to_dask()
+            if _has_required(base):
+                return base
+
         base = getattr(ddf_like, "_ddf", None)
-        if base is None:
-            raise TypeError("LSDB catalog missing _ddf attribute; cannot extract Dask base.")
-        if _has_required(base):
+        if base is not None and _has_required(base):
             return base
-        raise TypeError("LSDB catalog _ddf does not expose required dask-like methods.")
+        raise TypeError(
+            "LSDB catalog does not expose the required operation natively or through to_dask_dataframe()."
+        )
 
     raise TypeError("Object is not Dask-like (missing groupby/map_partitions/to_delayed).")
 

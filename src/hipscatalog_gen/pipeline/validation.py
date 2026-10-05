@@ -5,6 +5,20 @@ from __future__ import annotations
 from typing import Any
 
 
+def validate_config(cfg: Any) -> None:
+    """Validate all common and active-mode configuration constraints."""
+    validate_common_cfg(cfg)
+    mode = (getattr(cfg.algorithm, "selection_mode", "") or "").lower()
+    if mode == "mag_global":
+        validate_mag_global_cfg(cfg)
+    elif mode == "score_global":
+        validate_score_global_cfg(cfg)
+    elif mode == "score_density_hybrid":
+        validate_score_density_hybrid_cfg(cfg)
+    else:
+        raise ValueError(f"Unsupported selection_mode '{mode}' during config validation.")
+
+
 def _validate_nk_pairs(label: str, cfg: Any, prefix: str = "") -> None:
     """Ensure mutually exclusive n_i/k_i pairs."""
     for depth in (1, 2, 3):
@@ -50,8 +64,17 @@ def validate_score_density_hybrid_cfg(cfg: Any) -> None:
         raise ValueError("score_density_hybrid: algorithm.sdh_score_column (or score_column) is required.")
     if int(getattr(algo, "sdh_score_hist_nbins", getattr(algo, "score_hist_nbins", 0))) <= 0:
         raise ValueError("score_density_hybrid: sdh_score_hist_nbins must be positive.")
-    if int(getattr(algo, "sdh_density_up_to_depth", 4)) < 1:
+    density_up_to_depth = int(getattr(algo, "sdh_density_up_to_depth", 4))
+    level_limit = int(getattr(algo, "level_limit", 0))
+    if density_up_to_depth < 1:
         raise ValueError("score_density_hybrid: sdh_density_up_to_depth must be >= 1.")
+    if density_up_to_depth > level_limit:
+        raise ValueError(
+            "score_density_hybrid: density_up_to_depth "
+            f"({density_up_to_depth}) must be <= level_limit ({level_limit}). "
+            "Set algorithm.score_density_hybrid.density_up_to_depth explicitly "
+            "or increase algorithm.level_limit."
+        )
     _validate_nk_pairs("score_density_hybrid", algo, prefix="sdh_")
 
 

@@ -1,15 +1,34 @@
 # Pipeline overview
 
+Configuration preflight
+-----------------------
+- `hipscatalog-gen --check-config` and `run_pipeline` use the same common and active-mode validation.
+- Preflight finishes before the output location is created, cleared, or written.
+- `level_limit` must be at least 1.
+- In `score_density_hybrid`, `density_up_to_depth` defaults to 4 and must satisfy `1 <= density_up_to_depth <= level_limit`; set it explicitly when `level_limit < 4`.
+
 High-level stages
 -----------------
 - `prepare_input`: expand paths, validate RA/DEC, adjust partitions.
 - `input_total`: count rows after validation.
+- `photometry`: lazily derive configured magnitude columns and discard source-only columns.
 - `normalize_selection`: create internal columns and compute mode parameters (ranges, sentinels) without mutating `cfg`.
 - `prepare_<mode>`: apply the range filter using normalized parameters.
 - `densmaps`: compute density maps for all depths and write FITS files.
 - `static_products`: write MOC, metadata.xml, and arguments.
 - `run_<mode>`: slice by depth/score/magnitude and write tiles + Allsky when applicable.
 - `counts` / `properties`: write counts and HiPS properties.
+
+Optional photometric transformation
+-----------------------------------
+- Runs once per input partition and derives all configured measurements in one vectorized pass.
+- Uses `m = mag_offset - 2.5 log10(flux)` and `sigma_m = (2.5 / ln(10)) sigma_flux / flux`.
+- Optional extinction correction uses `m_corrected = m - coefficient[band] * E(B-V)`.
+- The corrected magnitude error currently propagates only the flux error; uncertainty in E(B-V) or in the extinction coefficient is not included.
+- Non-finite or non-positive fluxes produce `NaN` magnitudes. Non-finite or negative flux errors produce `NaN` magnitude errors.
+- The transformation itself preserves rows. With `adaptive_range: complete` and `keep_invalid_values: true`, invalid selection values are mapped to a sentinel and sent to the last slice, provided at least one finite selection value exists.
+- Parquet reads are projected to required physical columns. HATS execution retains native LSDB projection and partition operations, falling back to a Dask DataFrame only when the catalog object cannot perform the required partition mapping.
+- See {doc}`Photometry <reference/photometry>` for configuration and output-schema details.
 
 Execution policy (fixed defaults)
 ---------------------------------
@@ -26,14 +45,21 @@ Stage-2 streaming writes (`score_global` / `score_density_hybrid`, deeper depths
 - Fan-in is auto-tuned per worker task from worker concurrency and `RLIMIT_NOFILE`, reducing `EMFILE` (`Too many open files`) risk.
 - An active `dask.distributed` client is required; the pipeline fails fast when absent.
 
+Hybrid terminal spillover
+-------------------------
+- When `density_up_to_depth < level_limit`, the score-driven deeper levels consume the remainder from the density stage.
+- When `density_up_to_depth == level_limit`, the deepest density level consumes every remaining row, preventing unfilled per-pixel quotas from dropping rows.
+- With `adaptive_range: complete` and `keep_invalid_values: true`, row conservation holds when explicit score bounds do not exclude finite values and coordinates and writes are valid.
+
 Telemetry (`telemetry.json`)
 ----------------------------
 - Written to `output.out_dir/telemetry.json` at the end of the run. Schema in `docs/telemetry.schema.json`; includes `schema_version` for forward-compatibility.
-- Fields: `selection_mode`, `level_limit`, `moc_order`, `input_rows`, `output_rows`, `total_duration_s`, per-stage durations under `stages.{stage}.duration_s`, and counts under `counts` (input/output totals and per-depth).
+- Fields: `selection_mode`, `level_limit`, `moc_order`, `input_rows`, `output_rows`, `total_duration_s`, per-stage durations under `stages.{stage}.duration_s`, and counts under `counts` (input/output totals and per-depth). Runs with photometry also include a `photometry` summary with the measurement count, dereddening/replacement flags, and final output columns.
 - Schema snapshot:
 
 ```json
 {
+  "schema_version": 1,
   "selection_mode": "mag_global",
   "level_limit": 6,
   "moc_order": 6,
@@ -43,6 +69,7 @@ Telemetry (`telemetry.json`)
   "stages": {
     "prepare_input": {"duration_s": 0.5},
     "input_total": {"duration_s": 0.1},
+    "photometry": {"duration_s": 0.0},
     "normalize_selection": {"duration_s": 0.2},
     "prepare_mag_global": {"duration_s": 1.0},
     "densmaps": {"duration_s": 2.5},

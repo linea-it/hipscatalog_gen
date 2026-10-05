@@ -14,8 +14,8 @@
 #
 # HATS catalogs:
 #   - Opened via lsdb.open_catalog()
-#   - Columns restricted to RA/DEC, score expression dependencies, mag column (if mag_global)
-#     plus any columns listed in columns.keep.
+#   - Projected natively with LSDB to the columns required by RA/DEC, the active
+#     selection mode, configured photometry, and columns.keep.
 # =============================================================================
 
 
@@ -27,7 +27,7 @@ input:
   #   - Parquet/CSV/TSV → file paths or glob patterns.
   #   - HATS           → root catalog folder (where collection.properties lives).
   paths:
-    - "<path-omitted>/data/*.parquet"
+    - "<path-to-data>/dp1/*.parquet"
 
   # Input format:
   #   "parquet" → Dask DataFrame via dd.read_parquet
@@ -66,14 +66,17 @@ columns:
   # Behavior is unified across all formats (Parquet, CSV, TSV, HATS):
   #
   #   - If omitted or null:
-  #       → Keep all input columns. RA/DEC, score expression deps, and mag/flux
-  #         (if selection_mode = "mag_global") are ordered first.
+  #       → Without photometry, keep all input columns in catalog order.
+  #       → With photometry, also add every derived output; when
+  #         photometry.replace_fluxes=true, replace source flux/error columns.
   #
   #   - If empty list []:
-  #       → Keep only the essential subset (RA, DEC, score deps, mag/flux if mag_global).
+  #       → Keep only RA/DEC, active selection dependencies, and every configured
+  #         photometry output. Source columns needed for a transformation are still
+  #         read internally, but are not necessarily written.
   #
   #   - If provided (non-empty list):
-  #       → Keep the essential subset plus all columns listed here (filtered by availability).
+  #       → Keep the same required subset plus all listed columns that are available.
   #
   # This restriction minimizes I/O and memory footprint while preserving all
   # necessary columns for selection and output.
@@ -108,7 +111,7 @@ algorithm:
   # Common settings (all modes)
   # ==============================
   selection_mode: "score_density_hybrid"  # "mag_global" | "score_global" | "score_density_hybrid"
-  level_limit: 11             # HiPS max depth (4..11)
+  level_limit: 11             # HiPS max depth (>=1)
   # moc_order: 11             # Optional MOC order (defaults to level_limit)
   selection_defaults:
     hist_nbins: 2048
@@ -216,7 +219,7 @@ cluster:
     # - "--mem=0"   # use all node memory if allowed
 
   # Dask performance reports:
-  # "none" → disabled, "local" → per-depth, "global" → full pipeline
+  # "off" → disabled, "per_step" → per-stage, "global" → full pipeline
   diagnostics_mode: global
 
 

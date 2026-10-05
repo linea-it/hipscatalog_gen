@@ -14,8 +14,8 @@
 #
 # HATS catalogs:
 #   - Opened via lsdb.open_catalog()
-#   - Columns restricted to RA/DEC, score expression dependencies, mag column (if mag_global)
-#     plus any columns listed in columns.keep.
+#   - Projected natively with LSDB to the columns required by RA/DEC, the active
+#     selection mode, configured photometry, and columns.keep.
 # =============================================================================
 
 
@@ -66,14 +66,17 @@ columns:
   # Behavior is unified across all formats (Parquet, CSV, TSV, HATS):
   #
   #   - If omitted or null:
-  #       → Keep all input columns. RA/DEC, score expression deps, and mag/flux
-  #         (if selection_mode = "mag_global") are ordered first.
+  #       → Without photometry, keep all input columns in catalog order.
+  #       → With photometry, also add every derived output; when
+  #         photometry.replace_fluxes=true, replace source flux/error columns.
   #
   #   - If empty list []:
-  #       → Keep only the essential subset (RA, DEC, score deps, mag/flux if mag_global).
+  #       → Keep only RA/DEC, active selection dependencies, and every configured
+  #         photometry output. Source columns needed for a transformation are still
+  #         read internally, but are not necessarily written.
   #
   #   - If provided (non-empty list):
-  #       → Keep the essential subset plus all columns listed here (filtered by availability).
+  #       → Keep the same required subset plus all listed columns that are available.
   #
   # This restriction minimizes I/O and memory footprint while preserving all
   # necessary columns for selection and output.
@@ -85,6 +88,50 @@ columns:
 
 
 # -----------------------------------------------------------------------------
+# Optional photometric transformations
+# -----------------------------------------------------------------------------
+# Omit this entire block when the input already contains the desired magnitudes.
+# Transformations run lazily, once per partition, and are available to every
+# selection mode (including score expressions).
+# This top-level block creates output columns. algorithm.mag_global.flux_column
+# is a separate single-column convenience used only by mag_global selection.
+#
+# photometry:
+#   mag_offset: 31.4
+#   invalid_value: nan
+#   replace_fluxes: true
+#
+#   # Compact form for regular survey schemas. Use "measurements" instead when
+#   # input/output column names do not follow a common template.
+#   expand:
+#     bands: [u, g, r, i, z, y]
+#     flux_template: "{band}_psfFlux"
+#     flux_error_template: "{band}_psfFluxErr"
+#     mag_template: "{band}_psfMag"
+#     mag_error_template: "{band}_psfMagErr"
+#
+#   dereddening:
+#     enabled: true
+#     ebv_column: ebv
+#     keep_observed_magnitudes: false
+#     output_suffix: "_dered"
+#     coefficients:
+#       u: 4.81
+#       g: 3.64
+#       r: 2.70
+#       i: 2.06
+#       z: 1.58
+#       y: 1.31
+#
+# Explicit alternative:
+#   measurements:
+#     - band: r
+#       flux_column: r_psfFlux
+#       flux_error_column: r_psfFluxErr
+#       mag_column: r_psfMag
+#       mag_error_column: r_psfMagErr
+#
+# -----------------------------------------------------------------------------
 # Algorithmic controls
 # -----------------------------------------------------------------------------
 algorithm:
@@ -93,7 +140,7 @@ algorithm:
   # Common settings (all modes)
   # ==============================
   selection_mode: "score_density_hybrid"  # "mag_global" | "score_global" | "score_density_hybrid"
-  level_limit: 11             # HiPS max depth (4..11)
+  level_limit: 11             # HiPS max depth (>=1)
   # moc_order: 11             # Optional MOC order (defaults to level_limit)
   selection_defaults:
     hist_nbins: 2048
@@ -200,7 +247,7 @@ cluster:
     # - "--mem=0"   # use all node memory if allowed
     interface: "ib0"
   # Dask performance reports:
-  # "none" → disabled, "local" → per-depth, "global" → full pipeline
+  # "off" → disabled, "per_step" → per-stage, "global" → full pipeline
   diagnostics_mode: global
 
 

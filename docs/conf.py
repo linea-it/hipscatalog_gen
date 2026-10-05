@@ -51,7 +51,7 @@ for _mod in MOCK_MODULES:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "hipscatalog-gen"
-copyright = "2025, Luigi Silva @ LIneA"
+copyright = "2025-2026, Luigi Silva @ LIneA"
 author = "Luigi Lucas de Carvalho Silva"
 release = version("hipscatalog-gen")
 # for example take major/minor
@@ -61,6 +61,7 @@ version = ".".join(release.split(".")[:2])
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
@@ -81,7 +82,12 @@ copybutton_prompt_text = ">> "
 copybutton_selector = "div:not(.no-copybutton) > div.highlight > pre"
 
 templates_path = []
-exclude_patterns = ["_build", "**.ipynb_checkpoints"]
+exclude_patterns = [
+    "_build",
+    "**.ipynb_checkpoints",
+    "notebooks/README.md",
+    "pre_executed/README.md",
+]
 
 # This assumes that sphinx-build is called from the root directory
 master_doc = "index"

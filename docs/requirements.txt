@@ -2,6 +2,7 @@
 ipykernel
 ipython
 jupytext
+myst-parser>=2.0,<6
 nbconvert
 nbsphinx
 sphinx
