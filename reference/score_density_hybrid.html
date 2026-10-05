@@ -48,9 +48,11 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="core.html">Core</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pipeline.html">Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="photometry.html">Photometry</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mag_global.html">mag_global</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score_global.html">score_global</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">score_density_hybrid</a><ul>
@@ -96,6 +98,18 @@
   <section id="score-density-hybrid">
 <h1>score_density_hybrid<a class="headerlink" href="#score-density-hybrid" title="Link to this heading"></a></h1>
 <p>Hybrid density + score selection mode.</p>
+<p><code class="docutils literal notranslate"><span class="pre">density_up_to_depth</span></code> defaults to 4 and must satisfy
+<code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">&lt;=</span> <span class="pre">density_up_to_depth</span> <span class="pre">&lt;=</span> <span class="pre">level_limit</span></code>. <code class="docutils literal notranslate"><span class="pre">level_limit</span></code> itself must be at
+least 1, so configurations below level 4 must set <code class="docutils literal notranslate"><span class="pre">density_up_to_depth</span></code>
+explicitly to a compatible value.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">density_up_to_depth</span> <span class="pre">&lt;</span> <span class="pre">level_limit</span></code>, deeper score slices consume the
+rows left by the density stage. When both values are equal, the deepest density
+level acts as a terminal spillover and consumes every remaining row instead of
+dropping rows when individual pixel quotas cannot be filled.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">adaptive_range:</span> <span class="pre">complete</span></code> and <code class="docutils literal notranslate"><span class="pre">keep_invalid_values:</span> <span class="pre">true</span></code>, all rows
+are retained when no explicit score bounds exclude finite values and the
+coordinates and writes are valid. Invalid score values are mapped to the
+terminal sentinel.</p>
 <p>Usage snippet:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hipscatalog_gen.score_density_hybrid.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_score_density_hybrid</span><span class="p">,</span> <span class="n">run_score_density_hybrid_selection</span>
 <span class="n">ddf_score</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">normalize_score_density_hybrid</span><span class="p">(</span><span class="n">ddf</span><span class="p">,</span> <span class="n">cfg</span><span class="p">,</span> <span class="n">diag_ctx</span><span class="p">,</span> <span class="n">log_fn</span><span class="p">)</span>
@@ -128,7 +142,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

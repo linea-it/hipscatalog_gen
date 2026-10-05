@@ -46,6 +46,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
 </ul>
@@ -351,7 +352,7 @@ run_pipeline(cfg)</p>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">output.out_dir</span></code> already exists without <code class="docutils literal notranslate"><span class="pre">output.overwrite</span></code> set.</p></li>
-<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">level_limit</span></code> is outside the supported range [4, 11].</p></li>
+<li><p><strong>ValueError</strong> – If <code class="docutils literal notranslate"><span class="pre">level_limit</span></code> is not positive.</p></li>
 <li><p><strong>ValueError</strong> – If the configured <code class="docutils literal notranslate"><span class="pre">selection_mode</span></code> is unsupported.</p></li>
 </ul>
 </dd>
@@ -744,6 +745,20 @@ run_pipeline(cfg)</p>
 <span id="hipscatalog-gen-pipeline-validation-module"></span><h2>hipscatalog_gen.pipeline.validation module<a class="headerlink" href="#module-hipscatalog_gen.pipeline.validation" title="Link to this heading"></a></h2>
 <p>Validation helpers for configuration blocks across selection modes.</p>
 <dl class="py function">
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.validation.validate_config">
+<span class="sig-name descname"><span class="pre">validate_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_config" title="Link to this definition"></a></dt>
+<dd><p>Validate all common and active-mode configuration constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="hipscatalog_gen.pipeline.validation.validate_mag_global_cfg">
 <span class="sig-name descname"><span class="pre">validate_mag_global_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hipscatalog_gen/pipeline/validation.html#validate_mag_global_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_mag_global_cfg" title="Link to this definition"></a></dt>
 <dd><p>Surface mag_global config issues early.</p>
@@ -815,7 +830,7 @@ run_pipeline(cfg)</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

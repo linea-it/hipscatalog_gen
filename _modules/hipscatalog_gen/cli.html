@@ -45,6 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../notebooks.html">Notebooks</a></li>
 </ul>
@@ -206,24 +207,9 @@
 
     <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s2">"check_config"</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
         <span class="n">cfg</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">check_config</span><span class="p">)</span>
-        <span class="c1"># Validation runs inside run_pipeline, but we surface success here.</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-            <span class="n">validate_common_cfg</span><span class="p">,</span>
-            <span class="n">validate_mag_global_cfg</span><span class="p">,</span>
-            <span class="n">validate_score_density_hybrid_cfg</span><span class="p">,</span>
-            <span class="n">validate_score_global_cfg</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.pipeline.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_config</span>
 
-        <span class="n">validate_common_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="n">mode</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"selection_mode"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"mag_global"</span><span class="p">:</span>
-            <span class="n">validate_mag_global_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"score_global"</span><span class="p">:</span>
-            <span class="n">validate_score_global_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"score_density_hybrid"</span><span class="p">:</span>
-            <span class="n">validate_score_density_hybrid_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported selection_mode '</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">' during config check."</span><span class="p">)</span>
+        <span class="n">validate_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Configuration is valid."</span><span class="p">)</span>
         <span class="k">return</span>
 
@@ -268,7 +254,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

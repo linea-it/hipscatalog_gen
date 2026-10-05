@@ -11,7 +11,15 @@ Overview
   - ``mag_global``: magnitude-complete selection (see ``algorithm.mag_global.*``).
   - ``mag_global`` hist_peak defaults: when no ``mag_min``/``mag_max`` are provided, the histogram range clips global min/max to [-2, 40] (min clipped to >= -2; max from the peak within [-2, min(global_max, 40)]).
   - ``score_global``: selection driven by an arbitrary score/expression (see ``algorithm.score_global.*``).
-  - ``score_density_hybrid``: density-driven depths 1..``density_up_to_depth`` (default 4) with score-driven remainder (see ``algorithm.score_density_hybrid.*``).
+  - ``score_density_hybrid``: density-driven depths
+    1..``density_up_to_depth`` (default 4) with score-driven remainder. The
+    density depth must not exceed ``level_limit``; when both are equal, the
+    terminal depth absorbs every row left by earlier levels (see
+    ``algorithm.score_density_hybrid.*``).
+
+- Optional lazy photometry converts configured flux/error pairs to magnitudes,
+  optionally applies an E(B-V) correction, and makes derived columns available
+  to every selection mode. See :doc:`reference/photometry`.
 
 - Runs locally or on SLURM-backed Dask clusters; outputs full HiPS layouts (tiles, all-sky, MOC, metadata, density maps).
 
@@ -55,11 +63,19 @@ Configuration
 -------------
 
 - Start from ``examples/configs/config.template.yaml`` (copy to ``config.yaml``). Adjust input paths, column mapping, and selection parameters inside the per-mode blocks under ``algorithm``. More examples live under ``examples/configs/``.
+- Add the optional top-level ``photometry`` block only when magnitudes must be
+  derived from fluxes. Derived magnitudes may be referenced directly by
+  ``mag_global``, ``score_global``, or ``score_density_hybrid``.
+- ``photometry.replace_fluxes: true`` keeps source fluxes as internal read
+  dependencies but replaces them with derived photometry in the output schema.
 - When installed from PyPI, fetch the template with ``curl -O https://raw.githubusercontent.com/linea-it/hipscatalog_gen/main/examples/configs/config.template.yaml``.
 - Cluster memory policy is fixed: the pipeline does not persist large intermediate DataFrames and avoids early large computes whenever possible.
 - ``cluster.low_memory_mode`` is deprecated (warning only, no effect). ``cluster.persist_ddfs`` and ``cluster.avoid_computes_wherever_possible`` are deprecated and ignored.
 - Streamed stage-2 writes require an active ``dask.distributed`` client and execute bucket processing on workers (driver remains orchestration-only).
 - Stage-2 stream merge uses bounded fan-in (auto-tuned from worker concurrency + ``RLIMIT_NOFILE``) to reduce ``EMFILE`` risk on large runs.
+- ``algorithm.level_limit`` must be at least 1. For
+  ``score_density_hybrid``, ``density_up_to_depth`` defaults to 4 and must be
+  between 1 and ``level_limit``; set it explicitly when ``level_limit < 4``.
 
 Run the pipeline
 ----------------
@@ -84,6 +100,10 @@ CLI:
 No dedicated ``sbatch`` wrapper script is required. For HPC usage, set
 ``cluster.mode: slurm`` in the YAML and run the same command above.
 
+Validate without running with ``hipscatalog-gen --check-config config.yaml``.
+The check command and the real pipeline share the same preflight validation,
+which completes before the output location is created, cleared, or written.
+
 Outputs (HiPS layout)
 ---------------------
 
@@ -92,7 +112,11 @@ Outputs (HiPS layout)
 - ``Moc.fits`` / ``Moc.json``: MOC maps.
 - ``properties`` and ``metadata.xml``: HiPS metadata descriptors.
 - ``process.log`` and ``arguments``: logs and config snapshot.
-- Existing ``output.out_dir`` causes an error; set ``output.overwrite: true`` to clear it before writing.
+- ``telemetry.json``: schema-versioned stage timings and input/output counts.
+- ``index.html``: local catalog preview entry point; serve it with
+  ``hipscatalog-gen serve --out output/example_catalog``.
+- Existing ``output.out_dir`` causes an error; set ``output.overwrite: true``
+  to clear it after configuration preflight succeeds.
 
 Navigation
 ----------
@@ -104,5 +128,6 @@ Navigation
    :hidden:
 
    Home page <self>
+   Pipeline overview <pipeline>
    Reference <reference/index>
    Notebooks <notebooks>

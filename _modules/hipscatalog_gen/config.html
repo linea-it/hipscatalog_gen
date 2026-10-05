@@ -45,6 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../notebooks.html">Notebooks</a></li>
 </ul>
@@ -79,8 +80,9 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>  <span class="c1"># type: ignore[import-untyped, unused-ignore]</span>
@@ -90,6 +92,9 @@
     <span class="s2">"ColumnsCfg"</span><span class="p">,</span>
     <span class="s2">"InputCfg"</span><span class="p">,</span>
     <span class="s2">"ClusterCfg"</span><span class="p">,</span>
+    <span class="s2">"PhotometryMeasurementCfg"</span><span class="p">,</span>
+    <span class="s2">"DereddeningCfg"</span><span class="p">,</span>
+    <span class="s2">"PhotometryCfg"</span><span class="p">,</span>
     <span class="s2">"OutputCfg"</span><span class="p">,</span>
     <span class="s2">"Config"</span><span class="p">,</span>
     <span class="s2">"load_config"</span><span class="p">,</span>
@@ -204,6 +209,48 @@
 
 
 
+<div class="viewcode-block" id="PhotometryMeasurementCfg">
+<a class="viewcode-back" href="../../reference/generated/photometry/hipscatalog_gen.config.PhotometryMeasurementCfg.html#hipscatalog_gen.config.PhotometryMeasurementCfg">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhotometryMeasurementCfg</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One flux/error pair and its derived magnitude column names."""</span>
+
+    <span class="n">band</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">flux_column</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">mag_column</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">flux_error_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">mag_error_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="DereddeningCfg">
+<a class="viewcode-back" href="../../reference/generated/photometry/hipscatalog_gen.config.DereddeningCfg.html#hipscatalog_gen.config.DereddeningCfg">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DereddeningCfg</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Per-row Galactic-extinction correction configuration."""</span>
+
+    <span class="n">enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">ebv_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">coefficients</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">keep_observed_magnitudes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">output_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"_dered"</span></div>
+
+
+
+<div class="viewcode-block" id="PhotometryCfg">
+<a class="viewcode-back" href="../../reference/generated/photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhotometryCfg</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Optional survey-independent flux-to-magnitude transformations."""</span>
+
+    <span class="n">mag_offset</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">measurements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">PhotometryMeasurementCfg</span><span class="p">]</span>
+    <span class="n">invalid_value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"nan"</span>
+    <span class="n">replace_fluxes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">dereddening</span><span class="p">:</span> <span class="n">DereddeningCfg</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">DereddeningCfg</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="InputCfg">
 <a class="viewcode-back" href="../../api/hipscatalog_gen.html#hipscatalog_gen.config.InputCfg">[docs]</a>
 <span class="nd">@dataclass</span>
@@ -258,7 +305,8 @@
     <span class="n">columns</span><span class="p">:</span> <span class="n">ColumnsCfg</span>
     <span class="n">algorithm</span><span class="p">:</span> <span class="n">AlgoOpts</span>
     <span class="n">cluster</span><span class="p">:</span> <span class="n">ClusterCfg</span>
-    <span class="n">output</span><span class="p">:</span> <span class="n">OutputCfg</span></div>
+    <span class="n">output</span><span class="p">:</span> <span class="n">OutputCfg</span>
+    <span class="n">photometry</span><span class="p">:</span> <span class="n">PhotometryCfg</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -270,6 +318,7 @@
 <span class="s2">------------------</span>
 <span class="s2">input      [required]</span>
 <span class="s2">columns    [required]</span>
+<span class="s2">photometry [optional]</span>
 <span class="s2">algorithm  [required]</span>
 <span class="s2">cluster    [required]</span>
 <span class="s2">output     [required]</span>
@@ -294,21 +343,49 @@
 <span class="s2">keep  [optional, default=None] list[str] or null</span>
 <span class="s2">    Controls which columns are kept in the HiPS tiles:</span>
 <span class="s2">      - Not set / null (default):</span>
-<span class="s2">          Keep all input columns preserving original input order.</span>
+<span class="s2">          Without photometry, keep all input columns in original order. With</span>
+<span class="s2">          photometry, add every derived output and, when replace_fluxes=True,</span>
+<span class="s2">          omit the source flux/error columns from output.</span>
 <span class="s2">      - Empty list []:</span>
-<span class="s2">          Keep only the essential set: RA, DEC, score deps, and mag/flux</span>
-<span class="s2">          (if mag_global), with RA/DEC first.</span>
+<span class="s2">          Keep RA, DEC, active selection dependencies, and every configured</span>
+<span class="s2">          photometry output. Transformation source columns may still be read</span>
+<span class="s2">          internally without being written.</span>
 <span class="s2">      - Non-empty list:</span>
 <span class="s2">          Use the provided keep order when it already contains all essential</span>
 <span class="s2">          columns. Otherwise, prepend missing essential columns before the keep</span>
-<span class="s2">          order (with RA/DEC first if they are missing).</span>
+<span class="s2">          order (with RA/DEC first if they are missing). Configured photometry</span>
+<span class="s2">          outputs are part of the essential set.</span>
+
+<span class="s2">photometry</span>
+<span class="s2">-----------</span>
+<span class="s2">Optional top-level flux-to-magnitude transformation block. If omitted or null,</span>
+<span class="s2">the input catalog is unchanged.</span>
+
+<span class="s2">Use this block for output magnitudes, multiple bands, dereddening, or derived</span>
+<span class="s2">scores in any selection mode. algorithm.mag_global.flux_column is a separate</span>
+<span class="s2">single-column convenience used only by mag_global selection.</span>
+
+<span class="s2">mag_offset       [required] finite float</span>
+<span class="s2">replace_fluxes   [optional, default=True] bool</span>
+<span class="s2">invalid_value    [optional, default="nan"]</span>
+<span class="s2">    Currently only "nan" is supported.</span>
+<span class="s2">measurements     [required unless expand is used] list[dict]</span>
+<span class="s2">    Each item requires band, flux_column and mag_column. flux_error_column and</span>
+<span class="s2">    mag_error_column are optional but must be provided together.</span>
+<span class="s2">expand           [alternative to measurements] dict</span>
+<span class="s2">    Template shorthand with bands, flux_template, mag_template, and optional</span>
+<span class="s2">    flux_error_template/mag_error_template. Templates use "</span><span class="si">{band}</span><span class="s2">".</span>
+<span class="s2">dereddening      [optional] dict</span>
+<span class="s2">    enabled, ebv_column, coefficients, keep_observed_magnitudes, output_suffix.</span>
+<span class="s2">    When enabled, ebv_column and one finite coefficient per configured band are</span>
+<span class="s2">    required.</span>
 
 <span class="s2">algorithm (block-based)</span>
 <span class="s2">-----------------------</span>
 <span class="s2">selection_mode         [required]</span>
 <span class="s2">    "mag_global" | "score_global" | "score_density_hybrid".</span>
 <span class="s2">level_limit            [required] int</span>
-<span class="s2">    Maximum HiPS order (NorderL). Must be in [4, 11].</span>
+<span class="s2">    Maximum HiPS order (NorderL). Must be &gt;= 1.</span>
 <span class="s2">moc_order              [optional, default=level_limit] int</span>
 <span class="s2">    HiPS order used for the MOC.</span>
 <span class="s2">selection_defaults     [optional] dict</span>
@@ -316,6 +393,8 @@
 <span class="s2">      - hist_nbins        (int, default 2048)</span>
 <span class="s2">      - adaptive_range    (</span><span class="se">\"</span><span class="s2">complete</span><span class="se">\"</span><span class="s2"> | </span><span class="se">\"</span><span class="s2">hist_peak</span><span class="se">\"</span><span class="s2">, default </span><span class="se">\"</span><span class="s2">complete</span><span class="se">\"</span><span class="s2">)</span>
 <span class="s2">      - order_desc        (bool, default False)</span>
+<span class="s2">      - keep_invalid_values (bool, default False)</span>
+<span class="s2">      - tie_column        (str or null, default null)</span>
 <span class="s2">      - density_bias_n1/n2/n3 (float, default 1.0 for SDH)</span>
 
 <span class="s2">mag_global block</span>
@@ -329,6 +408,8 @@
 <span class="s2">mag_global.k_1/k_2/k_3       [optional] int, </span><span class="se">\"</span><span class="s2">per active tile</span><span class="se">\"</span><span class="s2"> aliases for n_*</span>
 <span class="s2">mag_global.n_1/n_2/n_3       [optional] int (must be provided in order)</span>
 <span class="s2">mag_global.order_desc        [optional, default=selection_defaults.order_desc or False]</span>
+<span class="s2">mag_global.keep_invalid_values [optional, default=selection_defaults.keep_invalid_values or False]</span>
+<span class="s2">mag_global.tie_column        [optional, default=selection_defaults.tie_column or null]</span>
 
 <span class="s2">score_global block</span>
 <span class="s2">^^^^^^^^^^^^^^^^^^</span>
@@ -339,6 +420,8 @@
 <span class="s2">score_global.k_1/k_2/k_3     [optional] int, </span><span class="se">\"</span><span class="s2">per active tile</span><span class="se">\"</span><span class="s2"> aliases for n_*</span>
 <span class="s2">score_global.n_1/n_2/n_3     [optional] int (must be provided in order)</span>
 <span class="s2">score_global.order_desc      [optional, default=selection_defaults.order_desc or False]</span>
+<span class="s2">score_global.keep_invalid_values [optional, default=selection_defaults.keep_invalid_values or False]</span>
+<span class="s2">score_global.tie_column      [optional, default=selection_defaults.tie_column or null]</span>
 
 <span class="s2">score_density_hybrid block</span>
 <span class="s2">^^^^^^^^^^^^^^^^^^^^^^^^^^</span>
@@ -347,12 +430,15 @@
 <span class="s2">score_density_hybrid.adaptive_range [optional, default=selection_defaults.adaptive_range or </span><span class="se">\"</span><span class="s2">complete</span><span class="se">\"</span><span class="s2">]</span>
 <span class="s2">score_density_hybrid.hist_nbins     [optional, default=selection_defaults.hist_nbins or 2048]</span>
 <span class="s2">score_density_hybrid.density_up_to_depth [optional, default=4]</span>
-<span class="s2">    Max depth handled by stage-1 density pass (clamped to level_limit).</span>
+<span class="s2">    Max depth handled by stage-1 density pass. Must be &lt;= level_limit. When</span>
+<span class="s2">    level_limit &lt; 4, override this default explicitly with a compatible value.</span>
 <span class="s2">score_density_hybrid.k_1/k_2/k_3    [optional] int, </span><span class="se">\"</span><span class="s2">per active tile</span><span class="se">\"</span><span class="s2"> aliases for n_*</span>
 <span class="s2">score_density_hybrid.n_1/n_2/n_3    [optional] int (must be provided in order)</span>
 <span class="s2">score_density_hybrid.density_bias_n1/n2/n3 [optional, default=selection_defaults.density_bias_n* or 1.0]</span>
 <span class="s2">    float in [0,1]</span>
 <span class="s2">score_density_hybrid.order_desc     [optional, default=selection_defaults.order_desc or False]</span>
+<span class="s2">score_density_hybrid.keep_invalid_values [optional, default=selection_defaults.keep_invalid_values or False]</span>
+<span class="s2">score_density_hybrid.tie_column     [optional, default=selection_defaults.tie_column or null]</span>
 
 <span class="s2">cluster</span>
 <span class="s2">-------</span>
@@ -362,7 +448,7 @@
 <span class="s2">threads_per_worker       [optional, default=1] int</span>
 <span class="s2">memory_per_worker        [optional, default="2GB"] str</span>
 <span class="s2">slurm                    [optional, default=None] dict</span>
-<span class="s2">low_memory_mode          [optional, default=True] bool</span>
+<span class="s2">low_memory_mode          [deprecated, default unset] bool</span>
 <span class="s2">    DEPRECATED: kept only for backward compatibility and has no effect.</span>
 <span class="s2">    The pipeline now always uses:</span>
 <span class="s2">      - no DataFrame persistence of large intermediates</span>
@@ -419,6 +505,149 @@
 <span class="sd">    """</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">_CONFIG_HELP_TEXT</span><span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_photometry</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhotometryCfg</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse and validate the optional photometric transformation block."""</span>
+    <span class="k">if</span> <span class="n">raw</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry must be a mapping or null."</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">mag_offset</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw</span><span class="p">[</span><span class="s2">"mag_offset"</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.mag_offset is required."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.mag_offset must be a finite number."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">mag_offset</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.mag_offset must be a finite number."</span><span class="p">)</span>
+
+    <span class="n">invalid_value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"invalid_value"</span><span class="p">,</span> <span class="s2">"nan"</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">invalid_value</span> <span class="o">!=</span> <span class="s2">"nan"</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.invalid_value currently supports only 'nan'."</span><span class="p">)</span>
+
+    <span class="n">raw_measurements</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"measurements"</span><span class="p">)</span>
+    <span class="n">raw_expand</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"expand"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">raw_measurements</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">raw_expand</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.measurements and photometry.expand are mutually exclusive."</span><span class="p">)</span>
+
+    <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">raw_expand</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_expand</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.expand must be a mapping."</span><span class="p">)</span>
+        <span class="n">bands</span> <span class="o">=</span> <span class="n">raw_expand</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"bands"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bands</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">bands</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.expand.bands must be a non-empty list."</span><span class="p">)</span>
+        <span class="n">required_templates</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"flux_template"</span><span class="p">,</span> <span class="s2">"mag_template"</span><span class="p">)</span>
+        <span class="n">missing_templates</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">required_templates</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">raw_expand</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">missing_templates</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.expand requires: "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_templates</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"."</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">band_raw</span> <span class="ow">in</span> <span class="n">bands</span><span class="p">:</span>
+            <span class="n">band</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">band_raw</span><span class="p">)</span>
+            <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"band"</span><span class="p">:</span> <span class="n">band</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="p">(</span><span class="s2">"flux_template"</span><span class="p">,</span> <span class="s2">"flux_column"</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"flux_error_template"</span><span class="p">,</span> <span class="s2">"flux_error_column"</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"mag_template"</span><span class="p">,</span> <span class="s2">"mag_column"</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">"mag_error_template"</span><span class="p">,</span> <span class="s2">"mag_error_column"</span><span class="p">),</span>
+            <span class="p">):</span>
+                <span class="n">template</span> <span class="o">=</span> <span class="n">raw_expand</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">template</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">values</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">template</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">band</span><span class="o">=</span><span class="n">band</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"photometry.expand.</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2"> must use a valid '</span><span class="se">{{</span><span class="s2">band</span><span class="se">}}</span><span class="s2">' template."</span>
+                        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+            <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_measurements</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">raw_measurements</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.measurements must be a non-empty list when expand is not used."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">raw_measurements</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Each photometry.measurements entry must be a mapping."</span><span class="p">)</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">raw_measurements</span><span class="p">)</span>
+
+    <span class="n">measurements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PhotometryMeasurementCfg</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">generated_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">entries</span><span class="p">):</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"band"</span><span class="p">,</span> <span class="s2">"flux_column"</span><span class="p">,</span> <span class="s2">"mag_column"</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"photometry.measurements[</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">] requires: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="n">flux_error</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"flux_error_column"</span><span class="p">)</span>
+        <span class="n">mag_error</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mag_error_column"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">bool</span><span class="p">(</span><span class="n">flux_error</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">mag_error</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"photometry.measurements[</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">] must set flux_error_column and mag_error_column together."</span>
+            <span class="p">)</span>
+        <span class="n">measurement</span> <span class="o">=</span> <span class="n">PhotometryMeasurementCfg</span><span class="p">(</span>
+            <span class="n">band</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">"band"</span><span class="p">]),</span>
+            <span class="n">flux_column</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">"flux_column"</span><span class="p">]),</span>
+            <span class="n">flux_error_column</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">flux_error</span><span class="p">)</span> <span class="k">if</span> <span class="n">flux_error</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">mag_column</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">[</span><span class="s2">"mag_column"</span><span class="p">]),</span>
+            <span class="n">mag_error_column</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">mag_error</span><span class="p">)</span> <span class="k">if</span> <span class="n">mag_error</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">)</span>
+        <span class="n">duplicates</span> <span class="o">=</span> <span class="n">generated_names</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">duplicates</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Duplicate photometry output column(s): </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">duplicates</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+        <span class="n">generated_names</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+        <span class="n">measurements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">measurement</span><span class="p">)</span>
+
+    <span class="n">raw_dered</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"dereddening"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_dered</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.dereddening must be a mapping."</span><span class="p">)</span>
+    <span class="n">dered_enabled</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">raw_dered</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"enabled"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="n">ebv_column</span> <span class="o">=</span> <span class="n">raw_dered</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ebv_column"</span><span class="p">)</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">raw_dered</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_suffix"</span><span class="p">,</span> <span class="s2">"_dered"</span><span class="p">))</span>
+    <span class="n">coeff_raw</span> <span class="o">=</span> <span class="n">raw_dered</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"coefficients"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coeff_raw</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.dereddening.coefficients must be a mapping."</span><span class="p">)</span>
+    <span class="n">coefficients</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">band</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">coeff_raw</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">coefficient</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"photometry.dereddening.coefficients.</span><span class="si">{</span><span class="n">band</span><span class="si">}</span><span class="s2"> must be finite."</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">err</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">coefficient</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"photometry.dereddening.coefficients.</span><span class="si">{</span><span class="n">band</span><span class="si">}</span><span class="s2"> must be finite."</span><span class="p">)</span>
+        <span class="n">coefficients</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">band</span><span class="p">)]</span> <span class="o">=</span> <span class="n">coefficient</span>
+
+    <span class="k">if</span> <span class="n">dered_enabled</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ebv_column</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.dereddening.ebv_column is required when enabled."</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">suffix</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"photometry.dereddening.output_suffix cannot be empty."</span><span class="p">)</span>
+        <span class="n">missing_bands</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">band</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">measurements</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">band</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">coefficients</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">missing_bands</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Missing extinction coefficient(s) for band(s): "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_bands</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"."</span>
+            <span class="p">)</span>
+        <span class="n">corrected_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="n">measurements</span><span class="p">:</span>
+            <span class="n">corrected_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_column</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span><span class="p">:</span>
+                <span class="n">corrected_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">measurement</span><span class="o">.</span><span class="n">mag_error_column</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">)</span>
+        <span class="n">collisions</span> <span class="o">=</span> <span class="n">generated_names</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">corrected_names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">collisions</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">corrected_names</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">corrected_names</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Dereddened photometry output column names collide."</span><span class="p">)</span>
+
+    <span class="n">dereddening</span> <span class="o">=</span> <span class="n">DereddeningCfg</span><span class="p">(</span>
+        <span class="n">enabled</span><span class="o">=</span><span class="n">dered_enabled</span><span class="p">,</span>
+        <span class="n">ebv_column</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">ebv_column</span><span class="p">)</span> <span class="k">if</span> <span class="n">ebv_column</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">coefficients</span><span class="o">=</span><span class="n">coefficients</span><span class="p">,</span>
+        <span class="n">keep_observed_magnitudes</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">raw_dered</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"keep_observed_magnitudes"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="n">output_suffix</span><span class="o">=</span><span class="n">suffix</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">PhotometryCfg</span><span class="p">(</span>
+        <span class="n">mag_offset</span><span class="o">=</span><span class="n">mag_offset</span><span class="p">,</span>
+        <span class="n">measurements</span><span class="o">=</span><span class="n">measurements</span><span class="p">,</span>
+        <span class="n">invalid_value</span><span class="o">=</span><span class="n">invalid_value</span><span class="p">,</span>
+        <span class="n">replace_fluxes</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"replace_fluxes"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+        <span class="n">dereddening</span><span class="o">=</span><span class="n">dereddening</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_config_from_mapping</span><span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Config</span><span class="p">:</span>
@@ -651,6 +880,7 @@
             <span class="n">obs_title</span><span class="o">=</span><span class="n">y</span><span class="p">[</span><span class="s2">"output"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"obs_title"</span><span class="p">),</span>
             <span class="n">overwrite</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="s2">"output"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"overwrite"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
         <span class="p">),</span>
+        <span class="n">photometry</span><span class="o">=</span><span class="n">_parse_photometry</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"photometry"</span><span class="p">)),</span>
     <span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -778,7 +1008,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

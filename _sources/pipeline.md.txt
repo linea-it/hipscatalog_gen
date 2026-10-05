@@ -1,5 +1,12 @@
 # Pipeline overview
 
+Configuration preflight
+-----------------------
+- `hipscatalog-gen --check-config` and `run_pipeline` use the same common and active-mode validation.
+- Preflight finishes before the output location is created, cleared, or written.
+- `level_limit` must be at least 1.
+- In `score_density_hybrid`, `density_up_to_depth` defaults to 4 and must satisfy `1 <= density_up_to_depth <= level_limit`; set it explicitly when `level_limit < 4`.
+
 High-level stages
 -----------------
 - `prepare_input`: expand paths, validate RA/DEC, adjust partitions.
@@ -37,6 +44,12 @@ Stage-2 streaming writes (`score_global` / `score_density_hybrid`, deeper depths
 - Per-bucket merge is streaming k-way merge with bounded fan-in rounds.
 - Fan-in is auto-tuned per worker task from worker concurrency and `RLIMIT_NOFILE`, reducing `EMFILE` (`Too many open files`) risk.
 - An active `dask.distributed` client is required; the pipeline fails fast when absent.
+
+Hybrid terminal spillover
+-------------------------
+- When `density_up_to_depth < level_limit`, the score-driven deeper levels consume the remainder from the density stage.
+- When `density_up_to_depth == level_limit`, the deepest density level consumes every remaining row, preventing unfilled per-pixel quotas from dropping rows.
+- With `adaptive_range: complete` and `keep_invalid_values: true`, row conservation holds when explicit score bounds do not exclude finite values and coordinates and writes are valid.
 
 Telemetry (`telemetry.json`)
 ----------------------------

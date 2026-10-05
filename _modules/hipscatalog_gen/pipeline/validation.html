@@ -45,6 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
@@ -80,6 +81,23 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+
+<div class="viewcode-block" id="validate_config">
+<a class="viewcode-back" href="../../../reference/generated/pipeline/hipscatalog_gen.pipeline.validation.validate_config.html#hipscatalog_gen.pipeline.validation.validate_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Validate all common and active-mode configuration constraints."""</span>
+    <span class="n">validate_common_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"selection_mode"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"mag_global"</span><span class="p">:</span>
+        <span class="n">validate_mag_global_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"score_global"</span><span class="p">:</span>
+        <span class="n">validate_score_global_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">"score_density_hybrid"</span><span class="p">:</span>
+        <span class="n">validate_score_density_hybrid_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported selection_mode '</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">' during config validation."</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_nk_pairs</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -135,8 +153,17 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"score_density_hybrid: algorithm.sdh_score_column (or score_column) is required."</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_score_hist_nbins"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"score_hist_nbins"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)))</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"score_density_hybrid: sdh_score_hist_nbins must be positive."</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_density_up_to_depth"</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">density_up_to_depth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"sdh_density_up_to_depth"</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+    <span class="n">level_limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="s2">"level_limit"</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">density_up_to_depth</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"score_density_hybrid: sdh_density_up_to_depth must be &gt;= 1."</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">density_up_to_depth</span> <span class="o">&gt;</span> <span class="n">level_limit</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"score_density_hybrid: density_up_to_depth "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">density_up_to_depth</span><span class="si">}</span><span class="s2">) must be &lt;= level_limit (</span><span class="si">{</span><span class="n">level_limit</span><span class="si">}</span><span class="s2">). "</span>
+            <span class="s2">"Set algorithm.score_density_hybrid.density_up_to_depth explicitly "</span>
+            <span class="s2">"or increase algorithm.level_limit."</span>
+        <span class="p">)</span>
     <span class="n">_validate_nk_pairs</span><span class="p">(</span><span class="s2">"score_density_hybrid"</span><span class="p">,</span> <span class="n">algo</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">"sdh_"</span><span class="p">)</span></div>
 
 
@@ -178,7 +205,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

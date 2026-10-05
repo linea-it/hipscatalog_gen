@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hipscatalog_gen.pipeline.common.compute_and_write_densmaps &mdash; hipscatalog-gen 0.3.3 documentation</title>
+  <title>hipscatalog_gen.pipeline.validation.validate_config &mdash; hipscatalog-gen 0.3.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -23,8 +23,8 @@
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="hipscatalog_gen.pipeline.common.write_tiles_with_allsky" href="hipscatalog_gen.pipeline.common.write_tiles_with_allsky.html" />
-    <link rel="prev" title="hipscatalog_gen.pipeline.common.build_and_prepare_input" href="hipscatalog_gen.pipeline.common.build_and_prepare_input.html" /> 
+    <link rel="next" title="hipscatalog_gen.pipeline.validation.validate_common_cfg" href="hipscatalog_gen.pipeline.validation.validate_common_cfg.html" />
+    <link rel="prev" title="hipscatalog_gen.pipeline.structure.run_stages" href="hipscatalog_gen.pipeline.structure.run_stages.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -58,7 +58,10 @@
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.structure.PipelineStage.html">hipscatalog_gen.pipeline.structure.PipelineStage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.structure.PipelineContext.html">hipscatalog_gen.pipeline.structure.PipelineContext</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.structure.run_stages.html">hipscatalog_gen.pipeline.structure.run_stages</a></li>
-<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.validation.validate_config.html">hipscatalog_gen.pipeline.validation.validate_config</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">hipscatalog_gen.pipeline.validation.validate_config</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#hipscatalog_gen.pipeline.validation.validate_config"><code class="docutils literal notranslate"><span class="pre">validate_config()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.validation.validate_common_cfg.html">hipscatalog_gen.pipeline.validation.validate_common_cfg</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.validation.validate_mag_global_cfg.html">hipscatalog_gen.pipeline.validation.validate_mag_global_cfg</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.validation.validate_score_global_cfg.html">hipscatalog_gen.pipeline.validation.validate_score_global_cfg</a></li>
@@ -66,10 +69,7 @@
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.common.log_prologue.html">hipscatalog_gen.pipeline.common.log_prologue</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.common.log_epilogue.html">hipscatalog_gen.pipeline.common.log_epilogue</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.common.build_and_prepare_input.html">hipscatalog_gen.pipeline.common.build_and_prepare_input</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">hipscatalog_gen.pipeline.common.compute_and_write_densmaps</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#hipscatalog_gen.pipeline.common.compute_and_write_densmaps"><code class="docutils literal notranslate"><span class="pre">compute_and_write_densmaps()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.common.compute_and_write_densmaps.html">hipscatalog_gen.pipeline.common.compute_and_write_densmaps</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.common.write_tiles_with_allsky.html">hipscatalog_gen.pipeline.common.write_tiles_with_allsky</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.common.write_counts_summaries.html">hipscatalog_gen.pipeline.common.write_counts_summaries</a></li>
 <li class="toctree-l3"><a class="reference internal" href="hipscatalog_gen.pipeline.logging_utils.setup_structured_logger.html">hipscatalog_gen.pipeline.logging_utils.setup_structured_logger</a></li>
@@ -105,7 +105,7 @@
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Reference</a></li>
           <li class="breadcrumb-item"><a href="../../pipeline.html">Pipeline</a></li>
-      <li class="breadcrumb-item active">hipscatalog_gen.pipeline.common.compute_and_write_densmaps</li>
+      <li class="breadcrumb-item active">hipscatalog_gen.pipeline.validation.validate_config</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -114,29 +114,18 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="hipscatalog-gen-pipeline-common-compute-and-write-densmaps">
-<h1>hipscatalog_gen.pipeline.common.compute_and_write_densmaps<a class="headerlink" href="#hipscatalog-gen-pipeline-common-compute-and-write-densmaps" title="Link to this heading"></a></h1>
+  <section id="hipscatalog-gen-pipeline-validation-validate-config">
+<h1>hipscatalog_gen.pipeline.validation.validate_config<a class="headerlink" href="#hipscatalog-gen-pipeline-validation-validate-config" title="Link to this heading"></a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.common.compute_and_write_densmaps">
-<span class="sig-name descname"><span class="pre">compute_and_write_densmaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ddf_sel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ra_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level_limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diag_ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/pipeline/common.html#compute_and_write_densmaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.common.compute_and_write_densmaps" title="Link to this definition"></a></dt>
-<dd><p>Compute density maps for all depths and write them to disk.</p>
+<dt class="sig sig-object py" id="hipscatalog_gen.pipeline.validation.validate_config">
+<span class="sig-name descname"><span class="pre">validate_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/pipeline/validation.html#validate_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.pipeline.validation.validate_config" title="Link to this definition"></a></dt>
+<dd><p>Validate all common and active-mode configuration constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>ddf_sel</strong> (<em>Any</em>) – Dask-like collection with RA/DEC columns.</p></li>
-<li><p><strong>ra_col</strong> (<em>str</em>) – Name of the RA column (degrees).</p></li>
-<li><p><strong>dec_col</strong> (<em>str</em>) – Name of the DEC column (degrees).</p></li>
-<li><p><strong>level_limit</strong> (<em>int</em>) – Maximum HiPS order to compute.</p></li>
-<li><p><strong>out_dir</strong> (<em>Path</em>) – Output directory where FITS files are written.</p></li>
-<li><p><strong>diag_ctx</strong> – Diagnostics context factory (label -&gt; context manager).</p></li>
-<li><p><strong>log_fn</strong> – Optional logging callback for progress updates.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>Any</em>)</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Mapping of depth -&gt; numpy array with counts per HEALPix pixel.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>Dict</em>[int, <em>ndarray</em>]</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -147,8 +136,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="hipscatalog_gen.pipeline.common.build_and_prepare_input.html" class="btn btn-neutral float-left" title="hipscatalog_gen.pipeline.common.build_and_prepare_input" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="hipscatalog_gen.pipeline.common.write_tiles_with_allsky.html" class="btn btn-neutral float-right" title="hipscatalog_gen.pipeline.common.write_tiles_with_allsky" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="hipscatalog_gen.pipeline.structure.run_stages.html" class="btn btn-neutral float-left" title="hipscatalog_gen.pipeline.structure.run_stages" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="hipscatalog_gen.pipeline.validation.validate_common_cfg.html" class="btn btn-neutral float-right" title="hipscatalog_gen.pipeline.validation.validate_common_cfg" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

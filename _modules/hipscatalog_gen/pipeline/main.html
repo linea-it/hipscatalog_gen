@@ -45,6 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
@@ -105,6 +106,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..cluster.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_cluster</span><span class="p">,</span> <span class="n">shutdown_cluster</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..io.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_properties</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..photometry</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_photometry</span><span class="p">,</span> <span class="n">working_photometry_columns</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_mkdirs</span><span class="p">,</span> <span class="n">_ts</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.common</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">build_and_prepare_input</span><span class="p">,</span>
@@ -118,7 +120,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.logging_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_structured_logger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.modes</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_selection_mode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.structure</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineContext</span><span class="p">,</span> <span class="n">PipelineStage</span><span class="p">,</span> <span class="n">run_stages</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_common_cfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_config</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"run_pipeline"</span><span class="p">]</span>
 
@@ -139,11 +141,17 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If ``output.out_dir`` already exists without ``output.overwrite`` set.</span>
-<span class="sd">        ValueError: If ``level_limit`` is outside the supported range [4, 11].</span>
+<span class="sd">        ValueError: If ``level_limit`` is not positive.</span>
 <span class="sd">        ValueError: If the configured ``selection_mode`` is unsupported.</span>
 <span class="sd">    """</span>
     <span class="n">out_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="c1"># Validate the complete configuration before creating, deleting, or writing</span>
+    <span class="c1"># anything under output.out_dir.</span>
+    <span class="n">validate_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+    <span class="n">selection_mode</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"selection_mode"</span><span class="p">,</span> <span class="s2">"mag_global"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"mag_global"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">mode_entry</span> <span class="o">=</span> <span class="n">get_selection_mode</span><span class="p">(</span><span class="n">selection_mode</span><span class="p">)</span>
 
     <span class="n">overwrite</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="s2">"overwrite"</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">out_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -171,14 +179,6 @@
     <span class="p">)</span>
 
     <span class="n">log_prologue</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">_log</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">4</span> <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">11</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"level_limit (lM) must be within [4, 11] to mirror the CDS tool."</span><span class="p">)</span>
-
-    <span class="n">validate_common_cfg</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
-
-    <span class="n">selection_mode</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"selection_mode"</span><span class="p">,</span> <span class="s2">"mag_global"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"mag_global"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="n">mode_entry</span> <span class="o">=</span> <span class="n">get_selection_mode</span><span class="p">(</span><span class="n">selection_mode</span><span class="p">)</span>
 
     <span class="n">runtime</span><span class="p">,</span> <span class="n">diag_ctx</span> <span class="o">=</span> <span class="n">setup_cluster</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="n">report_dir</span><span class="p">,</span> <span class="n">_log</span><span class="p">)</span>
     <span class="n">persist_ddfs</span> <span class="o">=</span> <span class="kc">False</span>
@@ -219,6 +219,37 @@
             <span class="n">context</span><span class="o">.</span><span class="n">ddf</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">diag_ctx</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">avoid_computes</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">with_updates</span><span class="p">(</span><span class="n">input_total</span><span class="o">=</span><span class="n">input_total</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_stage_photometry</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Attach configured photometry lazily and discard internal source columns."""</span>
+        <span class="n">photometry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span> <span class="s2">"photometry"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">photometry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">context</span>
+        <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">ddf</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">context</span><span class="o">.</span><span class="n">keep_cols</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Pipeline context missing photometry inputs."</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+
+        <span class="n">transformed</span> <span class="o">=</span> <span class="n">apply_photometry</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">ddf</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="n">working_columns</span> <span class="o">=</span> <span class="n">working_photometry_columns</span><span class="p">(</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">transformed</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span>
+            <span class="n">context</span><span class="o">.</span><span class="n">keep_cols</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">transformed</span> <span class="o">=</span> <span class="n">transformed</span><span class="p">[</span><span class="n">working_columns</span><span class="p">]</span>
+        <span class="n">dered</span> <span class="o">=</span> <span class="n">photometry</span><span class="o">.</span><span class="n">dereddening</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">log_fn</span><span class="p">(</span>
+            <span class="s2">"[photometry] derived "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">photometry</span><span class="o">.</span><span class="n">measurements</span><span class="p">)</span><span class="si">}</span><span class="s2"> measurement(s) in one partition-wise pass; "</span>
+            <span class="sa">f</span><span class="s2">"dereddening=</span><span class="si">{</span><span class="n">dered</span><span class="o">.</span><span class="n">enabled</span><span class="si">}</span><span class="s2">; replace_fluxes=</span><span class="si">{</span><span class="n">photometry</span><span class="o">.</span><span class="n">replace_fluxes</span><span class="si">}</span><span class="s2">."</span><span class="p">,</span>
+            <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">telemetry</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">telemetry</span><span class="p">)</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"photometry"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"measurements"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">photometry</span><span class="o">.</span><span class="n">measurements</span><span class="p">),</span>
+            <span class="s2">"dereddening"</span><span class="p">:</span> <span class="n">dered</span><span class="o">.</span><span class="n">enabled</span><span class="p">,</span>
+            <span class="s2">"replace_fluxes"</span><span class="p">:</span> <span class="n">photometry</span><span class="o">.</span><span class="n">replace_fluxes</span><span class="p">,</span>
+            <span class="s2">"output_columns"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">keep_cols</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">with_updates</span><span class="p">(</span><span class="n">ddf</span><span class="o">=</span><span class="n">transformed</span><span class="p">,</span> <span class="n">telemetry</span><span class="o">=</span><span class="n">telemetry</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_prepare_selection</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Prepare remainder DDF for tile writing after selection normalization."""</span>
@@ -352,7 +383,7 @@
             <span class="n">precomputed_depth_totals</span><span class="o">=</span><span class="n">precomputed_depth_totals</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">telemetry</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">telemetry</span><span class="p">)</span>
-        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"output_counts"</span><span class="p">]</span> <span class="o">=</span> <span class="n">counts_payload</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"counts"</span><span class="p">]</span> <span class="o">=</span> <span class="n">counts_payload</span>
         <span class="k">return</span> <span class="n">context</span><span class="o">.</span><span class="n">with_updates</span><span class="p">(</span><span class="n">total_written</span><span class="o">=</span><span class="n">total_written</span><span class="p">,</span> <span class="n">telemetry</span><span class="o">=</span><span class="n">telemetry</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stage_properties</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">PipelineContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PipelineContext</span><span class="p">:</span>
@@ -372,7 +403,6 @@
 <span class="w">        </span><span class="sd">"""Validate configuration and normalize selection parameters."""</span>
         <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">ddf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Pipeline context missing input DDF."</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
-        <span class="n">mode_entry</span><span class="o">.</span><span class="n">validate_fn</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
         <span class="n">normalized_ddf</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">mode_entry</span><span class="o">.</span><span class="n">normalize_fn</span><span class="p">(</span>
             <span class="n">context</span><span class="o">.</span><span class="n">ddf</span><span class="p">,</span>
             <span class="n">context</span><span class="o">.</span><span class="n">cfg</span><span class="p">,</span>
@@ -386,6 +416,7 @@
     <span class="n">pipeline_stages</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"prepare_input"</span><span class="p">,</span> <span class="n">_stage_prepare_input</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">"dask_prepare_input"</span><span class="p">),</span>
         <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"input_total"</span><span class="p">,</span> <span class="n">_stage_count_input</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">"dask_input_total"</span><span class="p">),</span>
+        <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"photometry"</span><span class="p">,</span> <span class="n">_stage_photometry</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">"dask_photometry"</span><span class="p">),</span>
         <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"normalize_selection"</span><span class="p">,</span> <span class="n">_stage_normalize_selection</span><span class="p">),</span>
         <span class="n">PipelineStage</span><span class="p">(</span><span class="sa">f</span><span class="s2">"prepare_</span><span class="si">{</span><span class="n">selection_mode</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">_stage_prepare_selection</span><span class="p">),</span>
         <span class="n">PipelineStage</span><span class="p">(</span><span class="s2">"densmaps"</span><span class="p">,</span> <span class="n">_stage_densmaps</span><span class="p">,</span> <span class="n">diag_label</span><span class="o">=</span><span class="s2">"dask_densmaps"</span><span class="p">),</span>
@@ -399,6 +430,7 @@
 <span class="w">        </span><span class="sd">"""Execute the ordered pipeline stages with telemetry updates."""</span>
         <span class="n">final_ctx</span> <span class="o">=</span> <span class="n">run_stages</span><span class="p">(</span><span class="n">pipeline_stages</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
         <span class="n">telemetry</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">final_ctx</span><span class="o">.</span><span class="n">telemetry</span><span class="p">)</span>
+        <span class="n">telemetry</span><span class="p">[</span><span class="s2">"schema_version"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">telemetry</span><span class="p">[</span><span class="s2">"selection_mode"</span><span class="p">]</span> <span class="o">=</span> <span class="n">selection_mode</span>
         <span class="n">telemetry</span><span class="p">[</span><span class="s2">"level_limit"</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span>
         <span class="n">telemetry</span><span class="p">[</span><span class="s2">"moc_order"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"moc_order"</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span><span class="p">)</span>
@@ -434,7 +466,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

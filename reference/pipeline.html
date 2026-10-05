@@ -48,6 +48,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="core.html">Core</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Pipeline</a><ul>
@@ -57,6 +58,7 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineStage.html">hipscatalog_gen.pipeline.structure.PipelineStage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.structure.PipelineContext.html">hipscatalog_gen.pipeline.structure.PipelineContext</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.structure.run_stages.html">hipscatalog_gen.pipeline.structure.run_stages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_config.html">hipscatalog_gen.pipeline.validation.validate_config</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_common_cfg.html">hipscatalog_gen.pipeline.validation.validate_common_cfg</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_mag_global_cfg.html">hipscatalog_gen.pipeline.validation.validate_mag_global_cfg</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_score_global_cfg.html">hipscatalog_gen.pipeline.validation.validate_score_global_cfg</a></li>
@@ -70,6 +72,7 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.logging_utils.setup_structured_logger.html">hipscatalog_gen.pipeline.logging_utils.setup_structured_logger</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="photometry.html">Photometry</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mag_global.html">mag_global</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score_global.html">score_global</a></li>
 <li class="toctree-l2"><a class="reference internal" href="score_density_hybrid.html">score_density_hybrid</a></li>
@@ -116,6 +119,11 @@
 <span class="n">run_pipeline</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>The CLI <code class="docutils literal notranslate"><span class="pre">--check-config</span></code> path and <code class="docutils literal notranslate"><span class="pre">run_pipeline</span></code> call the same
+<code class="docutils literal notranslate"><span class="pre">validate_config</span></code> preflight. Common and active-mode validation completes
+before the output location is created, cleared, or written. <code class="docutils literal notranslate"><span class="pre">level_limit</span></code>
+must be positive; the hybrid mode additionally requires
+<code class="docutils literal notranslate"><span class="pre">density_up_to_depth</span> <span class="pre">&lt;=</span> <span class="pre">level_limit</span></code>.</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.main.run_pipeline.html#hipscatalog_gen.pipeline.main.run_pipeline" title="hipscatalog_gen.pipeline.main.run_pipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.main.run_pipeline</span></code></a></p></td>
@@ -136,37 +144,40 @@
 <tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.structure.run_stages.html#hipscatalog_gen.pipeline.structure.run_stages" title="hipscatalog_gen.pipeline.structure.run_stages"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.structure.run_stages</span></code></a></p></td>
 <td><p>Execute ordered pipeline stages, threading a context object.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_common_cfg.html#hipscatalog_gen.pipeline.validation.validate_common_cfg" title="hipscatalog_gen.pipeline.validation.validate_common_cfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.validation.validate_common_cfg</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_config.html#hipscatalog_gen.pipeline.validation.validate_config" title="hipscatalog_gen.pipeline.validation.validate_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.validation.validate_config</span></code></a></p></td>
+<td><p>Validate all common and active-mode configuration constraints.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_common_cfg.html#hipscatalog_gen.pipeline.validation.validate_common_cfg" title="hipscatalog_gen.pipeline.validation.validate_common_cfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.validation.validate_common_cfg</span></code></a></p></td>
 <td><p>Cross-field validation for cluster/output and shared algorithm settings.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_mag_global_cfg.html#hipscatalog_gen.pipeline.validation.validate_mag_global_cfg" title="hipscatalog_gen.pipeline.validation.validate_mag_global_cfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.validation.validate_mag_global_cfg</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_mag_global_cfg.html#hipscatalog_gen.pipeline.validation.validate_mag_global_cfg" title="hipscatalog_gen.pipeline.validation.validate_mag_global_cfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.validation.validate_mag_global_cfg</span></code></a></p></td>
 <td><p>Surface mag_global config issues early.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_score_global_cfg.html#hipscatalog_gen.pipeline.validation.validate_score_global_cfg" title="hipscatalog_gen.pipeline.validation.validate_score_global_cfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.validation.validate_score_global_cfg</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_score_global_cfg.html#hipscatalog_gen.pipeline.validation.validate_score_global_cfg" title="hipscatalog_gen.pipeline.validation.validate_score_global_cfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.validation.validate_score_global_cfg</span></code></a></p></td>
 <td><p>Surface score_global config issues early.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg.html#hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg" title="hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg.html#hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg" title="hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.validation.validate_score_density_hybrid_cfg</span></code></a></p></td>
 <td><p>Surface score_density_hybrid config issues early.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.log_prologue.html#hipscatalog_gen.pipeline.common.log_prologue" title="hipscatalog_gen.pipeline.common.log_prologue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.log_prologue</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.log_prologue.html#hipscatalog_gen.pipeline.common.log_prologue" title="hipscatalog_gen.pipeline.common.log_prologue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.log_prologue</span></code></a></p></td>
 <td><p>Emit the initial pipeline log lines.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.log_epilogue.html#hipscatalog_gen.pipeline.common.log_epilogue" title="hipscatalog_gen.pipeline.common.log_epilogue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.log_epilogue</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.log_epilogue.html#hipscatalog_gen.pipeline.common.log_epilogue" title="hipscatalog_gen.pipeline.common.log_epilogue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.log_epilogue</span></code></a></p></td>
 <td><p>Emit closing log lines and optionally persist process.log.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.build_and_prepare_input.html#hipscatalog_gen.pipeline.common.build_and_prepare_input" title="hipscatalog_gen.pipeline.common.build_and_prepare_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.build_and_prepare_input</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.build_and_prepare_input.html#hipscatalog_gen.pipeline.common.build_and_prepare_input" title="hipscatalog_gen.pipeline.common.build_and_prepare_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.build_and_prepare_input</span></code></a></p></td>
 <td><p>Load inputs, validate RA/DEC, repartition, and persist when needed.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.compute_and_write_densmaps.html#hipscatalog_gen.pipeline.common.compute_and_write_densmaps" title="hipscatalog_gen.pipeline.common.compute_and_write_densmaps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.compute_and_write_densmaps</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.compute_and_write_densmaps.html#hipscatalog_gen.pipeline.common.compute_and_write_densmaps" title="hipscatalog_gen.pipeline.common.compute_and_write_densmaps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.compute_and_write_densmaps</span></code></a></p></td>
 <td><p>Compute density maps for all depths and write them to disk.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.write_tiles_with_allsky.html#hipscatalog_gen.pipeline.common.write_tiles_with_allsky" title="hipscatalog_gen.pipeline.common.write_tiles_with_allsky"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.write_tiles_with_allsky</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.write_tiles_with_allsky.html#hipscatalog_gen.pipeline.common.write_tiles_with_allsky" title="hipscatalog_gen.pipeline.common.write_tiles_with_allsky"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.write_tiles_with_allsky</span></code></a></p></td>
 <td><p>Finalize tiles and write optional Allsky.tsv.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.write_counts_summaries.html#hipscatalog_gen.pipeline.common.write_counts_summaries" title="hipscatalog_gen.pipeline.common.write_counts_summaries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.write_counts_summaries</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.common.write_counts_summaries.html#hipscatalog_gen.pipeline.common.write_counts_summaries" title="hipscatalog_gen.pipeline.common.write_counts_summaries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.common.write_counts_summaries</span></code></a></p></td>
 <td><p>Build output counts from selection-stage precomputed depth totals.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.logging_utils.setup_structured_logger.html#hipscatalog_gen.pipeline.logging_utils.setup_structured_logger" title="hipscatalog_gen.pipeline.logging_utils.setup_structured_logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.logging_utils.setup_structured_logger</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/pipeline/hipscatalog_gen.pipeline.logging_utils.setup_structured_logger.html#hipscatalog_gen.pipeline.logging_utils.setup_structured_logger" title="hipscatalog_gen.pipeline.logging_utils.setup_structured_logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hipscatalog_gen.pipeline.logging_utils.setup_structured_logger</span></code></a></p></td>
 <td><p>Configure a structured logger that writes to stdout and process.log; optionally JSON lines.</p></td>
 </tr>
 </tbody>
@@ -184,7 +195,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

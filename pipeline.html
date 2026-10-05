@@ -49,10 +49,12 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="index.html">Home page</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Pipeline overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-preflight">Configuration preflight</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#high-level-stages">High-level stages</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#optional-photometric-transformation">Optional photometric transformation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#execution-policy-fixed-defaults">Execution policy (fixed defaults)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#stage-2-streaming-writes-score-global-score-density-hybrid-deeper-depths">Stage-2 streaming writes (<code class="docutils literal notranslate"><span class="pre">score_global</span></code> / <code class="docutils literal notranslate"><span class="pre">score_density_hybrid</span></code>, deeper depths)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hybrid-terminal-spillover">Hybrid terminal spillover</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#telemetry-telemetry-json">Telemetry (<code class="docutils literal notranslate"><span class="pre">telemetry.json</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-to-add-a-new-mode">How to add a new mode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mode-scaffold-template">Mode scaffold (template)</a></li>
@@ -88,6 +90,15 @@
              
   <section id="pipeline-overview">
 <h1>Pipeline overview<a class="headerlink" href="#pipeline-overview" title="Link to this heading"></a></h1>
+<section id="configuration-preflight">
+<h2>Configuration preflight<a class="headerlink" href="#configuration-preflight" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">hipscatalog-gen</span> <span class="pre">--check-config</span></code> and <code class="docutils literal notranslate"><span class="pre">run_pipeline</span></code> use the same common and active-mode validation.</p></li>
+<li><p>Preflight finishes before the output location is created, cleared, or written.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">level_limit</span></code> must be at least 1.</p></li>
+<li><p>In <code class="docutils literal notranslate"><span class="pre">score_density_hybrid</span></code>, <code class="docutils literal notranslate"><span class="pre">density_up_to_depth</span></code> defaults to 4 and must satisfy <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">&lt;=</span> <span class="pre">density_up_to_depth</span> <span class="pre">&lt;=</span> <span class="pre">level_limit</span></code>; set it explicitly when <code class="docutils literal notranslate"><span class="pre">level_limit</span> <span class="pre">&lt;</span> <span class="pre">4</span></code>.</p></li>
+</ul>
+</section>
 <section id="high-level-stages">
 <h2>High-level stages<a class="headerlink" href="#high-level-stages" title="Link to this heading"></a></h2>
 <ul class="simple">
@@ -132,6 +143,14 @@
 <li><p>Per-bucket merge is streaming k-way merge with bounded fan-in rounds.</p></li>
 <li><p>Fan-in is auto-tuned per worker task from worker concurrency and <code class="docutils literal notranslate"><span class="pre">RLIMIT_NOFILE</span></code>, reducing <code class="docutils literal notranslate"><span class="pre">EMFILE</span></code> (<code class="docutils literal notranslate"><span class="pre">Too</span> <span class="pre">many</span> <span class="pre">open</span> <span class="pre">files</span></code>) risk.</p></li>
 <li><p>An active <code class="docutils literal notranslate"><span class="pre">dask.distributed</span></code> client is required; the pipeline fails fast when absent.</p></li>
+</ul>
+</section>
+<section id="hybrid-terminal-spillover">
+<h2>Hybrid terminal spillover<a class="headerlink" href="#hybrid-terminal-spillover" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>When <code class="docutils literal notranslate"><span class="pre">density_up_to_depth</span> <span class="pre">&lt;</span> <span class="pre">level_limit</span></code>, the score-driven deeper levels consume the remainder from the density stage.</p></li>
+<li><p>When <code class="docutils literal notranslate"><span class="pre">density_up_to_depth</span> <span class="pre">==</span> <span class="pre">level_limit</span></code>, the deepest density level consumes every remaining row, preventing unfilled per-pixel quotas from dropping rows.</p></li>
+<li><p>With <code class="docutils literal notranslate"><span class="pre">adaptive_range:</span> <span class="pre">complete</span></code> and <code class="docutils literal notranslate"><span class="pre">keep_invalid_values:</span> <span class="pre">true</span></code>, row conservation holds when explicit score bounds do not exclude finite values and coordinates and writes are valid.</p></li>
 </ul>
 </section>
 <section id="telemetry-telemetry-json">

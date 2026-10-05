@@ -45,6 +45,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
@@ -97,7 +98,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..io.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_header_line_from_keep</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..pipeline.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">maybe_persist_ddf</span><span class="p">,</span> <span class="n">write_tiles_with_allsky</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..pipeline.params</span><span class="w"> </span><span class="kn">import</span> <span class="n">ScoreDensityHybridParams</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..selection.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_ipix_column</span><span class="p">,</span> <span class="n">reduce_topk_by_group_dask</span><span class="p">,</span> <span class="n">targets_per_tile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..selection.common</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_sort_by_plain_keys</span><span class="p">,</span>
+    <span class="n">add_ipix_column</span><span class="p">,</span>
+    <span class="n">reduce_topk_by_group_dask</span><span class="p">,</span>
+    <span class="n">targets_per_tile</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..selection.levels</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_level_edges</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..selection.score</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_finite_min_max</span><span class="p">,</span>
@@ -589,19 +595,15 @@
     <span class="k">for</span> <span class="n">depth</span> <span class="ow">in</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">depths_sel</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;=</span> <span class="n">stage1_depth_max</span><span class="p">]:</span>
         <span class="n">depth_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">depth_total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">stage1_totals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">depth_total</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># If the density stage reaches level_limit there is no stage 2 to absorb</span>
+        <span class="c1"># per-tile quota shortfalls. Make the deepest level a catch-all for the</span>
+        <span class="c1"># remainder so every row in the resolved score window is written once.</span>
+        <span class="n">terminal_catchall</span> <span class="o">=</span> <span class="n">depth</span> <span class="o">==</span> <span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">level_limit</span> <span class="ow">and</span> <span class="n">stage1_depth_max</span> <span class="o">==</span> <span class="n">depth</span>
+        <span class="k">if</span> <span class="n">depth_total</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">terminal_catchall</span><span class="p">:</span>
             <span class="n">log_fn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: target is 0 → skipping."</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">continue</span>
 
         <span class="n">counts</span> <span class="o">=</span> <span class="n">densmaps</span><span class="p">[</span><span class="n">depth</span><span class="p">]</span>
-        <span class="n">bias</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sdh_density_bias_n</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
-        <span class="n">targets_per_tile_map</span> <span class="o">=</span> <span class="n">targets_per_tile</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">depth_total</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">targets_per_tile_map</span><span class="p">:</span>
-            <span class="n">log_fn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: no active tiles or zero targets → skipping."</span><span class="p">,</span>
-                <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">continue</span>
 
         <span class="k">with</span> <span class="n">diag_ctx</span><span class="p">(</span><span class="sa">f</span><span class="s2">"dask_sdh_depth_</span><span class="si">{</span><span class="n">depth</span><span class="si">:</span><span class="s2">02d</span><span class="si">}</span><span class="s2">_candidates"</span><span class="p">):</span>
             <span class="n">meta_ipix</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">available_ddf</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -614,19 +616,50 @@
                 <span class="n">meta</span><span class="o">=</span><span class="n">meta_ipix</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="n">target_tiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">targets_per_tile_map</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-            <span class="n">cand_ddf</span> <span class="o">=</span> <span class="n">ddf_with_ipix</span><span class="p">[</span><span class="n">ddf_with_ipix</span><span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">target_tiles</span><span class="p">)]</span>
-            <span class="n">selected_ddf</span> <span class="o">=</span> <span class="n">reduce_topk_by_group_dask</span><span class="p">(</span>
-                <span class="n">cand_ddf</span><span class="p">,</span>
-                <span class="n">group_col</span><span class="o">=</span><span class="s2">"__ipix__"</span><span class="p">,</span>
-                <span class="n">score_col</span><span class="o">=</span><span class="n">score_col_internal</span><span class="p">,</span>
-                <span class="n">order_desc</span><span class="o">=</span><span class="n">order_desc</span><span class="p">,</span>
-                <span class="n">k_per_group</span><span class="o">=</span><span class="n">targets_per_tile_map</span><span class="p">,</span>
-                <span class="n">ra_col</span><span class="o">=</span><span class="n">ra_col</span><span class="p">,</span>
-                <span class="n">dec_col</span><span class="o">=</span><span class="n">dec_col</span><span class="p">,</span>
-                <span class="n">tie_col</span><span class="o">=</span><span class="n">tie_col</span><span class="p">,</span>
+            <span class="k">if</span> <span class="n">terminal_catchall</span><span class="p">:</span>
+                <span class="n">selected_pdf</span> <span class="o">=</span> <span class="n">ddf_with_ipix</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+                <span class="n">sort_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">score_col_internal</span><span class="p">]</span>
+                <span class="n">ascending</span> <span class="o">=</span> <span class="p">[</span><span class="ow">not</span> <span class="n">order_desc</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">tie_col</span> <span class="ow">and</span> <span class="n">tie_col</span> <span class="ow">in</span> <span class="n">selected_pdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                    <span class="n">sort_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tie_col</span><span class="p">)</span>
+                    <span class="n">ascending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ra_col</span> <span class="ow">in</span> <span class="n">selected_pdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                    <span class="n">sort_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ra_col</span><span class="p">)</span>
+                    <span class="n">ascending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">dec_col</span> <span class="ow">in</span> <span class="n">selected_pdf</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                    <span class="n">sort_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dec_col</span><span class="p">)</span>
+                    <span class="n">ascending</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">selected_pdf</span> <span class="o">=</span> <span class="n">_sort_by_plain_keys</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">,</span> <span class="n">sort_cols</span><span class="p">,</span> <span class="n">ascending</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">bias</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">algo</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"sdh_density_bias_n</span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+                <span class="n">targets_per_tile_map</span> <span class="o">=</span> <span class="n">targets_per_tile</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">depth_total</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">targets_per_tile_map</span><span class="p">:</span>
+                    <span class="n">log_fn</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: no active tiles or zero targets → skipping."</span><span class="p">,</span>
+                        <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">continue</span>
+
+                <span class="n">target_tiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">targets_per_tile_map</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="n">cand_ddf</span> <span class="o">=</span> <span class="n">ddf_with_ipix</span><span class="p">[</span><span class="n">ddf_with_ipix</span><span class="p">[</span><span class="s2">"__ipix__"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">target_tiles</span><span class="p">)]</span>
+                <span class="n">selected_ddf</span> <span class="o">=</span> <span class="n">reduce_topk_by_group_dask</span><span class="p">(</span>
+                    <span class="n">cand_ddf</span><span class="p">,</span>
+                    <span class="n">group_col</span><span class="o">=</span><span class="s2">"__ipix__"</span><span class="p">,</span>
+                    <span class="n">score_col</span><span class="o">=</span><span class="n">score_col_internal</span><span class="p">,</span>
+                    <span class="n">order_desc</span><span class="o">=</span><span class="n">order_desc</span><span class="p">,</span>
+                    <span class="n">k_per_group</span><span class="o">=</span><span class="n">targets_per_tile_map</span><span class="p">,</span>
+                    <span class="n">ra_col</span><span class="o">=</span><span class="n">ra_col</span><span class="p">,</span>
+                    <span class="n">dec_col</span><span class="o">=</span><span class="n">dec_col</span><span class="p">,</span>
+                    <span class="n">tie_col</span><span class="o">=</span><span class="n">tie_col</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">selected_pdf</span> <span class="o">=</span> <span class="n">selected_ddf</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">terminal_catchall</span><span class="p">:</span>
+            <span class="n">log_fn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] score_density_hybrid: terminal spillover selected "</span>
+                <span class="sa">f</span><span class="s2">"all </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">)</span><span class="si">}</span><span class="s2"> remaining rows (nominal target=</span><span class="si">{</span><span class="n">depth_total</span><span class="si">}</span><span class="s2">)."</span><span class="p">,</span>
+                <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">selected_pdf</span> <span class="o">=</span> <span class="n">selected_ddf</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
 
         <span class="n">_log_depth_stats</span><span class="p">(</span><span class="n">log_fn</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="s2">"selected"</span><span class="p">,</span> <span class="n">counts</span><span class="o">=</span><span class="n">counts</span><span class="p">,</span> <span class="n">selected_len</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_pdf</span><span class="p">))</span>
 
@@ -654,10 +687,11 @@
         <span class="n">stage1_depth_totals</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">written_per_ipix</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span> <span class="k">if</span> <span class="n">written_per_ipix</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="n">stage1_depth_tiles</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">depth</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">written_per_ipix</span><span class="p">))</span> <span class="k">if</span> <span class="n">written_per_ipix</span> <span class="k">else</span> <span class="mi">0</span>
 
-        <span class="n">ids_used</span> <span class="o">=</span> <span class="n">selected_pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"int64"</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">ids_used</span><span class="p">:</span>
-            <span class="n">meta_avail</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">available_ddf</span><span class="p">)</span>
-            <span class="n">available_ddf</span> <span class="o">=</span> <span class="n">available_ddf</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span><span class="n">_drop_selected_ids</span><span class="p">,</span> <span class="n">ids_used</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta_avail</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">terminal_catchall</span><span class="p">:</span>
+            <span class="n">ids_used</span> <span class="o">=</span> <span class="n">selected_pdf</span><span class="p">[</span><span class="s2">"__sdh_id__"</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">"int64"</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">ids_used</span><span class="p">:</span>
+                <span class="n">meta_avail</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">available_ddf</span><span class="p">)</span>
+                <span class="n">available_ddf</span> <span class="o">=</span> <span class="n">available_ddf</span><span class="o">.</span><span class="n">map_partitions</span><span class="p">(</span><span class="n">_drop_selected_ids</span><span class="p">,</span> <span class="n">ids_used</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">meta_avail</span><span class="p">)</span>
 
         <span class="n">log_fn</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[DEPTH </span><span class="si">{</span><span class="n">depth</span><span class="si">}</span><span class="s2">] done in </span><span class="si">{</span><span class="n">_fmt_dur</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">depth_t0</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -707,7 +741,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -6,8 +6,9 @@ Input loaders and HiPS writer utilities.
 Typical flow::
 
    from hipscatalog_gen.io import _build_input_ddf, write_properties
-   ddf, ra, dec, keep_cols = _build_input_ddf(paths, cfg)[:4]
-   write_properties(out_dir, cfg.output, cfg.algorithm.level_limit, n_src=len(ddf))
+   ddf, ra, dec, keep_cols = _build_input_ddf(paths, cfg)
+   # Reuse the row count already computed by the pipeline; avoid len(ddf).
+   write_properties(out_dir, cfg.output, cfg.algorithm.level_limit, n_src=input_total)
 
 .. autosummary::
    :toctree: generated/io
@@ -23,3 +24,4 @@ Typical flow::
    hipscatalog_gen.io.output.write_metadata_xml
    hipscatalog_gen.io.output.write_moc
    hipscatalog_gen.io.output.write_densmap_fits
+   hipscatalog_gen.io.output.write_index_html
