@@ -48,7 +48,6 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../../core.html">Core</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">hipscatalog_gen.Config</a><ul>
@@ -63,7 +62,6 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../pipeline.html">Pipeline</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../photometry.html">Photometry</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../mag_global.html">mag_global</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../score_global.html">score_global</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../score_density_hybrid.html">score_density_hybrid</a></li>
@@ -106,7 +104,7 @@
 <h1>hipscatalog_gen.Config<a class="headerlink" href="#hipscatalog-gen-config" title="Link to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="hipscatalog_gen.Config">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/config.html#Config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.Config" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">Config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/hipscatalog_gen/config.html#Config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hipscatalog_gen.Config" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Top-level configuration container for the HiPS pipeline.</p>
 <dl class="field-list simple">
@@ -117,13 +115,12 @@
 <li><p><strong>algorithm</strong> (<a class="reference internal" href="../../../api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts" title="hipscatalog_gen.config.AlgoOpts"><em>AlgoOpts</em></a>)</p></li>
 <li><p><strong>cluster</strong> (<a class="reference internal" href="../../../api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg" title="hipscatalog_gen.config.ClusterCfg"><em>ClusterCfg</em></a>)</p></li>
 <li><p><strong>output</strong> (<a class="reference internal" href="../../../api/hipscatalog_gen.html#hipscatalog_gen.config.OutputCfg" title="hipscatalog_gen.config.OutputCfg"><em>OutputCfg</em></a>)</p></li>
-<li><p><strong>photometry</strong> (<a class="reference internal" href="../photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg" title="hipscatalog_gen.config.PhotometryCfg"><em>PhotometryCfg</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="hipscatalog_gen.Config.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">photometry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipscatalog_gen.Config.__init__" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipscatalog_gen.Config.__init__" title="Link to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -132,7 +129,6 @@
 <li><p><strong>algorithm</strong> (<a class="reference internal" href="../../../api/hipscatalog_gen.html#hipscatalog_gen.config.AlgoOpts" title="hipscatalog_gen.config.AlgoOpts"><em>AlgoOpts</em></a>)</p></li>
 <li><p><strong>cluster</strong> (<a class="reference internal" href="../../../api/hipscatalog_gen.html#hipscatalog_gen.config.ClusterCfg" title="hipscatalog_gen.config.ClusterCfg"><em>ClusterCfg</em></a>)</p></li>
 <li><p><strong>output</strong> (<a class="reference internal" href="../../../api/hipscatalog_gen.html#hipscatalog_gen.config.OutputCfg" title="hipscatalog_gen.config.OutputCfg"><em>OutputCfg</em></a>)</p></li>
-<li><p><strong>photometry</strong> (<a class="reference internal" href="../photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg" title="hipscatalog_gen.config.PhotometryCfg"><em>PhotometryCfg</em></a><em> | </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -152,22 +148,19 @@
 <p class="rubric">Attributes</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.photometry" title="hipscatalog_gen.Config.photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">photometry</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.input" title="hipscatalog_gen.Config.input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">input</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.input" title="hipscatalog_gen.Config.input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">input</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.columns" title="hipscatalog_gen.Config.columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">columns</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.columns" title="hipscatalog_gen.Config.columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">columns</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.algorithm" title="hipscatalog_gen.Config.algorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">algorithm</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.algorithm" title="hipscatalog_gen.Config.algorithm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">algorithm</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.cluster" title="hipscatalog_gen.Config.cluster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cluster</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.cluster" title="hipscatalog_gen.Config.cluster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cluster</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.output" title="hipscatalog_gen.Config.output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">output</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#hipscatalog_gen.Config.output" title="hipscatalog_gen.Config.output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">output</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -197,11 +190,6 @@
 <span class="sig-name descname"><span class="pre">output</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../../api/hipscatalog_gen.html#hipscatalog_gen.config.OutputCfg" title="hipscatalog_gen.config.OutputCfg"><span class="pre">OutputCfg</span></a></span><a class="headerlink" href="#hipscatalog_gen.Config.output" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="hipscatalog_gen.Config.photometry">
-<span class="sig-name descname"><span class="pre">photometry</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../photometry/hipscatalog_gen.config.PhotometryCfg.html#hipscatalog_gen.config.PhotometryCfg" title="hipscatalog_gen.config.PhotometryCfg"><span class="pre">PhotometryCfg</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#hipscatalog_gen.Config.photometry" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 </section>
@@ -217,7 +205,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

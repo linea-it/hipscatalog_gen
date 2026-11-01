@@ -45,7 +45,6 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../pipeline.html">Pipeline overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../reference/index.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
 </ul>
@@ -84,7 +83,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">suppress</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">is_dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
@@ -104,13 +102,7 @@
     <span class="n">write_metadata_xml</span><span class="p">,</span>
     <span class="n">write_moc</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">_detect_hats_catalog_root</span><span class="p">,</span>
-    <span class="n">_fmt_dur</span><span class="p">,</span>
-    <span class="n">_get_dask_base</span><span class="p">,</span>
-    <span class="n">_get_meta_df</span><span class="p">,</span>
-    <span class="n">_validate_and_normalize_radec</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_detect_hats_catalog_root</span><span class="p">,</span> <span class="n">_fmt_dur</span><span class="p">,</span> <span class="n">_get_dask_base</span><span class="p">,</span> <span class="n">_validate_and_normalize_radec</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"build_and_prepare_input"</span><span class="p">,</span>
@@ -474,7 +466,7 @@
     <span class="n">dens_lc</span> <span class="o">=</span> <span class="n">densmaps</span><span class="p">[</span><span class="n">moc_order</span><span class="p">]</span>
     <span class="n">write_moc</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">moc_order</span><span class="p">,</span> <span class="n">dens_lc</span><span class="p">)</span>
 
-    <span class="n">dtypes_map</span> <span class="o">=</span> <span class="n">_get_meta_df</span><span class="p">(</span><span class="n">ddf</span><span class="p">)</span><span class="o">.</span><span class="n">dtypes</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+    <span class="n">dtypes_map</span> <span class="o">=</span> <span class="n">ddf</span><span class="o">.</span><span class="n">dtypes</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
     <span class="n">cols</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="n">c</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">dtypes_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="s2">"object"</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">keep_cols</span><span class="p">]</span>
     <span class="n">ra_idx</span> <span class="o">=</span> <span class="n">keep_cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">ra_col</span><span class="p">)</span>
     <span class="n">dec_idx</span> <span class="o">=</span> <span class="n">keep_cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">dec_col</span><span class="p">)</span>
@@ -491,13 +483,6 @@
         <span class="p">(</span><span class="s2">"columns.ra"</span><span class="p">,</span> <span class="n">ra_col</span><span class="p">),</span>
         <span class="p">(</span><span class="s2">"columns.dec"</span><span class="p">,</span> <span class="n">dec_col</span><span class="p">),</span>
         <span class="p">(</span><span class="s2">"columns.keep"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="s2">"keep"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
-        <span class="p">(</span><span class="s2">"# photometry"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="p">(</span>
-            <span class="s2">"photometry"</span><span class="p">,</span>
-            <span class="n">asdict</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">photometry</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">is_dataclass</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="s2">"photometry"</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
-            <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="s2">"photometry"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-        <span class="p">),</span>
         <span class="p">(</span><span class="s2">"# algorithm.common"</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
         <span class="p">(</span><span class="s2">"algorithm.selection_mode"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"selection_mode"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
         <span class="p">(</span><span class="s2">"algorithm.level_limit"</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">algorithm</span><span class="p">,</span> <span class="s2">"level_limit"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)),</span>
@@ -731,7 +716,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2025-2026, Luigi Silva @ LIneA.</p>
+    <p>&#169; Copyright 2025, Luigi Silva @ LIneA.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -11,7 +11,6 @@ Subpackages
    hipscatalog_gen.healpix
    hipscatalog_gen.io
    hipscatalog_gen.mag_global
-   hipscatalog_gen.photometry
    hipscatalog_gen.pipeline
    hipscatalog_gen.score_density_hybrid
    hipscatalog_gen.score_global
